@@ -15,15 +15,16 @@ import { defineField } from "./_runtime.js";
 
 const nv = `
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10;
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  color: #2a2318; user-select: none; }
+  font-family: "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  color: #f4e9ff; user-select: none; }
 #hud * { box-sizing: border-box; }
-.panel { background: rgba(241,234,217,0.93); border: 1px solid #2a2318;
-  box-shadow: 0 1px 0 rgba(42,35,24,0.25), inset 0 0 0 3px rgba(241,234,217,0.9), inset 0 0 0 4px rgba(42,35,24,0.35);
+.panel { background: rgba(26,16,54,0.86); border: 1px solid #ff71ce;
+  box-shadow: 0 1px 0 rgba(255,113,206,0.25), inset 0 0 0 3px rgba(26,16,54,0.9), inset 0 0 0 4px rgba(255,113,206,0.35);
   pointer-events: auto; }
 #topbar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
   padding: 5px 22px 6px; text-align: center; }
-#cityname { font-size: 19px; letter-spacing: 0.34em; font-weight: 600; }
+#cityname { font-size: 19px; letter-spacing: 0.44em; font-weight: 600;
+  text-shadow: 1px 0 rgba(1,205,254,0.8), -1px 0 rgba(255,113,206,0.8); }
 #daytime { font-size: 11.5px; letter-spacing: 0.18em; font-style: italic; opacity: 0.85; margin-top: 1px;}
 #resources { position: absolute; top: 10px; left: 10px; padding: 7px 14px; font-size: 13px;
   letter-spacing: 0.06em; line-height: 1.75; }
@@ -31,65 +32,68 @@ const nv = `
 #resources .lbl { opacity: 0.75; font-size: 11px; letter-spacing: 0.14em; }
 #quals { position: absolute; top: 10px; right: 10px; padding: 7px 14px; font-size: 11px;
   letter-spacing: 0.12em; line-height: 1.9; text-align: right; }
-.qbar { display: inline-block; width: 64px; height: 5px; border: 1px solid #2a2318; margin-left: 8px;
+.qbar { display: inline-block; width: 64px; height: 5px; border: 1px solid #6ff5ea; margin-left: 8px;
   vertical-align: middle; position: relative; }
-.qbar i { position: absolute; inset: 0; right: auto; background: #2a2318; opacity: 0.75; }
+.qbar i { position: absolute; inset: 0; right: auto; background: #6ff5ea; opacity: 0.75; }
 #palette { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 0; }
 .tool { padding: 9px 15px 7px; cursor: pointer; text-align: center; border-right: none !important; }
-.tool:last-child { border-right: 1px solid #2a2318 !important; }
+.tool:last-child { border-right: 1px solid #ff71ce !important; }
 .tool svg { display: block; margin: 0 auto 3px; width: 30px; height: 26px; }
 .tool .tl { font-size: 10.5px; letter-spacing: 0.2em; }
-.tool.on { background: #2a2318; color: #f1ead9; }
-.tool.on svg * { stroke: #f1ead9 !important; fill: none; }
+.tool.on { background: #ff71ce; color: #1a1036; }
+.tool.on svg * { stroke: #1a1036 !important; fill: none; }
 #variants { position: absolute; bottom: 86px; left: 50%; transform: translateX(-50%);
   display: none; }
 #variants .var { padding: 7px 16px; cursor: pointer; display: inline-block; }
 #variants .var .vl { font-size: 12.5px; letter-spacing: 0.1em; }
 #variants .var .vh { font-size: 10.5px; font-style: italic; opacity: 0.7; margin-top: 1px; }
-#variants .var.on { background: #2a2318; color: #f1ead9; }
+#variants .var.on { background: #ff71ce; color: #1a1036; }
 #request { position: absolute; bottom: 12px; left: 12px; max-width: 340px; padding: 10px 16px;
   font-size: 12.5px; font-style: italic; line-height: 1.5; }
 #request .who { font-style: normal; font-size: 10.5px; letter-spacing: 0.16em; opacity: 0.7; margin-top: 4px; }
 #modes { position: absolute; bottom: 12px; right: 12px; display: flex; }
 .mode { padding: 9px 13px 8px; cursor: pointer; font-size: 10.5px; letter-spacing: 0.18em; border-right: none !important; }
-.mode:last-child { border-right: 1px solid #2a2318 !important; }
-.mode.on { background: #2a2318; color: #f1ead9; }
+.mode:last-child { border-right: 1px solid #ff71ce !important; }
+.mode.on { background: #ff71ce; color: #1a1036; }
 #undo { position: absolute; top: 156px; left: 10px; padding: 6px 13px; font-size: 10.5px;
   letter-spacing: 0.18em; cursor: pointer; }
 #toast { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); padding: 9px 22px;
   font-size: 13px; font-style: italic; opacity: 0; transition: opacity 0.6s; max-width: 480px; text-align: center; }
 #sectionctl { position: absolute; top: 120px; right: 10px; width: 190px; padding: 10px 14px; display: none;
   font-size: 11px; letter-spacing: 0.1em; }
-#sectionctl input[type=range] { width: 100%; accent-color: #2a2318; }
+#sectionctl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #sectionctl .btnrow { display: flex; gap: 6px; margin-top: 6px; }
-#sectionctl button, #platectl button { background: none; border: 1px solid #2a2318; font-family: inherit;
-  font-size: 10px; letter-spacing: 0.14em; padding: 4px 8px; cursor: pointer; color: #2a2318; flex: 1; }
-#sectionctl button.on, #platectl button.on { background: #2a2318; color: #f1ead9; }
+#sectionctl button, #platectl button { background: none; border: 1px solid #6ff5ea; font-family: inherit;
+  font-size: 10px; letter-spacing: 0.14em; padding: 4px 8px; cursor: pointer; color: #f4e9ff; flex: 1; }
+#sectionctl button.on, #platectl button.on { background: #ff71ce; color: #1a1036; border-color: #ff71ce; }
 #platectl { position: absolute; top: 120px; right: 10px; width: 210px; padding: 10px 14px; display: none;
   font-size: 11px; letter-spacing: 0.1em; }
-#platectl input[type=range] { width: 100%; accent-color: #2a2318; }
+#platectl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #platectl .btnrow { display: flex; gap: 6px; margin: 6px 0; }
 #platectl .engrave { width: 100%; padding: 8px; font-size: 11px; margin-top: 4px; }
 #wanderhint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 7px 18px;
   font-size: 11px; letter-spacing: 0.15em; display: none; font-style: italic; }
-#platemark { position: absolute; inset: 9px; border: 1px solid rgba(42,35,24,0.35); pointer-events: none; }
-#platemark::after { content: ''; position: absolute; inset: 3px; border: 1px solid rgba(42,35,24,0.16); }
+#platemark { position: absolute; inset: 9px; border: 1px solid rgba(255,113,206,0.35); pointer-events: none; }
+#platemark::after { content: ''; position: absolute; inset: 3px; border: 1px solid rgba(111,245,234,0.16); }
 #labels { position: absolute; inset: 0; overflow: hidden; }
 .dlabel { position: absolute; transform: translate(-50%, -50%); font-size: 13px; font-style: italic;
-  letter-spacing: 0.22em; color: #2a2318; text-shadow: 0 0 6px rgba(241,234,217,0.9), 0 0 2px rgba(241,234,217,1);
+  letter-spacing: 0.22em; color: #b8fff9; text-shadow: 0 0 6px rgba(26,16,54,0.9), 0 0 2px rgba(26,16,54,1);
   white-space: nowrap; transition: opacity 1.2s; }
 #frame { position: absolute; inset: 0; display: none; pointer-events: none; }
-#frame .bar { position: absolute; background: rgba(28,23,15,0.88); }
-#veil { position: fixed; inset: 0; background: #ece5d3; z-index: 50; display: flex; flex-direction: column;
+#frame .bar { position: absolute; background: rgba(14,7,34,0.9); }
+#veil { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column;
+  background: linear-gradient(to bottom, #241448 0%, #542a6e 46%, #c05490 78%, #ff9b6a 100%);
+  color: #f4e9ff;
   align-items: center; justify-content: center; transition: opacity 1.4s; pointer-events: auto; }
-#veil h1 { font-size: 44px; letter-spacing: 0.5em; font-weight: 500; margin: 0 0 6px 0.5em; }
+#veil h1 { font-size: 44px; letter-spacing: 0.5em; font-weight: 500; margin: 0 0 6px 0.5em;
+  text-shadow: 2px 0 rgba(1,205,254,0.85), -2px 0 rgba(255,113,206,0.85); }
 #veil .sub { font-style: italic; font-size: 15px; opacity: 0.8; letter-spacing: 0.06em; }
-#veil .rule { width: 220px; border-bottom: 1px solid #2a2318; margin: 22px 0; position: relative; }
+#veil .rule { width: 220px; border-bottom: 1px solid #ff71ce; margin: 22px 0; position: relative; }
 #veil .hint { font-size: 12px; letter-spacing: 0.14em; opacity: 0.65; line-height: 2; text-align: center; }
-#veil .begin { margin-top: 26px; border: 1px solid #2a2318; padding: 10px 38px; font-size: 13px;
-  letter-spacing: 0.3em; cursor: pointer; background: none; font-family: inherit; color: #2a2318; }
-#veil .begin:hover { background: #2a2318; color: #ece5d3; }
+#veil .begin { margin-top: 26px; border: 1px solid #6ff5ea; padding: 10px 38px; font-size: 13px;
+  letter-spacing: 0.3em; cursor: pointer; background: none; font-family: inherit; color: #f4e9ff; }
+#veil .begin:hover { background: #ff71ce; color: #1a1036; border-color: #ff71ce; }
 
 @media (max-width: 1020px) {
   #quals { display: none; }
@@ -117,20 +121,20 @@ const nv = `
 }
 `,
   iv = {
-    anchor: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    anchor: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M11 24 V6 h8 v18 M8 24 h14 M9 6 h12 M11 3 h8 v3 h-8 z"/></g></svg>`,
-    span: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    span: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M2 8 h26 M2 5 h26 M4 8 v4 a4 4 0 0 0 8 0 v-4 M12 8 v4 a4 4 0 0 0 8 0 v-4 M20 8 v4 a4 4 0 0 0 8 0 v-4 M4 12 v12 M28 12 v12"/></g></svg>`,
-    rise: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    rise: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M2 24 h7 v-5 h7 v-5 h7 v-5 h5 M2 24 v-2 h5 v-5 h7 v-5 h7 v-5 h7"/></g></svg>`,
-    vault: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    vault: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M3 24 V12 a12 9 0 0 1 24 0 V24 M8 24 V14 a7 6 0 0 1 14 0 V24"/></g></svg>`,
-    carve: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    carve: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M3 3 h24 v21 h-24 z M11 24 V14 a4 4 0 0 1 8 0 V24"/>
     <path d="M6 6 l4 4 M24 6 l-4 4" stroke-dasharray="1.5 1.5"/></g></svg>`,
-    emb: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    emb: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M11 24 h8 M12 21 h6 M13 21 V13 M17 21 V13 M15 13 m-3 0 a3 4.5 0 1 1 6 0 a3 4.5 0 1 1 -6 0 M15 5 v-2"/></g></svg>`,
-    designate: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    designate: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M5 21 c4 -3 7 1 10 -1 s6 -4 10 -2 M5 21 c0 2 2 3 4 3 s16 -1 16 -4" />
     <path d="M20 4 l4 4 -10 10 -5 1 1 -5 z"/></g></svg>`,
   };
@@ -451,7 +455,7 @@ class Hud {
   }
   showPlate(t, e) {
     const n = document.createElement("div");
-    n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(28,23,15,0.78);
+    n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(14,7,34,0.82);
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto`;
     const s = document.createElement("img");
     ((s.src = t),
@@ -464,7 +468,7 @@ class Hud {
       const c = document.createElement("button");
       return (
         (c.textContent = a),
-        (c.style.cssText = `background:#f1ead9;border:1px solid #2a2318;color:#2a2318;
+        (c.style.cssText = `background:#1a1036;border:1px solid #ff71ce;color:#f4e9ff;
         font-family:inherit;font-size:11px;letter-spacing:0.22em;padding:9px 22px;cursor:pointer`),
         r.appendChild(c),
         c
