@@ -226,8 +226,8 @@ class Hud {
       <div id="wanderhint" class="panel">W A S D walk · SHIFT hurry · ESC return</div>
       <div id="frame"><div class="bar" id="fb-t"></div><div class="bar" id="fb-b"></div><div class="bar" id="fb-l"></div><div class="bar" id="fb-r"></div></div>
       <div id="veil">
-        <h1>CAPRICCIO</h1>
-        <div class="sub">a city of arches, grown inside its own monuments</div>
+        <h1>CAPRICCIO 2</h1>
+        <div class="sub">a city of arches, at the end of humanity</div>
         <div class="rule"></div>
         <div class="hint">
           RAISE the great architecture — piers, spans, stairs, vaults.<br/>
@@ -236,6 +236,8 @@ class Hud {
           What you engrave is what remains.
         </div>
         <button class="begin">BEGIN</button>
+        <a href="/about.html" style="margin-top:16px; font-size:10px; letter-spacing:0.16em;
+          opacity:0.45; font-style:italic; color:inherit; text-decoration:none">about this city</a>
       </div>
     `;
     const e = t.querySelector("#palette"),

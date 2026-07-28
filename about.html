@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>CAPRICCIO — about</title>
-<meta name="description" content="A city of arches, at the end of humanity. What it is, what changed, and what to look for." />
+<title>CAPRICCIO 2 — about</title>
+<meta name="description" content="CAPRICCIO 2 — a city of arches, at the end of humanity. What it is, what changed, and what to look for." />
+<meta property="og:title" content="CAPRICCIO 2 — about" />
+<meta property="og:description" content="The same city, ten thousand years later. What changed, and what deliberately did not." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E" />
 <style>
   :root {
@@ -75,8 +77,8 @@
 <main>
 
   <header>
-    <h1>CAPRICCIO</h1>
-    <p class="sub">a city of arches, grown inside its own monuments</p>
+    <h1>CAPRICCIO 2</h1>
+    <p class="sub">a city of arches, at the end of humanity</p>
     <div class="rule"></div>
   </header>
 
@@ -108,8 +110,13 @@
     <p>The same game, at the end of humanity.</p>
     <p>Not a sequel and not a remake. Every rule underneath is untouched — the scoring, the
     growth, the save format, the way citizens choose where to live. What changed is the
-    surface: the ruins you inherit are concrete rather than marble, the sky is a sunset
-    that will not end, and something is still advertising.</p>
+    world those rules run in.</p>
+    <p>The ruins you inherit are concrete and rebar rather than marble. Overpasses stand on
+    the ridge with the roadway gone. A pipe still drains into the canyon, staining the rock,
+    with nobody upstream. A tower crane holds a pallet of blocks it was carrying when the
+    work stopped. Satellites cross overhead on fixed tracks, some tumbling, still
+    transmitting. And the billboards are still lit, still cheerful, still selling to an
+    empty plain.</p>
     <div class="note">The point is how little is different. The citizens still want shelter,
     light, water, and somewhere to gather in the evening. Ten thousand years, and the list
     is the same list.</div>
@@ -133,7 +140,10 @@
       <li>Between the title and the city, two lines appear. They are real comments from
       the sky shader — notes the program wrote to itself about how to draw its own
       sunset, which survived only because comments inside strings are not stripped.</li>
-      <li>Only sixteen plates survive. Engrave a seventeenth and watch which one leaves.</li>
+      <li>Only sixteen plates survive a save. Engrave a seventeenth and watch which one
+      leaves the record. Choosing what remains is the closest this game has to a goal.</li>
+      <li>The five requests run out. After that the only way to earn the clearance to build
+      further is to publish what you have already made.</li>
     </ul>
   </section>
 
@@ -144,9 +154,11 @@
       <dd>three.js r180. Engraved hatching projected in world space, so the strokes sit on
       the stone instead of crawling across the screen.</dd>
       <dt>Dither</dt>
-      <dd>The world is dithered as homage. <strong>The plates are the real thing</strong> —
-      true Atkinson error diffusion, six neighbours at one eighth each and two eighths
-      thrown away, exactly as it ran on a Macintosh in 1984.</dd>
+      <dd>The world is dithered against a blue-noise threshold generated at load —
+      aperiodic, clustered, biased toward edges, an homage rather than a copy.
+      <strong>The plates are the real thing</strong>: true Atkinson error diffusion, six
+      neighbours at one eighth each and two eighths thrown away, exactly as it ran on a
+      Macintosh in 1984.</dd>
       <dt>Sound</dt>
       <dd>Entirely synthesized. Pink-noise wind gusting on a fourteen-second cycle, water
       that fades in with the square of the distance, and a bell whose upper partials decay
@@ -157,6 +169,10 @@
       rather than sequencing it note by note. The piece is four chords in A minor that
       take half a minute to decide they want percussion, suspend their thirds for a while,
       and borrow exactly one major chord, late. No samples: every voice is generated.</dd>
+      <dt>Walkthrough</dt>
+      <dd>Six beats, played inside the game. It advances when you actually do the thing,
+      never on a timer, and the camera yields the moment you touch it. What you build
+      during it is real and stays.</dd>
       <dt>Assets</dt>
       <dd>None. There is nothing to download but the code.</dd>
     </dl>
