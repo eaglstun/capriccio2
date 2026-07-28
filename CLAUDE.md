@@ -46,6 +46,31 @@ lines**. It still parses clean (`node --check` passes) and behaves identically
 byte-identical to what is deployed.** Use 662KB when citing the real artifact's
 size publicly; use the local line numbers only for navigation.
 
+## Local servers — and a destructive footgun
+
+| port | serves | what it is |
+|---|---|---|
+| 8123 | `public/` | **the original game.** Pristine reference build |
+| 8124 | `dist/` | the current build — **changes whenever anything runs `yarn build`** |
+| 8125 | `public/` | original again, separate origin for fresh-vs-fresh comparison |
+
+**`?fresh` deletes the save on load.** It is a real feature of the game
+(`localStorage.removeItem` at bundle line 30736), not a dev flag. Saves are
+per-origin, so `127.0.0.1:8123` and `:8124` have separate ones.
+
+A save was destroyed this way: `?fresh` was habitually appended while testing
+on :8124, Chrome autocompleted it onto :8123, and a hand-built city was gone
+on load with no undo and no copy.
+
+**Rules:**
+
+- Never put `?fresh` on **:8123**. To see a clean original, use **:8125**.
+- Before anything that might wipe a save the user cares about, copy it out
+  first: `localStorage.getItem('capriccio-save-v1')` and write it to disk.
+  It is a few KB of JSON and it is the only copy in existence.
+- `dist/` is rebuilt by any build, including an agent's. If :8124 "looks
+  wrong", check the script hash before assuming the code broke.
+
 ## Package manager: yarn, not npm
 
 This project uses **yarn** (4.17, pinned via `packageManager` in
