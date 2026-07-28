@@ -187,6 +187,8 @@ class Hud {
       document.body.appendChild(this.root),
       this.build());
   }
+  /** Construct the whole interface as one HTML string, then wire the callbacks.
+   * Built once; everything after is text and style updates. */
   build() {
     const t = this.root;
     t.innerHTML = `
@@ -357,6 +359,7 @@ class Hud {
           this.cb.onBegin());
       }));
   }
+  /** Highlight the chosen tool and show its variants row. */
   pickTool(t) {
     const e = [...this.toolBtns.entries()].find(([, n]) =>
       n.classList.contains("on"),
@@ -370,6 +373,8 @@ class Hud {
       this.showVariants(t),
       this.cb.onTool(t, BUILD_CATALOGUE[t][0].key));
   }
+  /** The second row — Pier / Giant Pier / Column and so on. Its presence moves
+   * other elements, which is why the tutorial card lifts when it opens. */
   showVariants(t) {
     ((this.varRow.style.display = "block"),
       (this.varRow.innerHTML = ""),
@@ -387,6 +392,7 @@ class Hud {
           this.varRow.appendChild(s));
       }));
   }
+  /** Switch between BUILD, SECTION, WANDER and PLATE. */
   pickMode(t) {
     for (const n of this.modeBtns.values()) n.classList.remove("on");
     (this.modeBtns.get(t).classList.add("on"),
@@ -405,6 +411,8 @@ class Hud {
     }
     this.cb.onMode(t);
   }
+  /** Transient message, bottom centre. Used for build confirmations, request
+   * completions and the plate's "the laser bites the substrate". */
   toast(t, e = 4200) {
     ((this.toastEl.textContent = t),
       (this.toastEl.style.opacity = "1"),
@@ -413,6 +421,8 @@ class Hud {
         this.toastEl.style.opacity = "0";
       }, e)));
   }
+  /** Show or hide the citizen request panel. Clicking it flies the camera to
+   * whoever is speaking — see FEATURES.md A0. */
   setRequest(t) {
     if (!t) {
       this.requestEl.style.display = "none";
@@ -427,6 +437,8 @@ class Hud {
   setWanderHint(t) {
     this.wanderHint.style.display = t ? "block" : "none";
   }
+  /** Stone, timber, clearance, souls. Floored for display — resources accrue as
+   * floats every frame. */
   updateResources(t) {
     (gameState.folio
       ? ((this.resStone.textContent = "∞"), (this.resTimber.textContent = "∞"))
@@ -440,6 +452,8 @@ class Hud {
         ? "✦ resources are off — restore them"
         : "✦ play without resources");
   }
+  /** The day and time-of-day label. Hours are shown mod 24 since the clock now
+   * runs past midnight, and anything from 21.7 reads as "night". */
   updateClock(t, e) {
     const n = [
         "night",
@@ -466,6 +480,8 @@ class Hud {
                     : 6;
     this.dayEl.textContent = `day ${String(t).padStart(3, "0")} · ${n[s]}`;
   }
+  /** The five meters. Called from updateQualityMeters on a slower cadence than
+   * the sim, so a computed value can lead the bar by a few seconds. */
   updateQuals(t) {
     for (const [e, n] of Object.entries(t)) {
       const s = this.qualBars.get(e);
@@ -485,6 +501,9 @@ class Hud {
   // The folio holds what the save holds: the last sixteen plates. Filled
   // slots read as prints in a case; hover names each one. No caption, no
   // count — the strip is discovered by filling it.
+  /** The sixteen folio slots. Held slots are clickable and return the camera to
+   * that plate's stored pose. Empty slots stay outlines — discovering the cap
+   * by filling it is the point, so nothing announces the number. */
   updateFolio(t) {
     const e = this.root.querySelector("#folio-strip");
     if (e) {
@@ -504,6 +523,8 @@ class Hud {
       }
     }
   }
+  /** The plate overlay after engraving. Past sixteen it also names the plate
+   * being pushed out of the record. */
   showPlate(t, e /* , evicted */) {
     const n = document.createElement("div");
     n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(14,7,34,0.82);
@@ -560,6 +581,8 @@ class Hud {
       (this.root.querySelector("#fb-r").style.cssText =
         `top:0;bottom:0;right:0;width:${r}px`));
   }
+  /** Project world positions to screen and place text labels — district names,
+   * and the name of whoever is currently speaking. Rebuilt every frame. */
   updateLabels(t, e, n) {
     if (((this.labelsEl.innerHTML = ""), !n)) return;
     const s = new Vector3();

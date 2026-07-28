@@ -55,6 +55,12 @@ const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
 
 // [chord voicing, bass root, counter-melody note] per bar.
 // Plain pass: Am9 · Fmaj9 · Cmaj9 · Gadd9 — i VI III VII in A minor.
+/**
+ * The chord loop as MIDI note numbers, per bar: [notes, bass, counter].
+ *
+ * Am9 - Fmaj9 - Cmaj9 - Gadd9 = i - VI - III - VII in A minor. Everything else
+ * in the score is colour inside that key rather than modulation.
+ */
 const BARS_PLAIN = [
   [[57, 60, 64, 67, 71], 33, 76], // Am9        · E5 counter
   [[53, 57, 60, 64, 67], 29, 72], // Fmaj9      · C5
@@ -62,6 +68,8 @@ const BARS_PLAIN = [
   [[43, 47, 50, 57, 62], 31, 74], // Gadd9      · D5
 ];
 // Suspended pass: the 3rd lifted out so each chord hovers unresolved.
+/** The same four chords with the 3rds lifted out — sus2/sus4. Hovering,
+ * neither major nor minor, used for the second pass of the loop. */
 const BARS_SUS = [
   [[57, 59, 64, 67, 71], 33, 76], // Asus2 (add 7/9)
   [[53, 55, 60, 64, 67], 29, 72], // Fsus2 (add 7/9)
@@ -70,8 +78,17 @@ const BARS_SUS = [
 ];
 // Borrowed from A Dorian: D major where the diatonic chord would be Dm.
 // Used once, at the end of the 16-bar loop, only in the last stage.
+/**
+ * Dadd9 — borrowed from A Dorian, where the diatonic chord would be Dm.
+ *
+ * One unearned major chord in a minor key, used EXACTLY ONCE and late. It is
+ * the strongest single emotional move available in the mode and it stops
+ * working the moment it repeats.
+ */
 const BAR_D = [[50, 54, 57, 64, 66], 26, 78]; // Dadd9 · F#5 counter
 
+/** Choose the bar set for the current arrangement stage — plain, suspended, or
+ * the 16-bar version ending on the borrowed D. */
 function harmonicLoop(stage) {
   const eight = [...BARS_PLAIN, ...BARS_SUS];
   if (stage < 3) return eight;
@@ -81,6 +98,8 @@ function harmonicLoop(stage) {
 
 const chord = (ns) => stack(...ns.map((n) => note(n)));
 
+/** The main pad voice: supersaw, heavy unison detune, filter opening with the
+ * stage and closing at dusk. */
 function pads(bars, duskAmt, stage) {
   return cat(...bars.map((b) => chord(b[0])))
     .s("supersaw")
@@ -96,6 +115,8 @@ function pads(bars, duskAmt, stage) {
 }
 
 // octave-doubled pad an octave down — weight under the kit, root + fifth only
+/** Root-and-fifth an octave down, added when the drums arrive so the low end
+ * has weight under them. */
 function lowPad(bars, duskAmt) {
   return cat(...bars.map((b) => chord([b[0][0] - 12, b[0][2] - 12])))
     .s("supersaw")
@@ -107,6 +128,7 @@ function lowPad(bars, duskAmt) {
     .gain(0.3);
 }
 
+/** Triangle bass on the written root of each bar. */
 function bass(bars) {
   return cat(...bars.map((b) => seq(note(b[1]), silence, note(b[1] + 12), silence)))
     .s("triangle")
@@ -116,6 +138,7 @@ function bass(bars) {
 }
 
 // slow counter-melody — one note per bar, high and thin
+/** The counter-melody: one high thin sine per bar, entering with the snare. */
 function counter(bars) {
   return cat(...bars.map((b) => note(b[2])))
     .s("sine")
@@ -128,6 +151,8 @@ function counter(bars) {
 }
 
 // the construction arpeggio — only stacked in while the city is growing
+/** The construction arpeggio — square, and audible ONLY while something is
+ * being built. Bound to sim state like every other sound in the game. */
 function arp(bars) {
   return cat(...bars.map((b) => seq(...[0, 2, 4, 2, 1, 3, 4, 3].map((k) => note(b[0][k] + 12)))))
     .s("square")
