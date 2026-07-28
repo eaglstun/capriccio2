@@ -17,6 +17,22 @@ void main() {
   gl_Position = vec4(position.xy, 0.0, 1.0);
 }
 `;
+/**
+ * The full-screen post-pass fragment shader, assembled as a string.
+ *
+ * Runs after the scene renders to an offscreen target and does the work that
+ * belongs to the SHEET rather than the stone — see docs/RENDERING.md for why
+ * the look is split across two frames of reference.
+ *
+ * In order: the VHS tracking band (displacement plus RGB channel separation),
+ * the hatched sky, depth- and normal-edge ink outlines, neon bloom, graded
+ * smog haze, CRT scanlines, paper grain and vignette.
+ *
+ * Two things it reads that are not colour: the depth texture, for edges and
+ * haze, and the ALPHA of the colour target — which every material writes as
+ * 1.0 except `figure`, so citizens get their own warm outline. That channel is
+ * otherwise unused; see FEATURES.md A7.
+ */
 function $0() {
   return `
 precision highp float;
@@ -323,6 +339,19 @@ void main() {
 // Energy is a toroidally wrapped gaussian, so the texture tiles seamlessly.
 // Deterministic seed, zero shipped bytes, ~4096 threshold levels — this is
 // what replaces the 16-level Bayer lattice in both dither sites.
+/**
+ * Generate a 64x64 blue-noise threshold texture by void-and-cluster
+ * (Ulichney), at load. Procedural — nothing is shipped or fetched.
+ *
+ * Blue noise is what makes the 1-bit dither read as clustered and organic
+ * rather than as a halftone screen: aperiodic, no visible lattice, and many
+ * more threshold levels than the 4x4 Bayer matrix it replaced.
+ *
+ * Implementation note: past half fill, the canonical phase-3 rule ("break the
+ * tightest cluster of zeros") is identical to phase 2's "fill the largest
+ * void" on a torus, because zero-energy is a constant minus one-energy. One
+ * rule serves both phases.
+ */
 function makeBlueNoiseTexture(size = 64) {
   const N = size * size,
     s2 = 2 * 1.9 * 1.9,
@@ -399,6 +428,13 @@ function makeBlueNoiseTexture(size = 64) {
   return tex;
 }
 const blueNoiseTex = makeBlueNoiseTexture();
+/**
+ * The renderer wrapper: owns the WebGLRenderer, the offscreen target with its
+ * depth texture, and the fullscreen quad that runs the post pass.
+ *
+ * The target is RGBA with a depth texture attached, because the post pass needs
+ * both — depth for edges and haze, alpha as the citizen mask.
+ */
 class J0 {
   constructor(t, e = {}) {
     defineField(this, "renderer");
@@ -472,6 +508,8 @@ class J0 {
         t.clientHeight || window.innerHeight,
       ));
   }
+  /** Resize the target and update resolution-dependent uniforms, including the
+   * dither cell scale so a dither pixel stays the same size on screen. */
   resize(t, e) {
     ((this.w = t), (this.h = e));
     const n = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -489,22 +527,29 @@ class J0 {
         Math.round(n * this.ss * 3),
       )));
   }
+  /** Dusk factor 0..1 — warms and darkens the sky toward the sun's side. */
   setDusk(t) {
     this.postMat.uniforms.uDusk.value = t;
   }
+  /** Dawn factor 0..1 — the same low sun read as cool blue-grey instead. */
   setDawn(t) {
     this.postMat.uniforms.uDawn.value = t;
   }
+  /** Night factor 0..1. Kills the sky, lifts the bloom so the neon carries the
+   * scene, and stops the smog haze glowing. Separate from dusk on purpose —
+   * pushing dusk past its range would have distorted the sunset. */
   setNight(t) {
     this.postMat.uniforms.uNight.value = t;
   }
   setSunDir(t) {
     this.postMat.uniforms.uSunDir.value.copy(t);
   }
+  /** The paper colour, which is also the clear colour and the sky. */
   setPaper(t) {
     (this.postMat.uniforms.uPaper.value.copy(t),
       this.renderer.setClearColor(t, 1));
   }
+  /** Render the scene to the offscreen target, then run the post pass to screen. */
   render(t, e) {
     const n = this.postMat.uniforms;
     ((n.uTime.value = performance.now() * 0.001),
@@ -520,6 +565,13 @@ class J0 {
       this.renderer.setRenderTarget(null),
       this.renderer.render(this.postScene, this.postCam));
   }
+  /**
+   * Render one frame at an arbitrary resolution and return it as an image.
+   *
+   * Used by PLATE at 2000px. Renders through the same pipeline, so a plate
+   * looks like the game — and because the post pass always outputs alpha 1.0,
+   * the citizen mask never reaches the exported PNG.
+   */
   snap(t, e, n, s) {
     const r = this.w,
       o = this.h,
@@ -560,6 +612,13 @@ class J0 {
     );
   }
 }
+/**
+ * Uniforms SHARED by every engraved material.
+ *
+ * Shared objects, not copies — so `syncLightUniforms` updates one place and
+ * every surface in the world follows. This is what keeps the hatching
+ * consistent across dozens of separately-created materials.
+ */
 const engravingUniforms = {
   uHatchFreq: { value: 3.1 },
   uInkCol: { value: new Color("#2b1a52") },
@@ -581,6 +640,14 @@ const engravingUniforms = {
 // inside its radius. Hue goes where the name sends it; the value stays
 // put (the tint is luminance-preserving in the shader). Re-derived as
 // the city grows, so the map of colour moves with the map of people.
+/**
+ * Up to eight districts, each a position, radius and colour, shared by every
+ * engraved material and the neon glow.
+ *
+ * Refreshed whenever districts re-derive (~8s). Fabric within a district's
+ * radius is tinted toward its colour at MATCHED LUMINANCE — hue moves, value
+ * does not — which is what lets the palette be maximal without turning muddy.
+ */
 const districtUniforms = {
   uDistrictPos: { value: Array.from({ length: 8 }, () => new Vector3(0, 0, 0)) },
   uDistrictCol: { value: Array.from({ length: 8 }, () => new Color(0, 0, 0)) },
@@ -594,12 +661,20 @@ const districtHues = {
   Quiet: 0.72, Sleeping: 0.78, Patient: 0.64,
   Halogen: 0.15, Morning: 0.57, White: 0.83,
 };
+/** Fallback hue for a district name not in the table. */
 function districtHash(i) {
   let t = 2166136261;
   for (let e = 0; e < i.length; e++)
     ((t ^= i.charCodeAt(e)), (t = Math.imul(t, 16777619)));
   return (t >>> 0) / 4294967296;
 }
+/**
+ * Push the current districts into the shared uniforms.
+ *
+ * Hue comes from the district's NAME — Ember hot, Cistern cold, and so on — so
+ * a quarter always looks the way it is called, and the same name always gets
+ * the same colour.
+ */
 function setDistricts(i) {
   for (let t = 0; t < 8; t++) {
     const e = i?.[t],
@@ -614,6 +689,12 @@ function setDistricts(i) {
       districtUniforms.uDistrictCol.value[t].setHSL(r, 0.62, 0.64));
   }
 }
+/**
+ * Collapse the scene's real lights to scalar luminance for the hatcher.
+ *
+ * Rec.709 luma, pi-normalised. COLOUR IS DISCARDED ON PURPOSE: an engraving
+ * has one ink, so light level chooses hatch density rather than hue.
+ */
 function syncLightUniforms(i, t) {
   const e = (s) => 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
   engravingUniforms.uSunDirW.value.copy(i.position).sub(i.target.position).normalize();

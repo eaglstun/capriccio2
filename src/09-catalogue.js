@@ -5,6 +5,18 @@
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write
 
+/**
+ * Every buildable thing, by tool. Seven categories, 22 entries.
+ *
+ * `key` is LOAD-BEARING and frozen — it is what the save stores and what
+ * `chooseKind` and the builders switch on. Changing one orphans every save
+ * that used it. `label` and `hint` are free text and have been rewritten for
+ * the later era.
+ *
+ * Note the verbs: you ESTABLISH, SPAN, RISE, VAULT, CARVE, FURNISH — and
+ * INVITE. You never "build a house". See docs/CHARACTERS.md on how the writing
+ * works.
+ */
 const BUILD_CATALOGUE = {
     anchor: [
       { key: "pier", label: "Pier", hint: "a stout foundation for spans" },

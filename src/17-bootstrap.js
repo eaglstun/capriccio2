@@ -92,6 +92,18 @@ const NIGHT_START = 20.5,
   DAY_END = 29.6,
   NIGHT_HOURS = DAY_END - NIGHT_START, // 9.1
   NIGHT_RATE = 2.5;
+/**
+ * Set every light and sky uniform for hour `i`. The whole time-of-day system.
+ *
+ * `t` normalises the daylight span to 0..1 and drives the sun's arc. The low-sun
+ * factor then SPLITS IN TWO: the same low angle reads as cool blue-grey before
+ * noon and violent orange after, so one calculation gives two different hours.
+ *
+ * Past 20.5 a separate night branch takes over — sun below the horizon,
+ * ambient collapsed, paper and fog going cold, and the glow material lifted so
+ * lanterns, signs and fires become the only real light. The day loop was
+ * unfrozen specifically for this; see FEATURES.md B1.
+ */
 function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
     // night phase: 0 at 20.5, 1 at 29.6 (which is 5.6 tomorrow)
@@ -158,6 +170,14 @@ let fn = "build",
 // the camera rather than cutting it. Smoothstepped, ~2s, and any real drag
 // or wheel cancels it instantly: the player always outranks the machine.
 let Sf = null;
+/**
+ * Ease the camera to position `i` looking at `t` over `e` seconds.
+ *
+ * Cancelled instantly by any pointerdown or wheel on the canvas — the player's
+ * input always wins, and a camera that fights the mouse is worse than no
+ * camera move at all. Shared by the request-click, the folio revisit and the
+ * tutorial.
+ */
 function flyCam(i, t, e = 1.9) {
   Sf = {
     k: 0,
@@ -177,6 +197,20 @@ function flyCam(i, t, e = 1.9) {
 // it is the one prefix under which all five request ids land on five
 // DIFFERENT citizens — Marcus and Tullia must not share a body.
 let Uv = "";
+/**
+ * Decide which citizen is currently speaking, from the active request.
+ *
+ * `hashString("voice:" + request.id) % 14` — DERIVED, never stored, because the
+ * save format is frozen and a reload must produce the same Marcus. Modulo 14
+ * because population never drops below the base 14, so the speaker is always an
+ * active, walking citizen.
+ *
+ * The "voice:" salt is load-bearing: unsalted, reach-terrace and water-terrace
+ * both hashed to the same agent, so Marcus and Tullia were one person.
+ *
+ * With no active request this clears the speaker — which is how "when the
+ * citizens stop asking, nobody is marked" falls out rather than being coded.
+ */
 function syncSpeaker() {
   const i = oi.active;
   if (!i) {
@@ -409,6 +443,13 @@ Mn.onCommit = (i) => {
   };
   fe.toast(t[i.t] ?? "Built.");
 };
+/**
+ * UNDO. Pops the last player action and rebuilds the world from what remains.
+ *
+ * Rebuilding rather than reversing is the only tractable approach: a structure
+ * emits pockets, nav nodes and water sources, and unpicking those in place
+ * would be far more fragile than replaying a shorter log.
+ */
 function rc() {
   const i = gameState.playerActions.pop();
   if (!i) {
@@ -472,6 +513,17 @@ async function Uh(i = !1) {
     (gameState.dirty = !0));
 }
 let bi = [];
+/**
+ * Compute the five HUD meters. Runs every ~8s, not every frame.
+ *
+ * ACCESS, SHELTER and LIGHT read ONLY OCCUPIED pockets — quality nobody lives
+ * in counts for nothing, which is the game's central scoring idea. BELONGING
+ * counts districts, lanterns and infill. GRANDEUR is two independently capped
+ * halves, structure and ornament, so neither maxes it alone.
+ *
+ * See docs/SIMULATION.md for the derivations and FEATURES.md B2 for why
+ * GRANDEUR was rebalanced.
+ */
 function updateQualityMeters() {
   const i = Kt.pockets.filter((a) => a.occupiedBy >= 0),
     t = i.length ? i.filter((a) => a.navNode >= 0).length / i.length : 0.3,
@@ -603,6 +655,9 @@ let Ns = performance.now(),
   Do = 0,
   Lo = 0;
 te.paused = !0;
+/** Derive district names and positions from what has been built nearby. Names
+ * come from a pool that has drifted unevenly — Sodium and Halogen arrived,
+ * Candle refused to leave. */
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
   if (((Aa.value += t), ov(Aa.value), Kt.sceneTick && Kt.sceneTick(Aa.value), !te.paused)) {
