@@ -693,6 +693,9 @@ function Nh(i) {
         waterDist: Kt.waterDistAt(e),
         constructing: Ne.items.some((n) => n.stage < 1),
         hour: te.hour,
+        // the score reads the city's size to choose its track — the same
+        // way the wind and the bell already read the sim
+        pop: ei.population,
       };
     (Lh.update(t, Vv), score.update(t, Vv));
   }

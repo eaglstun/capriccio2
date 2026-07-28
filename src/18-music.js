@@ -28,6 +28,17 @@
 // Gadd9), with the second 4-bar pass suspended (sus2/sus4 — the 3rd
 // removed so the chords hover), and, only in the last stage, that
 // single Dadd9 where the diatonic chord would be Dm.
+//
+// That loop is now TRACK 1 of three. All three stay rooted on A, so a
+// track change is a mode change, not a key change:
+//   track 1 — A minor, calm            · the original bed, ~67bpm
+//   track 2 — A Dorian, driving        · Am9 D6/9 Am9 Gadd9, ~80bpm,
+//             backbeat, sixteenth hats, the bass carrying a riff
+//   track 3 — the strange one, night   · bar 1 always Am9, bars 2–4
+//             chosen per cycle (Fmaj7#11 / Bm7b5 / Dm6 / Abmaj7),
+//             ~72bpm half-time, heavy detune, tape sag
+// Selection is bound to the sim — city size and the night hours — and
+// changes fade through silence over ~3s. See the Score class.
 
 // Subpath imports keep the bundle honest: pulling the packages' index
 // modules would drag in @strudel/core's repl (and with it the unrelated
@@ -35,6 +46,15 @@
 import { Cyclist } from "@strudel/core/cyclist.mjs";
 import { stack, cat, seq, silence } from "@strudel/core/pattern.mjs";
 import { note } from "@strudel/core/controls.mjs";
+// generative material — all of it randomises RHYTHM and CHOICE, never pitch
+// outside the scale: a random note in key sounds intentional, a random
+// rhythm sounds broken. chooseCycles picks track 3's harmony per cycle,
+// degradeBy breathes the hats, irand walks a counter-melody inside the mode,
+// perlin is the tape sag. euclid puts a shaker on (5,8) so it never lands
+// square. The functional forms are used so the imports cannot be tree-shaken
+// away from their Pattern.prototype registrations.
+import { chooseCycles, perlin, irand, degradeBy } from "@strudel/core/signal.mjs";
+import { euclid } from "@strudel/core/euclid.mjs";
 import {
   superdough,
   getAudioContext,
@@ -208,6 +228,178 @@ function kit(stage, duskAmt) {
   return cat(bar, bar, bar, bar, bar, bar, bar, fill);
 }
 
+// ------------------------------------------------------------ track 2: Dorian
+// A Dorian — natural minor with the raised 6th. That F# turns the IV chord
+// major, and Am -> D is the signature sound of the mode. Driving: ~80bpm,
+// backbeat on 2 and 4, hats on sixteenths, and the BASS carries it — a
+// syncopated riff (root / 5th / b7 / octave), not roots.
+//
+// Track 1's one borrowed Dadd9 (BAR_D) is a different thing entirely: there
+// it is a single unearned major chord in a minor key, used once and late.
+// Here the D major is the home sound of the mode, present from bar 2 and
+// earned by the F# in everything around it. Different track, different mode
+// — the two never share a scheduler, so neither undermines the other.
+
+// [chord voicing, bass riff (8 eighth-note slots, 0 = rest)] per bar.
+// Loop: Am9 | D6/9 | Am9 | Gadd9. Every riff note is in A Dorian.
+const BARS_DORIAN = [
+  [[57, 60, 64, 67, 71], [33, 0, 0, 45, 43, 0, 40, 0]], // Am9   · A . . A' G . E .
+  [[50, 54, 57, 59, 64], [38, 0, 0, 50, 48, 0, 45, 48]], // D6/9  · D . . D' C . A C
+  [[57, 60, 64, 67, 71], [33, 0, 45, 0, 43, 33, 0, 40]], // Am9   · A . A' . G A . E
+  [[43, 47, 50, 57, 62], [31, 0, 0, 43, 42, 0, 38, 42]], // Gadd9 · G . . G' F# . D F#
+];
+
+/** Track 2's bass: the riff, sawtooth, well forward in the mix. */
+function bassRiff(bars) {
+  return cat(
+    ...bars.map((b) => seq(...b[1].map((n) => (n ? note(n) : silence)))),
+  )
+    .s("sawtooth")
+    .attack(0.01)
+    .release(0.32)
+    .lpf(760)
+    .shape(0.2)
+    .gain(0.5);
+}
+
+/** Track 2's counter-melody: irand over an A Dorian pool, two notes a bar,
+ * a third of them dropped — always in key, never twice the same. */
+const DORIAN_POOL = [69, 71, 74, 76, 78, 81]; // A4 B4 D5 E5 F#5 A5
+function counterDorian() {
+  return degradeBy(
+    0.3,
+    note(irand(DORIAN_POOL.length).segment(2).fmap((i) => DORIAN_POOL[i]))
+      .s("sine")
+      .attack(0.4)
+      .release(1.4)
+      .room(0.5)
+      .roomsize(0.8)
+      .pan(0.38)
+      .gain(0.15),
+  );
+}
+
+const hats16 = (g) =>
+  degradeBy(0.22, seq(...Array.from({ length: 16 }, () => hat(g))));
+const shaker = (g) =>
+  euclid(
+    5,
+    8,
+    note(105).s("z_noise").clip(0.045).release(0.045).hpf(5200).gain(g),
+  );
+
+/** Track 2's kit: real backbeat, sixteenth hats that breathe, a (5,8)
+ * shaker that never lands square. Dusk halves it like track 1's. */
+function kitDorian(stage, duskAmt) {
+  if (stage < 1) return null;
+  if (duskAmt)
+    return stack(seq(kick(0.5), R, R, R), hats8(0.09), seq(R, R, snare(0.22), R));
+  return stack(hats16(0.13), kickOpen(0.45), snare24(0.3), shaker(0.09));
+}
+
+function arrangementDorian(stage, duskAmt, constructing) {
+  const layers = [
+    pads(BARS_DORIAN.map((b) => [b[0]]), duskAmt, 2),
+    bassRiff(BARS_DORIAN),
+    counterDorian(),
+  ];
+  const drums = kitDorian(stage, duskAmt);
+  drums && layers.push(drums);
+  constructing && layers.push(arp(BARS_DORIAN.map((b) => [b[0], 0, 0])));
+  return stack(...layers);
+}
+
+// ----------------------------------------------------------- track 3: strange
+// The night track. Bar 1 is always Am9 — the anchor — and bars 2–4 are
+// CHOSEN PER CYCLE from a pool that all voice-lead from A minor: Fmaj7#11
+// (lydian colour on VI), Bm7b5 (the ii-half-diminished), Dm6 (iv6,
+// Dorian-tinged), and Abmaj7 — chromatic, genuinely foreign. ~72bpm with a
+// half-time kit, heavy detune, perlin filter drift and a slow vibrato for
+// the tape sag. The harmony is generative at its core; the pitch material
+// never leaves the chosen chords.
+
+/** Track 3's pad voice: heavier detune than anything in track 1, filter
+ * drifting on perlin noise, slow vibrato — the tape is sagging. */
+function padStrange(notes) {
+  return chord(notes)
+    .s("supersaw")
+    .unison(7)
+    .detune(1.05)
+    .spread(0.9)
+    .attack(1.9)
+    .release(3.6)
+    .lpf(perlin.range(430, 830).slow(3))
+    .vib(0.38)
+    .vibmod(0.16)
+    .room(0.8)
+    .roomsize(0.9)
+    .gain(0.48);
+}
+
+/** Track 3's bass: half-time — root on 1, a chord-tone answer on 3. */
+function bassStrange(root, answer) {
+  return seq(note(root), R, note(answer), R)
+    .s("triangle")
+    .attack(0.05)
+    .release(1.1)
+    .gain(0.44);
+}
+
+// [pad voicing, bass root, bass answer] — the answer note is chosen per
+// chord so it is always a chord tone (F natural over Bm7b5, Eb over Ab).
+const STRANGE_ANCHOR = [[57, 60, 64, 67, 71], 33, 40]; // Am9
+const STRANGE_POOL = [
+  [[53, 57, 60, 64, 71], 29, 36], // Fmaj7#11 · the #11 (B) on top
+  [[53, 57, 59, 62, 65], 35, 41], // Bm7b5    · F natural, the b5
+  [[50, 57, 59, 62, 65], 38, 45], // Dm6      · iv with the Dorian 6th
+  [[56, 60, 63, 67, 70], 32, 39], // Abmaj7   · foreign, and meant to be
+];
+
+const bundleStrange = (c) => stack(padStrange(c[0]), bassStrange(c[1], c[2]));
+
+/** Track 3's counter: a rare high sine off the A minor pentatonic — heavily
+ * degraded, so it surfaces maybe once a bar, in key, unrepeating. */
+const STRANGE_POOL_HI = [72, 76, 79, 84]; // C5 E5 G5 C6
+function counterStrange() {
+  return degradeBy(
+    0.55,
+    note(irand(STRANGE_POOL_HI.length).segment(2).fmap((i) => STRANGE_POOL_HI[i]))
+      .s("sine")
+      .attack(0.9)
+      .release(2.4)
+      .room(0.7)
+      .roomsize(0.9)
+      .pan(0.6)
+      .gain(0.12),
+  );
+}
+
+/** Half-time kit: kick on 1, snare on 3, eighth hats mostly missing. */
+function kitStrange() {
+  return stack(
+    seq(kick(0.5), R, snare(0.3), R),
+    degradeBy(0.35, hats8(0.11)),
+    shaker(0.07),
+  );
+}
+
+function arrangementStrange(constructing) {
+  // bar 1 anchored, bars 2–4 re-chosen every pass. The .early(13k) is
+  // load-bearing: inside cat, all three pool slots would otherwise sample
+  // the random stream at the SAME inner cycle and pick the same chord all
+  // pass — a whole-cycle shift gives each slot its own stream while leaving
+  // the chord phase intact.
+  const pool = (k) =>
+    chooseCycles(...STRANGE_POOL.map(bundleStrange)).early(13 * k);
+  const layers = [
+    cat(bundleStrange(STRANGE_ANCHOR), pool(1), pool(2), pool(3)),
+    counterStrange(),
+    kitStrange(),
+  ];
+  constructing && layers.push(arp([[STRANGE_ANCHOR[0], 0, 0]]));
+  return stack(...layers);
+}
+
 // ------------------------------------------------------------------ score
 
 function arrangement(stage, duskAmt, constructing) {
@@ -221,6 +413,33 @@ function arrangement(stage, duskAmt, constructing) {
   return stack(...layers);
 }
 
+// ------------------------------------------------- which track plays when
+// Bound to the simulation the way the wind, the water and the bell already
+// are (docs/AUDIO.md): track 1 for a small city, track 2 (Dorian, driving)
+// once the city has actually grown — a fresh city seeds six houses and
+// wakes with population 46, so 58 means three houses the CITY built on top
+// of that — and track 3 (strange) through the night hours. The clock runs
+// 5.6–29.6, so hour > 20.5 IS the night; it hands back to a day track at
+// the dawn wrap.
+const TRACK_NIGHT_HOUR = 20.5,
+  TRACK_GROWN_POP = 58,
+  XFADE_SECS = 3;
+
+/** Pick cps (tempo) per track: 67bpm / 80bpm / 72bpm at four beats a cycle,
+ * track 1 keeping its dusk slowdown. */
+function cpsFor(track, duskAmt) {
+  if (track === 2) return duskAmt ? 0.31 : 80 / 60 / 4; // ≈0.333
+  if (track === 3) return 72 / 60 / 4; // 0.3
+  return duskAmt ? 0.24 : 0.28;
+}
+
+/** Build the full pattern for a track at the given arrangement state. */
+function arrangementFor(track, stage, duskAmt, constructing) {
+  if (track === 2) return arrangementDorian(stage, duskAmt, constructing);
+  if (track === 3) return arrangementStrange(constructing);
+  return arrangement(stage, duskAmt, constructing);
+}
+
 class Score {
   constructor() {
     this.scheduler = null;
@@ -228,6 +447,9 @@ class Score {
     this.key = "";
     this.level = 0;
     this.t = 0; // seconds since the score began — drives the arrangement
+    this.track = 1; // which of the three tracks is playing
+    this.fade = 1; // 1 = full; eased to 0 and back across a track change
+    this.xfadeTo = 0; // the track a fade is heading for, 0 = none
   }
   async start() {
     if (this.scheduler || this.starting) return;
@@ -246,7 +468,7 @@ class Score {
       });
       this.scheduler.setCps(0.28);
       await this.scheduler.setPattern(arrangement(0, 0, false), true);
-      this.key = "0|0|false";
+      this.key = "1|0|0|false";
     } catch (err) {
       console.warn("[score] music failed to start", err);
       this.scheduler = null;
@@ -259,15 +481,43 @@ class Score {
     // ease the master level toward its dusk-aware target
     const target = 0.34 + st.dusk * 0.14;
     this.level += (target - this.level) * Math.min(1, dt * 0.5);
-    this.out.gain.value = this.level;
-    // discrete mood: arrangement stage + dusk bucket + construction layer
+    // which track the simulation wants right now
+    const want =
+      st.hour > TRACK_NIGHT_HOUR
+        ? 3
+        : (st.pop ?? 0) >= TRACK_GROWN_POP
+          ? 2
+          : 1;
+    // track changes cross over silence: ease down over ~3s, swap the
+    // pattern at the bottom, ease back up. Never cut. A new want mid-fade
+    // waits its turn — the fade in progress always completes.
+    if (want !== this.track && !this.xfadeTo) this.xfadeTo = want;
+    if (this.xfadeTo) {
+      if (this.track !== this.xfadeTo) {
+        this.fade = Math.max(0, this.fade - dt / XFADE_SECS);
+        this.fade === 0 && ((this.track = this.xfadeTo), (this.key = ""));
+      } else {
+        this.fade = Math.min(1, this.fade + dt / XFADE_SECS);
+        this.fade >= 1 && (this.xfadeTo = 0);
+      }
+    }
+    this.out.gain.value = this.level * this.fade;
+    // discrete mood: track + arrangement stage + dusk bucket + construction
     const stage = this.t < 30 ? 0 : this.t < 60 ? 1 : this.t < 90 ? 2 : 3;
     const duskAmt = st.dusk > 0.45 ? 1 : 0;
-    const key = `${stage}|${duskAmt}|${!!st.constructing}`;
+    const key = `${this.track}|${stage}|${duskAmt}|${!!st.constructing}`;
     if (key !== this.key) {
       this.key = key;
-      this.scheduler.setCps(duskAmt ? 0.24 : 0.28);
-      this.scheduler.setPattern(arrangement(stage, duskAmt, !!st.constructing));
+      // a pattern that throws at build time must not take the frame loop
+      // down — fall back to what is already playing
+      try {
+        this.scheduler.setCps(cpsFor(this.track, duskAmt));
+        this.scheduler.setPattern(
+          arrangementFor(this.track, stage, duskAmt, !!st.constructing),
+        );
+      } catch (err) {
+        console.warn("[score] pattern swap failed", err);
+      }
     }
   }
 }
