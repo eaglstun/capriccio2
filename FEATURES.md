@@ -297,19 +297,83 @@ dependency.
 
 ## Tier B — each needs one narrow unfreeze
 
-### B1. Night ⭐ recommended, and the unfreeze is small
+### B1. Night — APPROVED, unfreeze the day loop
 
-Requires touching the day loop in `17-bootstrap.js` where the clock resets
-20.5 → 5.6. That is _not_ one of the seven frozen systems — but it is timing,
-and Fable has twice declined to touch it for exactly that reason, correctly.
+**Decision: the day loop may be changed.** It is the only unfreeze granted; the
+rest of the frozen list still stands.
 
-Unfreeze it explicitly and the payoff is large: the neon, the failing signs,
-the trash fires and the district palettes all finally carry a scene. The audio
-already responds to `dusk`. The bell already rings. Everything is built and
-waiting for the sun to actually go down.
+#### What is actually there
 
-Verification: population, pocket counts and stat values must be unchanged at
-the same clock hour. Only the range of `hour` changes.
+Not a reset — an absence. One line in the frame loop:
+
+```js
+te.hour += t * te.speed;
+te.hour > 20.5 && ((te.hour = 5.6), te.day++);
+```
+
+The day runs **5.6 to 20.5 and jumps straight back**. The hours between 20.5
+and 5.6 are never visited. Night is not dark in this game; it does not exist.
+
+And `os()`, the lighting function, normalises with a **clamp**:
+
+```js
+const t = clamp((i - 5.5) / 15, 0, 1);
+```
+
+So even if the clock were extended today, the sun would stop at the horizon and
+hold — night would render as a permanent sunset, not as darkness. **Extending
+the clock alone is not enough; `os()` needs a night branch.**
+
+#### What already handles night correctly
+
+Pleasantly, most of it. No change needed to any of these:
+
+- **Citizens.** Their routine already reads `(hour > 19.6 || hour < 6) -> tohome`.
+  Given real night hours they will walk home and stay there, and the streets
+  will empty on their own.
+- **Birds.** Gated on `dusk < 0.55`, so they fall silent as it darkens.
+- **Wind.** Already rises with dusk.
+- **The bell.** Rings on the hour and will keep ringing through the night, which
+  is exactly right.
+- **Growth.** `InfillSystem.grow(t, e)` is passed the hour and **never reads
+  it** — growth is driven by a 2.2s real-time timer. So a longer day does not
+  change how fast the city grows.
+
+The neon, the failing signs, the trash fires, the lamp-family palette and the
+district colours are all built and waiting for the sun to go down.
+
+#### The work
+
+1. **Extend the clock** past 20.5 through midnight to 5.6.
+2. **Give `os()` a night branch** — sun below the horizon, ambient down hard,
+   the paper/fog colour going cold and dark rather than holding at sunset.
+3. **A night factor for the shaders.** `setDusk`/`setDawn` exist; night needs
+   its own, so the post pass can lift the neon and drop everything else rather
+   than reusing dusk past its intended range.
+4. **Let artificial light take over.** Lanterns, signs and fires should be the
+   only real light sources. This is the entire payoff.
+
+#### Compress the night, do not run it at 1x
+
+At the current speed a day is 9.4 real minutes. A literal 24 hours would be
+**15.2 minutes**, with 5.8 of them dark — too long to sit through, and it slows
+the day counter by 60% for everyone who does not care about night.
+
+**Run the dark hours faster.** At roughly 2.5x, night lasts about 2.3 real
+minutes and a full day comes to ~11.7 minutes — close to today's pacing with a
+real night inside it. Tune to taste; the principle is that night should be an
+event, not a wait.
+
+`CAP.skip` wraps on the same 14.9-hour figure and must be updated with it.
+
+#### Verify
+
+Fresh city reports the same structures / pockets / navNodes / pop, and the four
+meters other than GRANDEUR read identically **at the same clock hour**. Only the
+range of `hour` and the lighting derived from it may change.
+
+Watch a full cycle and confirm: the streets empty, the birds stop, the signs and
+fires carry the scene, and the sun comes back.
 
 ### B2. GRANDEUR counts ornament — DECIDED, build it
 
