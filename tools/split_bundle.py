@@ -350,6 +350,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--analyse", action="store_true")
+    ap.add_argument("--force-overwrite", action="store_true",
+                    help="overwrite src/ even if it has been hand-edited")
     ap.add_argument("--force-shadowed", action="store_true",
                     help="allow renaming names that are shadowed in inner scopes")
     args = ap.parse_args()
@@ -405,6 +407,15 @@ def main():
         return
 
     OUT.mkdir(exist_ok=True)
+    if (OUT / ".hand-edited").exists() and not args.force_overwrite:
+        sys.exit(
+            f"refusing to write: {OUT}/.hand-edited exists.\n"
+            f"{OUT}/ has been modified by hand and is no longer a pure function of\n"
+            "the bundle. Regenerating would overwrite those edits and the integrity\n"
+            "check would still PASS, because it verifies the regenerated files.\n"
+            f"See {OUT}/DO-NOT-REGENERATE.md. Use --force-overwrite only if you\n"
+            "genuinely intend to discard the hand edits."
+        )
     renames = load_renames(args.force_shadowed)
     if renames:
         print(f"\napplying {len(renames)} rename(s) from {RENAMES}")
