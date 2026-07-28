@@ -192,6 +192,77 @@ Plates already store the camera pose. So:
 
 Cheap, and it makes the sixteen mean something between engraving them.
 
+### A6. The tracking band: RGB separation, not dither
+
+The slow band that rolls down the screen currently does two things — it
+displaces the image sideways (correct, keep it) and then **re-renders that strip
+as a 1-bit dithered plate** (the "style slab").
+
+**Replace the dither inside the band with RGB channel separation.**
+
+#### Why this is the better effect
+
+A real VHS tracking error is a **timing** fault. The luma and chroma carriers
+drift out of alignment, so the colour channels smear horizontally against each
+other. That is what the artefact actually looks like. A halftone is a *printing*
+artefact and belongs to a different medium entirely — inside a video-tape band
+it reads as two unrelated ideas stacked.
+
+The dither is not being retired. It stays where it belongs: on the end-of-
+humanity fabric in the material pass, and as true Atkinson on the plates.
+
+#### What already exists
+
+The band is built and working. In `00-shaders.js`:
+
+```glsl
+float trackPos = fract(vUv.y + uTime * 0.023);
+float bar   = smoothstep(0.0, 0.03, trackPos) * (1.0 - smoothstep(0.03, 0.10, trackPos));
+float gate  = smoothstep(0.58, 0.74, vnoise(vec2(uTime * 0.19, 4.7)));
+float tear  = bar * gate;
+vec2  suv   = vUv + vec2(tear * (0.006 + 0.012 * jag), 0.0);
+```
+
+There is even a mild two-channel bleed already (`r` sampled +3px, `b` sampled
+−3px, mixed by `tear * 0.85`). **That is the thing to develop.** The work is
+deleting the slab and making the separation carry the band on its own.
+
+#### The change
+
+**Remove** the `STYLE SLAB` block entirely — the `step(trackPos, 0.085)` hard
+edge, the luminance curve, the `bnThresh` lookup and the two-tone assignment.
+
+**Develop the separation** in its place:
+
+- Push it well past the current 3px inside the band — a real tear is a visible
+  offset, not a hint
+- **Separate all three channels, not two.** Sampling R and B in opposite
+  directions while G stays put is the classic look; offsetting G slightly the
+  other way adds a second-generation feel
+- **Vertical offset as well as horizontal.** Tracking errors are a line-sync
+  fault, so a small vertical component on one channel sells it
+- **Scale the offset by `jag`**, the existing per-scanline hash, so the
+  separation is ragged line to line rather than a clean smear
+- Hard edges are still right at the band boundary — collage, not crossfade
+
+#### Watch for
+
+- **Do not separate the whole frame.** Only inside the band. A permanent
+  aberration would fight the neon rim light, which is already coloured.
+- **Sample the displaced `suv`,** not raw `vUv`, or the separation and the
+  displacement will disagree and the band will look doubled.
+- Clamp or wrap the sample coordinates; a large offset at the screen edge will
+  otherwise smear whatever the sampler clamps to across the border.
+- The band must still read at night, when most of the frame is near-black and
+  only the neon is lit. Test it there specifically — that is the hardest case
+  and the most likely to disappear.
+
+#### Verify
+
+`yarn build` green, fresh-city numbers unchanged, and **capture the band mid-roll
+in daylight and at night**. It is intermittent — gated on noise — so a
+screenshot at an arbitrary moment will usually miss it. Drive `uTime` or wait.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone

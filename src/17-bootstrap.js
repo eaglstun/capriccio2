@@ -9,7 +9,7 @@
 import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders.js";
-import { Aa, Nn, Vr, clamp, lerp, n_ } from "./01-materials.js";
+import { Aa, Nn, Vr, clamp, hashString, lerp, n_ } from "./01-materials.js";
 import { Ah, C_, P_, World } from "./05-world.js";
 import { InfillSystem } from "./06-infill.js";
 import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
@@ -154,6 +154,36 @@ function os(i) {
 os(te.hour);
 let fn = "build",
   Fr = !1;
+// One shared camera ease — the request panel and the folio slots both fly
+// the camera rather than cutting it. Smoothstepped, ~2s, and any real drag
+// or wheel cancels it instantly: the player always outranks the machine.
+let Sf = null;
+function flyCam(i, t, e = 1.9) {
+  Sf = {
+    k: 0,
+    dur: e * 1000,
+    p0: ie.position.clone(),
+    p1: i.clone(),
+    g0: Te.target.clone(),
+    g1: t.clone(),
+  };
+}
+// --- the current speaker -------------------------------------------------
+// Whoever is voicing the active request. DERIVED from the request id, never
+// stored — the save format is frozen, and hashing the id means a reload
+// produces the same Marcus, and any future request gets a speaker for free.
+// Modulo 14 because population is never below the base 14, so the speaker
+// is always an active, walking citizen.
+let Uv = "";
+function syncSpeaker() {
+  const i = oi.active;
+  if (!i) {
+    (ei.setSpeaker(-1), (Uv = ""));
+    return;
+  }
+  (ei.setSpeaker(hashString(i.id) % 14),
+    (Uv = (i.text.match(/—\s*(.*)$/s)?.[1] ?? "").trim()));
+}
 const Or = { pos: new Vector3(), target: new Vector3() },
   Mn = new PlacementTool(Kt, ie, je),
   Qn = new SectionMode(Kt, us),
@@ -215,6 +245,29 @@ const Or = { pos: new Vector3(), target: new Vector3() },
       ((oc = !0),
         localStorage.removeItem("capriccio-save-v1"),
         location.reload());
+    },
+    // click the request and the camera goes to the citizen who spoke —
+    // keeping the player's azimuth, so the view turns to face them rather
+    // than swinging around the city
+    onRequestClick: () => {
+      const i = ei.speakerAgent();
+      if (!i) return;
+      const t = i.pos.clone();
+      t.y += 1.3;
+      const e = Math.atan2(ie.position.x - t.x, ie.position.z - t.z);
+      flyCam(
+        new Vector3(t.x + Math.sin(e) * 24, t.y + 11, t.z + Math.cos(e) * 24),
+        t,
+      );
+    },
+    // a folio slot returns the camera to exactly the plate's stored pose
+    onPlateSlot: (i) => {
+      i?.cam?.length === 6 &&
+        flyCam(
+          new Vector3(i.cam[0], i.cam[1], i.cam[2]),
+          new Vector3(i.cam[3], i.cam[4], i.cam[5]),
+          2.2,
+        );
     },
   });
 function av(i) {
@@ -282,11 +335,19 @@ function sc() {
 }
 const On = { x: 0, y: 0, t: 0, down: !1 };
 us.domElement.addEventListener("pointerdown", (i) => {
-  ((On.x = i.clientX),
+  ((Sf = null), // the player's hand cancels any camera flight
+    (On.x = i.clientX),
     (On.y = i.clientY),
     (On.t = performance.now()),
     (On.down = !0));
 });
+us.domElement.addEventListener(
+  "wheel",
+  () => {
+    Sf = null;
+  },
+  { passive: !0 },
+);
 us.domElement.addEventListener("pointerup", (i) => {
   if (!On.down) return;
   On.down = !1;
@@ -521,11 +582,20 @@ fe.updateFolio(gameState.plates.slice(-16));
     }),
     i.appendChild(e));
 }
+// The handover: on completion the marker leaves the speaker at once — they
+// go back into the crowd — and the next speaker is marked only when their
+// request is announced, after the existing 9s delay. When the last request
+// is done nobody is marked at all; the empty state is the point.
 oi.onDone = (i) => {
-  (fe.toast(i.thanks + `  (+${i.favor} clearance)`, 7e3), fe.setRequest(null));
+  (fe.toast(i.thanks + `  (+${i.favor} clearance)`, 7e3),
+    fe.setRequest(null),
+    ei.setSpeaker(-1),
+    (Uv = ""));
 };
-oi.onNew = (i) => fe.setRequest(i.text);
-oi.active && fe.setRequest(oi.active.text);
+oi.onNew = (i) => {
+  (fe.setRequest(i.text), syncSpeaker());
+};
+oi.active && (fe.setRequest(oi.active.text), syncSpeaker());
 Kt.onStructureBuilt = () => {};
 let Ns = performance.now(),
   Do = 0,
@@ -566,10 +636,25 @@ function Nh(i) {
       };
     (Lh.update(t, Vv), score.update(t, Vv));
   }
+  if (Sf) {
+    ((Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur)));
+    const n = Sf.k,
+      r = n * n * (3 - 2 * n);
+    (ie.position.lerpVectors(Sf.p0, Sf.p1, r),
+      Te.target.lerpVectors(Sf.g0, Sf.g1, r),
+      n >= 1 && (Sf = null));
+  }
+  // one world-space name, because there is only ever one speaker — the
+  // district-label system carries it
+  const Rv = ei.speakerAgent(),
+    Ev =
+      Rv && Uv
+        ? [...bi, { x: Rv.pos.x, y: Rv.pos.y + 3.1, z: Rv.pos.z, name: Uv }]
+        : bi;
   (ni.active || Te.update(),
     fe.updateResources(ei.population),
     fe.updateClock(te.day, te.hour % 24),
-    fe.updateLabels(bi, ie, (fn === "build" || fn === "section") && !Mn.tool));
+    fe.updateLabels(Ev, ie, (fn === "build" || fn === "section") && !Mn.tool));
 }
 function cc() {
   const i = performance.now();
@@ -622,6 +707,8 @@ window.CAP = {
   infill: Ne,
   citizens: ei,
   requests: oi,
+  // the agent voicing the active request, or null — derived, never stored
+  speaker: () => ei.speakerAgent(),
   state: gameState,
   score,
   wander: ni,

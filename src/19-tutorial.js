@@ -412,8 +412,12 @@ function startWalkthrough() {
         markPos = null;
         const req = CAP.hud.requestEl;
         if (req && req.style.display !== "none") ringOn(req);
+        // the fix that works everywhere must work here too: as Marcus is
+        // named, the camera goes to him — marked, walking his route
+        const sp = CAP.speaker?.();
+        if (sp) flyTo(new Vector3(sp.pos.x, sp.pos.y + 1.3, sp.pos.z), 28, 12, 1.9);
         say(
-          "Marcus is asking for a way up to the high terrace. That is the first job — the city will ask the rest in time.",
+          "Marcus is asking for a way up to the high terrace. That is the first job — the city will ask the rest in time. Click the request whenever you lose whoever is asking.",
           !0,
         );
         later(() => finish(), 14000);
