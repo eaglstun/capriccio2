@@ -35,6 +35,7 @@ uniform vec3 uPaper;
 uniform vec3 uInk;
 uniform float uDusk;
 uniform float uDawn;
+uniform float uNight;
 uniform float uVignette;
 uniform float uGrain;
 uniform float uLineWeight;
@@ -144,6 +145,12 @@ void main() {
     float smogT = 1.0 - smoothstep(-0.02, 0.15, elev);
     float smogN = vnoise(vec2(worldDir.x * 2.6 + 11.0, elev * 70.0));
     sky = mix(sky, vec3(0.44, 0.27, 0.38), smogT * (0.30 + 0.28 * smoothstep(0.35, 0.8, smogN)));
+    // night: the gradient dies to a cold near-black violet. Everything after
+    // this line is hardware — the ring, the satellites, the shafts — and it
+    // stays lit; the sky goes out, the machines above it do not.
+    vec3 nightSky = mix(vec3(0.11, 0.06, 0.19), vec3(0.015, 0.015, 0.06),
+                        smoothstep(-0.02, 0.55, elev));
+    sky = mix(sky, nightSky, uNight);
     // the orbital ring: still up there, in pieces
     vec3 ringN = normalize(vec3(0.55, 0.62, -0.42));
     float ringD = dot(worldDir, ringN);
@@ -191,9 +198,9 @@ void main() {
     sky += shaftCol * shaft * (0.10 + 0.24 * uDusk);
     // dusk warms and darkens the paper sky hard near the sun's side —
     // the violent-orange hour before the artificial lights take over
-    vec3 duskTint = mix(vec3(1.0), vec3(1.09, 0.76, 0.58), uDusk * (0.35 + 0.65 * sunAmt));
+    vec3 duskTint = mix(vec3(1.0), vec3(1.09, 0.76, 0.58), uDusk * (0.35 + 0.65 * sunAmt) * (1.0 - uNight));
     sky = sky * duskTint;
-    sky *= 1.0 - uDusk * 0.22 * (1.0 - sunAmt);
+    sky *= 1.0 - uDusk * 0.22 * (1.0 - sunAmt) * (1.0 - uNight);
     color = sky;
   } else {
     // ============ INK OUTLINES ============
@@ -243,7 +250,8 @@ void main() {
     // graded haze: the low city drowns in smog-coloured air
     vec3 wpC = (uCameraWorld * vec4(pC, 1.0)).xyz;
     float lowness = 1.0 - smoothstep(-18.0, 34.0, wpC.y);
-    color = mix(color, vec3(0.50, 0.32, 0.45), fogF * lowness * 0.42);
+    // at night the smog stops glowing — a lit haze would wash the dark out
+    color = mix(color, vec3(0.50, 0.32, 0.45), fogF * lowness * 0.42 * (1.0 - uNight * 0.7));
   }
 
   // ============ NEON BLOOM ============
@@ -257,7 +265,9 @@ void main() {
     float sat = mx - min(min(bs.r, bs.g), bs.b);
     bloom += bs * (smoothstep(0.60, 0.90, mx) * smoothstep(0.24, 0.52, sat));
   }
-  color += bloom * 0.075;
+  // at night the bloom is most of the light: neon, signs and fires bleed
+  // harder into a dark that no longer competes with them
+  color += bloom * (0.075 + 0.105 * uNight);
 
   // ============ PAPER ============
   // tube tooth: static CRT scanlines + a coarse chroma wobble
@@ -271,6 +281,7 @@ void main() {
 
   // slight cool phosphor tint multiply + dusk magenta
   vec3 tint = mix(vec3(1.0, 0.975, 1.015), vec3(1.03, 0.91, 1.04), uDusk);
+  tint = mix(tint, vec3(0.90, 0.93, 1.06), uNight * 0.45);
   color *= tint;
 
   // vignette
@@ -436,6 +447,7 @@ class J0 {
           uInk: { value: new Color(this.ink) },
           uDusk: { value: 0 },
           uDawn: { value: 0 },
+          uNight: { value: 0 },
           uVignette: { value: 0.58 },
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
@@ -477,6 +489,9 @@ class J0 {
   }
   setDawn(t) {
     this.postMat.uniforms.uDawn.value = t;
+  }
+  setNight(t) {
+    this.postMat.uniforms.uNight.value = t;
   }
   setSunDir(t) {
     this.postMat.uniforms.uSunDir.value.copy(t);

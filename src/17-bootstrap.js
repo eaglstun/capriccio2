@@ -82,11 +82,31 @@ const dc_dusk = new Color("#ff8c46"),      // violent orange
   dc_hemiDawn = new Color("#c3cfe6"),
   dc_paperDay = new Color("#f0ddeb"),      // bleached high day
   dc_paperDusk = new Color("#eb9f76"),     // the hot sheet
-  dc_paperDawn = new Color("#bfc8d8");     // cool blue-grey
+  dc_paperDawn = new Color("#bfc8d8"),     // cool blue-grey
+  dc_paperNight = new Color("#221a30"),    // the sheet gone cold and dark
+  dc_hemiNight = new Color("#4a4666");
+// The clock runs 5.6 → 29.6 (= 5.6 next morning); hours past 20.5 are the
+// night, which the frame loop drives at NIGHT_RATE so dark is an event, not
+// a wait. os() takes the raw hour, so it must accept the whole 5.6–29.6 range.
+const NIGHT_START = 20.5,
+  DAY_END = 29.6,
+  NIGHT_HOURS = DAY_END - NIGHT_START, // 9.1
+  NIGHT_RATE = 2.5;
 function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
-    e = lerp(2.05, -2.05, t),
-    n = 0.09 + Math.sin(Math.PI * t) * 0.43,
+    // night phase: 0 at 20.5, 1 at 29.6 (which is 5.6 tomorrow)
+    u = clamp((i - NIGHT_START) / NIGHT_HOURS, 0, 1),
+    // full dark plateaus through the middle of the night and releases
+    // into dawn before the wrap, so both boundaries are seamless
+    nightAmt = Nn(0, 0.14, u) * (1 - Nn(0.8, 0.97, u)),
+    // by night the sun keeps rotating the long way round, landing exactly
+    // on the dawn azimuth (2.05 - 2π ≡ 2.05) as the clock wraps
+    e = u > 0 ? -2.05 - u * (2 * Math.PI - 4.1) : lerp(2.05, -2.05, t),
+    n =
+      0.09 +
+      Math.sin(Math.PI * t) * 0.43 -
+      // below the horizon in the middle of the night, back up for dawn
+      Math.sin(Math.PI * u) * 0.55,
     s = new Vector3(
       Math.sin(e) * Math.cos(n),
       Math.sin(n),
@@ -98,26 +118,37 @@ function os(i) {
   // Between them the day bleaches. Free variety, twice a day.
   const r = 1 - Math.sin(Math.PI * t),
     o = Nn(0.45, 0.95, r),
-    hv = Nn(0.42, 0.58, t),
+    // through the night dusk hands over to dawn late — the last quarter —
+    // which keeps the birds (gated on dusk < 0.55) silent until the
+    // pre-dawn chorus, and lands duskAmt/dawnAmt exactly on their 5.6
+    // values as the clock wraps
+    hv = u > 0 ? 1 - Nn(0.72, 0.98, u) : Nn(0.42, 0.58, t),
     duskAmt = o * hv,
     dawnAmt = o * (1 - hv);
   (Pe.color.set("#fff3ec"),
     Pe.color.lerp(dc_dusk, Nn(0.2, 0.8, duskAmt)),
     Pe.color.lerp(dc_dawn, Nn(0.2, 0.8, dawnAmt)),
-    (Pe.intensity = lerp(3.5, 2.55, o)),
-    (Nr.intensity = lerp(0.6, 0.42, o)),
-    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt),
+    (Pe.intensity = lerp(3.5, 2.55, o) * (1 - nightAmt)),
+    // ambient down hard: enough to read silhouettes, no more
+    (Nr.intensity = lerp(lerp(0.6, 0.42, o), 0.08, nightAmt)),
+    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt).lerp(dc_hemiNight, nightAmt),
     ke.setDusk(duskAmt),
     ke.setDawn(dawnAmt),
+    ke.setNight(nightAmt),
     ke.setSunDir(Pe.position.clone().normalize()),
     syncLightUniforms(Pe, Nr));
   // paper follows the hour — blue-grey morning, bleached high day, hot
-  // dusk — and the fog agrees with the sheet
-  const pc = dc_paperDay.clone().lerp(dc_paperDusk, duskAmt).lerp(dc_paperDawn, dawnAmt);
+  // dusk, cold dark night — and the fog agrees with the sheet
+  const pc = dc_paperDay
+    .clone()
+    .lerp(dc_paperDusk, duskAmt)
+    .lerp(dc_paperDawn, dawnAmt)
+    .lerp(dc_paperNight, nightAmt);
   (ke.setPaper(pc), je.fog.color.copy(pc));
-  // artificial light takes over as the sun drops — harder at dusk
+  // artificial light takes over as the sun drops — harder at dusk, and at
+  // night it is the only real light there is
   const a = Kt.glowMat,
-    c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9;
+    c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9 + nightAmt * 1.5;
   a.color.setRGB(1.05 * c + 0.12, 0.42 * c + 0.06, 0.85 * c + 0.12);
 }
 os(te.hour);
@@ -486,10 +517,14 @@ te.paused = !0;
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
   if (((Aa.value += t), ov(Aa.value), Kt.sceneTick && Kt.sceneTick(Aa.value), !te.paused)) {
-    ((te.hour += t * te.speed),
-      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (gameState.dirty = !0)),
+    // the dark hours run at NIGHT_RATE — a full day is ~11.7 real minutes,
+    // ~2.3 of them night — and the day turns over at the 29.6 → 5.6 wrap
+    const hourDelta =
+      t * te.speed * (te.hour > NIGHT_START ? NIGHT_RATE : 1);
+    ((te.hour += hourDelta),
+      te.hour >= DAY_END && ((te.hour -= 24), te.day++, (gameState.dirty = !0)),
       os(te.hour),
-      V_(t * te.speed),
+      V_(hourDelta),
       ei.update(t, te.hour),
       ni.active && ni.update(t),
       (Lo += t),
@@ -516,7 +551,7 @@ function Nh(i) {
   }
   (ni.active || Te.update(),
     fe.updateResources(ei.population),
-    fe.updateClock(te.day, te.hour),
+    fe.updateClock(te.day, te.hour % 24),
     fe.updateLabels(bi, ie, (fn === "build" || fn === "section") && !Mn.tool));
 }
 function cc() {
@@ -620,7 +655,7 @@ window.CAP = {
     return (ei.sync(), (bi = Rh(Kt, Ne)), setDistricts(bi), Ne.items.length);
   },
   skip(i) {
-    for (te.hour += i; te.hour > 20.5; ) ((te.hour -= 14.9), te.day++);
+    for (te.hour += i; te.hour >= DAY_END; ) ((te.hour -= 24), te.day++);
     os(te.hour);
   },
   pathTest(i, t, e, n) {
