@@ -31,17 +31,26 @@ class BuildOverlays {
         opacity: 0.65,
       })));
   }
+  /** A dashed line through points `t`. computeLineDistances is required or the
+   * dash pattern silently does nothing. */
   dashedLine(t) {
     const e = new BufferGeometry().setFromPoints(t),
       n = new Line(e, this.dashMat);
     return (n.computeLineDistances(), n);
   }
+  /** Drop the persistent marks layer (carvable faces, anchor tops). */
   clearMarks() {
     Ol(this.marks);
   }
+  /** Drop the live layer — the preview that follows the cursor. */
   clearLive() {
     Ol(this.live);
   }
+  /**
+   * Show where CARVE can cut: dashes along both faces of every wall, spaced
+   * every 5 units and inset past the wall thickness so they float just clear
+   * of the surface rather than z-fighting with it.
+   */
   markCarvables(t) {
     this.clearMarks();
     for (const [, e] of t.structures)
@@ -80,6 +89,8 @@ class BuildOverlays {
         this.marks.add(this.dashedLine(r));
       }
   }
+  /** Ring the top of every pier and column — the snap targets a span can start
+   * or end on. */
   markAnchors(t) {
     this.clearMarks();
     for (const [, e] of t.anchors) {
@@ -103,6 +114,7 @@ class BuildOverlays {
         ));
     }
   }
+  /** The taut line drawn between a span's first click and the cursor. */
   string(t, e) {
     this.clearLive();
     const n = new BufferGeometry().setFromPoints([
@@ -111,6 +123,7 @@ class BuildOverlays {
     ]);
     this.live.add(new Line(n, this.stringMat));
   }
+  /** The rectangle a vault would occupy, drawn on the ground before you commit. */
   footprint(t, e, n, s, r) {
     this.clearLive();
     const o = Math.hypot(n - t, s - e);

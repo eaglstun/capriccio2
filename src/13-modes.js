@@ -11,6 +11,14 @@ import { engravingUniforms } from "./00-shaders.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
+/**
+ * SECTION mode: a movable cut plane through the city, rendered as an
+ * architectural section.
+ *
+ * Sets `uCutting` on the materials, which switches the shader to fill the
+ * interior of cut solids with dark diagonal hatching — POCHE, the drafting
+ * convention for solid matter a section passes through.
+ */
 class SectionMode {
   constructor(t, e) {
     defineField(this, "world");
@@ -22,18 +30,22 @@ class SectionMode {
     defineField(this, "flip", 1);
     ((this.world = t), (this.renderer = e));
   }
+  /** Enable or disable the cut. */
   set(t) {
     ((this.active = t), (engravingUniforms.uCutting.value = t ? 1 : 0), this.apply());
   }
+  /** Cut along x or z. */
   setAxis(t) {
     ((this.axis = t), this.apply());
   }
+  /** Slide the plane along its axis. */
   setOffset(t) {
     ((this.offset = t), this.apply());
   }
   setFlip(t) {
     ((this.flip = t), this.apply());
   }
+  /** Push plane, axis, offset and flip into the renderer's clipping state. */
   apply() {
     if (!this.active) {
       this.renderer.clippingPlanes = [];
@@ -45,6 +57,13 @@ class SectionMode {
       (this.renderer.clippingPlanes = [this.plane]));
   }
 }
+/**
+ * WANDER mode: drop to street level and walk the city in first person.
+ *
+ * Pointer-lock mouselook with WASD movement, the camera held at eye height
+ * above the terrain. The one mode where the engraving is seen from inside
+ * rather than above.
+ */
 class WanderMode {
   constructor(t, e, n) {
     defineField(this, "world");
@@ -75,6 +94,7 @@ class WanderMode {
         document.pointerLockElement !== this.dom && this.active && this.exit();
       }));
   }
+  /** Enter at position `t`, requesting pointer lock. */
   enter(t, e = 0) {
     ((this.active = !0),
       this.pos.copy(t),
@@ -88,6 +108,7 @@ class WanderMode {
       document.addEventListener("pointerlockchange", this.boundLockChange),
       this.dom.requestPointerLock());
   }
+  /** Leave and hand the camera back to the orbit controls. */
   exit() {
     ((this.active = !1),
       document.removeEventListener("mousemove", this.boundMove),
@@ -97,17 +118,20 @@ class WanderMode {
       document.pointerLockElement && document.exitPointerLock(),
       this.onExit?.());
   }
+  /** Mouselook. Pitch is clamped so the view cannot roll over the top. */
   onMouse(t) {
     this.active &&
       ((this.yaw -= t.movementX * 0.0021),
       (this.pitch -= t.movementY * 0.0019),
       (this.pitch = Math.max(-1.35, Math.min(1.35, this.pitch))));
   }
+  /** Terrain height under a point, used to keep the walker on the ground. */
   groundAt(t, e, n) {
     (this.ray.set(new Vector3(t, n + 1.4, e), new Vector3(0, -1, 0)), (this.ray.far = 60));
     const s = this.ray.intersectObjects(this.world.raycastTargets(), !1);
     return s.length ? s[0].point.y : -999;
   }
+  /** Per-frame walk: apply WASD to velocity, damp it, and follow the ground. */
   update(t) {
     if (!this.active) return;
     const e =

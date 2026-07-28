@@ -20,6 +20,18 @@ class Soundscape {
     defineField(this, "lastBellHour", -1);
     defineField(this, "t", 0);
   }
+  /**
+   * Build the ambient graph. Deferred until the first user gesture, because
+   * browsers will not let an AudioContext start before one.
+   *
+   * Two continuous beds, both from synthesized pink noise:
+   *   WIND  -> bandpass at 480Hz, Q 0.6. An LFO at 0.07Hz (one cycle every
+   *            ~14 seconds) sweeps the centre frequency +/-130Hz. The wind
+   *            changes COLOUR as it gusts rather than just volume, which is
+   *            what real wind does; amplitude tremolo would sound like a fan.
+   *   WATER -> highpass 1400 + lowpass 5200, the band a fountain occupies with
+   *            the body removed. Gain starts at 0 and is driven by distance.
+   */
   start() {
     if (this.ctx) return;
     const t = new AudioContext();
@@ -49,6 +61,14 @@ class Soundscape {
       (this.waterGain.gain.value = 0),
       o.connect(a).connect(c).connect(this.waterGain).connect(this.master));
   }
+  /**
+   * A looping buffer of PINK noise, `t` seconds long.
+   *
+   * Three one-pole filters at different time constants, summed with a little
+   * raw white — the standard filter-bank approximation. Pink noise has equal
+   * energy per octave, which is what wind, water and rain actually sound like.
+   * White noise sounds like a broken television.
+   */
   noiseSource(t) {
     const e = this.ctx,
       n = e.createBuffer(1, e.sampleRate * t, e.sampleRate),
@@ -66,6 +86,14 @@ class Soundscape {
     const c = e.createBufferSource();
     return ((c.buffer = n), (c.loop = !0), c.start(), c);
   }
+  /**
+   * A short tone: frequency `t`, duration `e`, gain `n`, waveform `s`, and
+   * `r` as a frequency slide over the note.
+   *
+   * The bird calls use a -160Hz slide, which is what makes them read as birds
+   * rather than beeps. They are square waves now, not sine — same schedule,
+   * same count, same slide. They are drones.
+   */
   blip(t, e, n, s = "sine", r = 0) {
     const o = this.ctx,
       a = o.createOscillator();
@@ -80,6 +108,16 @@ class Soundscape {
       a.start(),
       a.stop(o.currentTime + e + 0.05));
   }
+  /**
+   * The hour bell: three partials at 392 / 587 / 988 Hz (a G major triad).
+   *
+   * The detail that matters is that HIGHER PARTIALS ARE QUIETER AND DECAY
+   * FASTER — 0.10/2.6s, 0.05/1.9s, 0.022/1.1s. That is how struck metal
+   * behaves. Give every partial the same envelope and you get an organ.
+   *
+   * Each strike detunes randomly by a fraction of a percent, so no two rings
+   * are identical.
+   */
   bell() {
     // the hour is still marked the same way; the bell has just been through a lot
     const t = this.ctx;
@@ -108,6 +146,15 @@ class Soundscape {
         a.stop(t.currentTime + o + 0.1));
     }
   }
+  /**
+   * One tool strike: a 30ms exponentially-decaying noise burst through a
+   * narrow bandpass, re-randomised between 2400 and 4200 Hz per hit so
+   * repeated strikes vary like a real tool on real stone.
+   *
+   * Only fires while something is under construction — and infill is capped at
+   * two buildings at once, so the sound stays sparse rather than becoming a
+   * rattle.
+   */
   chisel() {
     const t = this.ctx,
       e = t.createBuffer(1, t.sampleRate * 0.03, t.sampleRate),
@@ -125,6 +172,22 @@ class Soundscape {
       s.connect(r).connect(o).connect(this.master),
       s.start());
   }
+  /**
+   * Per-frame ambience. `t` is delta seconds, `e` carries the sim state the
+   * audio reacts to.
+   *
+   * EVERY ELEMENT IS BOUND TO SIMULATION STATE, not to a timeline:
+   *   wind gain rises with dusk
+   *   water gain = (1 - dist/55)^2 — SQUARED, so it comes up sharply as you
+   *     approach rather than bleeding in from far away
+   *   birds only while dusk < 0.55, every 3.5-11.5s, 80% of the time
+   *   chisels only while building
+   *   the bell when the integer hour changes
+   *
+   * The result is that the soundscape is a readout of the game. You could play
+   * with your eyes shut and know roughly the hour, whether you are near water,
+   * and whether anything is being built.
+   */
   update(t, e) {
     if (!this.ctx) return;
     ((this.t += t), (this.windGain.gain.value = 0.04 + e.dusk * 0.035));

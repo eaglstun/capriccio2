@@ -104,10 +104,33 @@ class Requests {
     defineField(this, "flavorIdx", 0);
     this.resync();
   }
+  /**
+   * Rebuild the queue from the master list, dropping anything already done.
+   *
+   * There are exactly FIVE requests in the game, ever. `doneRequests` persists
+   * in the save, so completing one removes it permanently. Once all five are
+   * finished the queue is empty and the only remaining source of clearance is
+   * engraving plates. See docs/PROGRESSION.md.
+   */
   resync() {
     ((this.queue = j_.filter((t) => !gameState.doneRequests.has(t.id))),
       (this.active = this.queue[0] ?? null));
   }
+  /**
+   * Test whether the active request is satisfied; if so pay out and advance.
+   *
+   * Called every growth tick with the world and infill. Each request carries
+   * its own `done(world, infill)` predicate, so the completion condition lives
+   * with the request rather than here.
+   *
+   * The payout is clearance (`res.favor`), which is never spent — it is tested
+   * against thresholds that raise the maximum span and vault length, and it
+   * feeds the growth demand formula. Finishing the first request roughly
+   * doubles how large the city can get.
+   *
+   * The next request is announced on a 9s delay so the completion toast is
+   * read before the new ask arrives.
+   */
   check(t, e) {
     if (this.active && this.active.done(t, e)) {
       ((gameState.res.favor += this.active.favor),
@@ -124,6 +147,7 @@ class Requests {
       }
     }
   }
+  /** Cycle to the next ambient citizen line shown between requests. */
   nextFlavor() {
     return (
       (this.flavorIdx = (this.flavorIdx + 1) % kl.length),
