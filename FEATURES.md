@@ -311,18 +311,96 @@ waiting for the sun to actually go down.
 Verification: population, pocket counts and stat values must be unchanged at
 the same clock hour. Only the range of `hour` changes.
 
-### B2. Give GRANDEUR something to do
+### B2. GRANDEUR counts ornament — DECIDED, build it
 
-Requires unfreezing one of the five stat formulas — the most invasive thing on
-this list, and the one I would think hardest about.
+**Decision: add ornament terms.** Keep the meter a count; make decoration count
+toward it.
 
-The minimal version: keep the existing terms exactly, add a small ornament
-term, raise the clamp. Old saves would score differently, which is the real
-cost. It is worth deciding whether a dead meter is worse than a changed number.
+#### The trap this has to avoid
 
-**Alternative that needs no unfreeze:** leave GRANDEUR alone and let the
-_ornament_ do something else — lanterns already feed BELONGING. That may be
-the honest answer.
+Naively adding ornament makes the problem *worse*. Measured on a fresh city:
+
+- GRANDEUR already starts at **0.34** — the seeded ruins contain one span, one
+  vault and one giant pier
+- Headroom is 0.66, which is **about five player spans**
+- The seeded ruins contain **18 ornaments, and 12 of them are cypresses**
+
+So giving every ornament a flat value would push the *starting* score up and cut
+the remaining headroom — saturating sooner, not later. The fix has to rebalance
+the structural weights at the same time.
+
+#### The design: two halves, each capped
+
+```
+structure = clamp( spans       * 0.042
+                 + vaults      * 0.036
+                 + rises       * 0.025
+                 + giant piers * 0.032 , 0, 0.60 )
+
+ornament  = clamp( statues   * 0.026
+                 + obelisks  * 0.026      // seeded only, not player-placeable
+                 + fountains * 0.022
+                 + gates     * 0.022      // the CARVE "Great Gate"
+                 + columns   * 0.018      // the ESTABLISH column
+                 + lanterns  * 0.005 , 0, 0.40 )
+
+GRANDEUR  = structure + ornament          // sums to at most 1.0
+```
+
+Tuned so each cap needs a real city: **~14 spans** to max the structural half,
+**~15 statues** to max the ornamental one.
+
+**Neither half can max the meter alone.** Ten spans and no ornament stalls at
+0.60. A plaza full of statues and no architecture stalls at 0.40. Grandeur now
+requires a city that is both **built and adorned**, which is the point of adding
+ornament at all.
+
+Modelled against real cities:
+
+| city | GRANDEUR |
+|---|---|
+| fresh, seeded ruins only | **0.20** (today: 0.34) |
+| a 13-action city | **0.38** (today: 0.88) |
+| mid game, built and adorned | 0.79 |
+| 14 spans, no ornament at all | 0.60 — the structural cap |
+| plaza full of ornament, no architecture | 0.51 |
+| large city, both | **1.00** |
+
+The second row is the one that matters. A thirteen-action city currently reads
+**0.88** — effectively finished. Under this it reads **0.38**, with the rest of
+the game still ahead of it.
+
+#### Two things score zero, deliberately
+
+- **Cypress: 0.** Twelve of the eighteen seeded ornaments are trees, so any
+  value at all would let the starting scenery dominate the meter. There is also
+  a straight argument for it: grandeur is built magnificence, and a tree is the
+  one thing in the world nobody built.
+- **Passage: 0.** A door through a wall is circulation, not monument. The
+  *Great Gate* is the ceremonial one and it scores.
+
+**Lanterns score only 0.005** because they already feed BELONGING at 0.05 each.
+Paying them fully into both meters would let one cheap object drive half the HUD.
+
+#### The cost is smaller than previously stated
+
+An earlier draft of this plan implied changing a stat formula would break saves.
+**It would not.** The meters are computed live from world state and GRANDEUR is
+stored nowhere — the save holds actions, resources, plates and done-requests.
+Changing the formula changes a displayed number on reload. No corruption, no
+migration, no crash.
+
+That is the whole cost: an existing city will show a different GRANDEUR than it
+did yesterday.
+
+#### Scope
+
+This is the **only** one of the five formulas being touched. ACCESS, SHELTER,
+LIGHT and BELONGING stay byte-identical, and so does everything else on the
+frozen list.
+
+Verify: fresh city reports GRANDEUR ≈ 0.27 with all other meters unchanged at
+the same clock hour, and structures / pockets / navNodes / pop unchanged.
 
 ### B3. New building types
 
