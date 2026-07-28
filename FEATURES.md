@@ -553,6 +553,49 @@ game runs on machines that will not all have the same fonts. A missing font
 silently falls back to the default and the variety quietly disappears, which is
 exactly the kind of thing that will not show up on the machine it was built on.
 
+### A14. TIMBER is the wrong word
+
+The second resource is still called **TIMBER**, which is a word for a material
+nobody in this city uses. The buildings it pays for are corrugated sheet,
+tarps, shipping containers and salvaged panel — the shanty modules from pass 3.
+Nothing is made of wood.
+
+This is the same drift already applied to FAVOR → CLEARANCE, and it follows the
+rule in `docs/CHARACTERS.md`: **words tied to dead things die.** Timber died
+with the forests.
+
+#### Recommended: SALVAGE
+
+It says the material comes from **taking apart what is already there**, which is
+exactly what the infill looks like and exactly what a city at the end of
+humanity would actually be built from. It also pairs correctly with STONE:
+one quarried, one scavenged.
+
+Alternatives if it does not sit right: SCRAP (blunter), SHEET (more technical),
+COMPOSITE (colder). Avoid POLYMER — it competes with the cypress hint, which
+already uses "in polymer".
+
+#### Scope — display only, and this matters
+
+**Rename the LABEL, not the field.** `gameState.res.timber` is written into the
+save, and renaming the key would orphan every existing save. Do exactly what
+was done for CLEARANCE: change the HUD text, leave the data model alone.
+
+The HUD element id (`#r-timber`) can stay too — it is internal.
+
+Also update:
+
+- The **cost readouts** wherever the price of an action is shown
+- `docs/PROGRESSION.md` and the **how-to-play page**, which both name it
+- The **material** is separately called `mats.timber` in code. That is internal
+  and can stay, but if the surfaces it draws still read as *planks* rather than
+  as salvaged sheet, that is worth a look while in there.
+
+#### Verify
+
+An existing save loads and still shows the right number under the new label,
+and the save blob still contains `timber` as its key.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone
