@@ -497,6 +497,62 @@ gives.
 - A giant pier that has already been carved must stop reading as carvable —
   the state is per-structure, not per-type.
 
+### A13. Billboard text clips, and every sign is the same typeface
+
+**Two problems in the same place** — the runtime canvas atlas at the end of
+`C_` in `05-world.js`.
+
+#### a) The clipping is measurable
+
+Cells are **512px wide**, text is centred at x=256, and **nothing measures
+anything**. Every headline is drawn at a fixed `bold 52px Georgia` and hoped
+for. Measured against the real font:
+
+| headline | width | |
+|---|---|---|
+| EVERYDAY LOW PRICES | **688px** | overflows by 176 |
+| MIRAMAR ESTATES | **558px** | overflows by 46 |
+| GRAND OPENING | 492px | fits, barely |
+| OPEN 24 HOURS | 462px | fits |
+| AZURE COAST | 399px | fits |
+| VISTAPHONE | 379px | fits |
+| SUNMIST | 266px | fits |
+
+All seven sub-lines fit (258–392px).
+
+**Fix it properly, not by shortening the two strings.** Measure with
+`measureText` and shrink the font until it fits, with a margin — so any future
+copy is safe by construction rather than by luck. Something like: start at 52,
+step down while `measureText(s).width > 512 - 2*margin`.
+
+Do the same for the sub-line even though none currently overflow; the next
+person to write a longer tagline should not have to know this.
+
+#### b) Every sign is Georgia
+
+Seven different companies across decades of a dead economy, all set in one
+serif. Real signage is a jumble — that is most of what makes a strip look like
+a strip.
+
+Give each cell its own face. **System fonts only** — no webfonts, nothing
+fetched, per the standing constraint. There is plenty of range in what is
+already installed:
+
+- a grotesque for the phone company (Helvetica, Arial)
+- a fat condensed sans for the supermarket (Impact, Haettenschweiler)
+- a geometric for the resort (Futura, Century Gothic, Avenir Next)
+- a slab or typewriter for the motel (Courier, American Typewriter)
+- keep a serif for one or two — Georgia earns its place among others
+
+Vary weight, tracking and case too, not just family. A sign that is
+`letter-spacing`-wide and thin reads as a completely different era from a fat
+condensed one, even in the same family.
+
+**Specify fallbacks** — `"Impact, Haettenschweiler, sans-serif"` — since the
+game runs on machines that will not all have the same fonts. A missing font
+silently falls back to the default and the variety quietly disappears, which is
+exactly the kind of thing that will not show up on the machine it was built on.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone
