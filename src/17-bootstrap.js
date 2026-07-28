@@ -54,7 +54,7 @@ const Nr = new qd("#dfe3dd", "#8d8064", 0.6);
 je.add(Nr);
 const ic = n_();
 for (const i of Object.values(ic)) i.clipShadows = !0;
-const Kt = new T_(je, ic);
+const Kt = new World(je, ic);
 Kt.buildTerrain();
 Kt.seedNav();
 for (const i of Ah()) Kt.applyAction(i);
@@ -62,10 +62,10 @@ Kt.seedGroundPockets(-18, 30, 14, 12, 34);
 Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77);
 C_(Kt);
 const ov = P_(Kt),
-  Ne = new I_(Kt),
-  ei = new F_(Kt, Ne, je),
-  oi = new $_(),
-  Lh = new ev();
+  Ne = new InfillSystem(Kt),
+  ei = new Citizens(Kt, Ne, je),
+  oi = new Requests(),
+  Lh = new Soundscape();
 window.addEventListener("pointerdown", () => Lh.start(), { once: !0 });
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
 function os(i) {
@@ -85,7 +85,7 @@ function os(i) {
     (Nr.intensity = zn(0.6, 0.42, o)),
     ke.setDusk(o),
     ke.setSunDir(Pe.position.clone().normalize()),
-    wh(Pe, Nr));
+    syncLightUniforms(Pe, Nr));
   const a = Kt.glowMat,
     c = 0.3 + o * 1.25;
   a.color.setRGB(1.05 * c + 0.1, 0.74 * c + 0.08, 0.36 * c + 0.04);
@@ -94,11 +94,11 @@ os(te.hour);
 let fn = "build",
   Fr = !1;
 const Or = { pos: new P(), target: new P() },
-  Mn = new Z_(Kt, ie, je),
-  Qn = new J_(Kt, us),
-  ni = new Q_(Kt, ie, us.domElement),
+  Mn = new PlacementTool(Kt, ie, je),
+  Qn = new SectionMode(Kt, us),
+  ni = new WanderMode(Kt, ie, us.domElement),
   Us = { aspect: "3:2", fov: 42 },
-  fe = new sv({
+  fe = new Hud({
     onTool: (i, t) => {
       (Mn.setTool(i, t),
         Is && (Te.enableRotate = i === null),
@@ -122,10 +122,10 @@ const Or = { pos: new P(), target: new P() },
       te.paused = !1;
     },
     onFolio: () => {
-      ((yt.folio = !yt.folio),
-        (yt.dirty = !0),
+      ((gameState.folio = !gameState.folio),
+        (gameState.dirty = !0),
         fe.toast(
-          yt.folio
+          gameState.folio
             ? "Resources are off — build freely."
             : "Resources restored — stone must be won again.",
         ));
@@ -253,7 +253,7 @@ window.addEventListener("keydown", (i) => {
 });
 Mn.onMessage = (i) => fe.toast(i);
 Mn.onCommit = (i) => {
-  yt.dirty = !0;
+  gameState.dirty = !0;
   const t = {
     anchor: "The pier is founded.",
     span: "The span leaps.",
@@ -266,13 +266,13 @@ Mn.onCommit = (i) => {
   fe.toast(t[i.t] ?? "Built.");
 };
 function rc() {
-  const i = yt.playerActions.pop();
+  const i = gameState.playerActions.pop();
   if (!i) {
     fe.toast("Nothing to undo.");
     return;
   }
   const t = Mn.costOf(i);
-  ((yt.res.stone += t.stone), (yt.res.timber += t.timber));
+  ((gameState.res.stone += t.stone), (gameState.res.timber += t.timber));
   const e = Ne.serialize();
   (Ne.clear(),
     Kt.rebuildAll([...Ah(), ...yt.playerActions]),
@@ -307,21 +307,21 @@ async function Uh(i = !1) {
   (fe.toast("The burin bites the copper…", 2500),
     await new Promise((l) => setTimeout(l, 30)));
   const s = ke.snap(je, ie, e, n),
-    r = yt.plates.length + 1,
+    r = gameState.plates.length + 1,
     a = `${bi.length ? bi[0].name : yt.cityName} · day ${te.day}`,
-    c = await Dh(s, a, r);
-  (yt.plates.push({
+    c = await renderPlateImage(s, a, r);
+  (gameState.plates.push({
     cam: [...ie.position.toArray(), ...Te.target.toArray()],
     hour: te.hour,
     caption: a,
     n: r,
   }),
     fe.showPlate(c, `capriccio-plate-${String(r).padStart(2, "0")}.png`),
-    (yt.res.favor += 6),
-    (yt.dirty = !0));
+    (gameState.res.favor += 6),
+    (gameState.dirty = !0));
 }
 let bi = [];
-function lv() {
+function updateQualityMeters() {
   const i = Kt.pockets.filter((a) => a.occupiedBy >= 0),
     t = i.length ? i.filter((a) => a.navNode >= 0).length / i.length : 0.3,
     e = i.length ? i.reduce((a, c) => a + c.shelter, 0) / i.length : 0.3,
@@ -346,21 +346,21 @@ function lv() {
 }
 let oc = !1;
 function ac() {
-  oc || q_({ day: te.day, hour: te.hour, infill: Ne.serialize() });
+  oc || saveGame({ day: te.day, hour: te.hour, infill: Ne.serialize() });
 }
 new URLSearchParams(location.search).has("fresh") &&
   localStorage.removeItem("capriccio-save-v1");
-const hn = Y_();
+const hn = loadGame();
 if (hn) {
-  ((yt.playerActions = hn.actions), (yt.nextId = 1e3 + hn.actions.length + 5));
+  ((gameState.playerActions = hn.actions), (gameState.nextId = 1e3 + hn.actions.length + 5));
   for (const t of hn.actions)
-    ((t.id = t.id ?? yt.nextId++),
+    ((t.id = t.id ?? gameState.nextId++),
       Kt.applyAction(structuredClone(t)),
-      (yt.nextId = Math.max(yt.nextId, (t.id ?? 0) + 1)));
-  ((yt.res = hn.res),
-    (yt.plates = hn.plates ?? []),
-    (yt.doneRequests = new Set(hn.doneRequests ?? [])),
-    (yt.folio = hn.folio ?? !1),
+      (gameState.nextId = Math.max(gameState.nextId, (t.id ?? 0) + 1)));
+  ((gameState.res = hn.res),
+    (gameState.plates = hn.plates ?? []),
+    (gameState.doneRequests = new Set(hn.doneRequests ?? [])),
+    (gameState.folio = hn.folio ?? !1),
     (te.day = hn.day),
     (te.hour = hn.hour),
     Ih(hn.infill ?? []),
@@ -389,14 +389,14 @@ ei.sync();
 {
   const i = document.querySelector("#veil"),
     t = document.createElement("div");
-  ((t.textContent = yt.folio
+  ((t.textContent = gameState.folio
     ? "(playing without resources)"
     : "or play without resources"),
     (t.style.cssText =
       "margin-top:14px;font-size:11px;letter-spacing:0.12em;opacity:0.6;cursor:pointer;font-style:italic"),
     (t.onclick = () => {
-      ((yt.folio = !0),
-        (yt.dirty = !0),
+      ((gameState.folio = !0),
+        (gameState.dirty = !0),
         (t.textContent = "(playing without resources)"),
         document.querySelector("#veil .begin")?.click());
     }),
@@ -426,7 +426,7 @@ function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
   if (((Aa.value += t), ov(Aa.value), !te.paused)) {
     ((te.hour += t * te.speed),
-      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (yt.dirty = !0)),
+      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (gameState.dirty = !0)),
       os(te.hour),
       V_(t * te.speed),
       ei.update(t, te.hour),
@@ -437,13 +437,13 @@ function Nh(i) {
         Ne.grow(
           te.hour,
           10 +
-            yt.res.favor * 0.28 +
+            gameState.res.favor * 0.28 +
             Kt.pockets.filter((n) => n.kind !== "terrace_p").length * 0.12,
         ),
         oi.check(Kt, Ne),
         ei.sync()),
       (Do += t),
-      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), lv(), yt.dirty && ac()));
+      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), updateQualityMeters(), gameState.dirty && ac()));
     const e = ie.position;
     Lh.update(t, {
       dusk: ke.postMat.uniforms.uDusk.value,
@@ -496,26 +496,26 @@ window.CAP = {
   controls: Te,
   engraving: ke,
   mats: ic,
-  shared: Ge,
+  shared: engravingUniforms,
   world: Kt,
   time: te,
   SPOTS: Vr,
   hemi: Nr,
   sunLight: Pe,
-  syncLightModel: wh,
+  syncLightModel: syncLightUniforms,
   tools: Mn,
   hud: fe,
   infill: Ne,
   citizens: ei,
   requests: oi,
-  state: yt,
+  state: gameState,
   wander: ni,
   section: Qn,
   undo: rc,
   doSave: ac,
   async plateTest() {
     const i = ke.snap(je, ie, 800, 533);
-    return (await Dh(i, "test plate · day 1", 1)).length;
+    return (await renderPlateImage(i, "test plate · day 1", 1)).length;
   },
   snap(i = 1100, t = 660) {
     return ke.snap(je, ie, i, t);
@@ -541,8 +541,8 @@ window.CAP = {
   },
   act(i) {
     return (
-      (i.id = i.id ?? yt.nextId++),
-      yt.playerActions.push(structuredClone(i)),
+      (i.id = i.id ?? gameState.nextId++),
+      gameState.playerActions.push(structuredClone(i)),
       Kt.applyAction(i)
     );
   },

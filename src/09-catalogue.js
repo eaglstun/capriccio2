@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-const La = {
+const BUILD_CATALOGUE = {
     anchor: [
       { key: "pier", label: "Pier", hint: "a stout foundation for spans" },
       {
@@ -75,7 +75,7 @@ const La = {
       { key: "gathering", label: "Gathering", hint: "invite idle evenings" },
     ],
   },
-  pr = {
+  VAULT_FOOTPRINTS = {
     court: { w: 13, h: 9 },
     market: { w: 17, h: 12 },
     basilica: { w: 22, h: 17 },

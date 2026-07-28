@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class F_ {
+class Citizens {
   constructor(t, e, n) {
     K(this, "world");
     K(this, "infill");
@@ -325,7 +325,7 @@ function Rh(i, t) {
   }
   return (a.sort((c, l) => l.size - c.size), a.slice(0, 7));
 }
-const yt = {
+const gameState = {
   res: { stone: 700, timber: 160, favor: 12 },
   playerActions: [],
   nextId: 1e3,
@@ -336,26 +336,26 @@ const yt = {
   folio: !1,
 };
 function V_(i) {
-  ((yt.res.stone = Math.min(2600, yt.res.stone + i * 18)),
-    (yt.res.timber = Math.min(900, yt.res.timber + i * 6)));
+  ((gameState.res.stone = Math.min(2600, gameState.res.stone + i * 18)),
+    (gameState.res.timber = Math.min(900, gameState.res.timber + i * 6)));
 }
 function Fl(i) {
-  return yt.folio
+  return gameState.folio
     ? !0
-    : yt.res.stone >= i.stone && yt.res.timber >= (i.timber || 0);
+    : gameState.res.stone >= i.stone && gameState.res.timber >= (i.timber || 0);
 }
 function W_(i) {
-  yt.folio ||
-    ((yt.res.stone -= i.stone),
-    (yt.res.timber -= i.timber || 0),
-    (yt.dirty = !0));
+  gameState.folio ||
+    ((gameState.res.stone -= i.stone),
+    (gameState.res.timber -= i.timber || 0),
+    (gameState.dirty = !0));
 }
 function X_() {
-  return yt.folio
+  return gameState.folio
     ? 160
-    : yt.res.favor >= 150
+    : gameState.res.favor >= 150
       ? 150
-      : yt.res.favor >= 60
+      : gameState.res.favor >= 60
         ? 95
         : 55;
 }

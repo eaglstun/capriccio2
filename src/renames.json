@@ -1,0 +1,46 @@
+{
+  "//": "mangled -> friendly. src/ is regenerated from the bundle with this map applied;",
+  "//1": "verification applies the INVERSE and requires byte-identity with the original.",
+  "//2": "Names must be grounded in ../SIMULATION.md vocabulary, not invented.",
+  "//3": "Shadowed names (see SHADOWED in tools/split_bundle.py) are refused by default.",
+
+  "//batch1-systems": "the class per subsystem, confirmed by their methods",
+  "T_": "World",
+  "I_": "InfillSystem",
+  "F_": "Citizens",
+  "$_": "Requests",
+  "Z_": "PlacementTool",
+  "K_": "BuildOverlays",
+  "J_": "SectionMode",
+  "Q_": "WanderMode",
+  "Rl": "NavGraph",
+  "sv": "Hud",
+  "ev": "Soundscape",
+
+  "//batch1-state": "the global mutable game state and its catalogue data",
+  "yt": "gameState",
+  "La": "BUILD_CATALOGUE",
+  "pr": "VAULT_FOOTPRINTS",
+
+  "//batch1-builders": "confirmed via the Da dispatcher switching on action.t",
+  "Da": "buildStructureMesh",
+  "y_": "buildAnchor",
+  "M_": "buildSpan",
+  "S_": "buildRise",
+  "b_": "buildVault",
+  "E_": "buildWall",
+  "w_": "buildOrnament",
+
+  "//batch1-save": "event-sourced action log, see ../FINDINGS.md",
+  "q_": "saveGame",
+  "Y_": "loadGame",
+
+  "//batch1-render": "engraving uniforms and material factory, see ../RENDERING.md",
+  "Ge": "engravingUniforms",
+  "wh": "syncLightUniforms",
+  "jn": "createStoneMaterial",
+
+  "//batch1-misc": "",
+  "lv": "updateQualityMeters",
+  "Dh": "renderPlateImage"
+}

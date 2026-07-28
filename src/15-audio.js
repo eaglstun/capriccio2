@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class ev {
+class Soundscape {
   constructor() {
     K(this, "ctx", null);
     K(this, "master");

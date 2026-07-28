@@ -126,7 +126,7 @@ const nv = `
     <path d="M5 21 c4 -3 7 1 10 -1 s6 -4 10 -2 M5 21 c0 2 2 3 4 3 s16 -1 16 -4" />
     <path d="M20 4 l4 4 -10 10 -5 1 1 -5 z"/></g></svg>`,
   };
-class sv {
+class Hud {
   constructor(t) {
     K(this, "cb");
     K(this, "root");
@@ -327,12 +327,12 @@ class sv {
     }
     (this.toolBtns.get(t).classList.add("on"),
       this.showVariants(t),
-      this.cb.onTool(t, La[t][0].key));
+      this.cb.onTool(t, BUILD_CATALOGUE[t][0].key));
   }
   showVariants(t) {
     ((this.varRow.style.display = "block"),
       (this.varRow.innerHTML = ""),
-      La[t].forEach((e, n) => {
+      BUILD_CATALOGUE[t].forEach((e, n) => {
         const s = document.createElement("div");
         ((s.className = "var" + (n === 0 ? " on" : "")),
           (s.innerHTML = `<div class="vl">${e.label}</div><div class="vh">${e.hint}</div>`),
@@ -387,15 +387,15 @@ class sv {
     this.wanderHint.style.display = t ? "block" : "none";
   }
   updateResources(t) {
-    (yt.folio
+    (gameState.folio
       ? ((this.resStone.textContent = "∞"), (this.resTimber.textContent = "∞"))
-      : ((this.resStone.textContent = String(Math.floor(yt.res.stone))),
-        (this.resTimber.textContent = String(Math.floor(yt.res.timber)))),
-      (this.resFavor.textContent = String(Math.floor(yt.res.favor))),
+      : ((this.resStone.textContent = String(Math.floor(gameState.res.stone))),
+        (this.resTimber.textContent = String(Math.floor(gameState.res.timber)))),
+      (this.resFavor.textContent = String(Math.floor(gameState.res.favor))),
       (this.resPop.textContent = String(t)));
     const e = this.root.querySelector("#folio-line");
     e &&
-      (e.textContent = yt.folio
+      (e.textContent = gameState.folio
         ? "✦ resources are off — restore them"
         : "✦ play without resources");
   }

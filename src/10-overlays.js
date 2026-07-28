@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class K_ {
+class BuildOverlays {
   constructor(t) {
     K(this, "marks", new rn());
     K(this, "live", new rn());

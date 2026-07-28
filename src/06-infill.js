@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class I_ {
+class InfillSystem {
   constructor(t) {
     K(this, "world");
     K(this, "items", []);

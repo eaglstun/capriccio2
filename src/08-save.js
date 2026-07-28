@@ -5,25 +5,25 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-function q_(i) {
+function saveGame(i) {
   const t = {
     v: 1,
-    actions: yt.playerActions,
+    actions: gameState.playerActions,
     day: i.day,
     hour: i.hour,
-    res: yt.res,
+    res: gameState.res,
     infill: i.infill,
-    plates: yt.plates.slice(-16),
-    cityName: yt.cityName,
+    plates: gameState.plates.slice(-16),
+    cityName: gameState.cityName,
     doneRequests: [...yt.doneRequests],
-    folio: yt.folio,
+    folio: gameState.folio,
   };
   try {
     localStorage.setItem(Ch, JSON.stringify(t));
   } catch {}
-  yt.dirty = !1;
+  gameState.dirty = !1;
 }
-function Y_() {
+function loadGame() {
   try {
     const i = localStorage.getItem(Ch);
     if (!i) return null;

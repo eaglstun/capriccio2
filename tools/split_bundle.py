@@ -27,8 +27,18 @@ import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from jsmask import mask  # noqa: E402
+
 BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
 OUT = pathlib.Path("src")
+RENAMES = OUT / "renames.json"
+
+# Names that are ALSO declared in an inner scope somewhere (from
+# scope_graph.py --shadows). A blind global rename on these would corrupt the
+# shadowing scope, so the tool refuses to rename them without --force-shadowed.
+SHADOWED = {"Ch", "Co", "Fr", "Kt", "Pe", "Pl", "Qe", "Th", "bi",
+            "cc", "ct", "gt", "je", "lc"}
 
 # First app declaration: `const j0 = ` — the post-pass fullscreen vertex
 # shader. Everything before is three.js and OrbitControls.
@@ -186,6 +196,57 @@ def scan_top_level(text):
 
 
 ANCHORS_C = [(re.compile(p), n) for p, n in ANCHORS]
+IDENT_RX = re.compile(r"(?<![.\w$])([A-Za-z_$][\w$]*)")
+
+
+def substitute(text, mapping):
+    """Replace identifiers per `mapping`, never inside strings or comments.
+
+    Operates on masked text to find positions, then splices the ORIGINAL text
+    so string contents (GLSL uniforms, localStorage keys, UI copy) are
+    untouched. Skips property accesses via the lookbehind on `.`.
+    """
+    if not mapping:
+        return text, []
+    m = mask(text)
+    out, last, shorthand = [], 0, []
+    for mo in IDENT_RX.finditer(m):
+        name = mo.group(1)
+        new = mapping.get(name)
+        if new is None:
+            continue
+        a, b = mo.span(1)
+        # shorthand-property detection: `{ x }` / `, x ,` — renaming these
+        # would silently change a property KEY, which the inverse check
+        # cannot catch. Report them.
+        before = m[:a].rstrip()[-1:] if m[:a].strip() else ""
+        after = m[b:].lstrip()[:1]
+        if before in "{," and after in ",}":
+            shorthand.append(name)
+        out.append(text[last:a])
+        out.append(new)
+        last = b
+    out.append(text[last:])
+    return "".join(out), shorthand
+
+
+def load_renames(force_shadowed=False):
+    if not RENAMES.exists():
+        return {}
+    raw = json.loads(RENAMES.read_text())
+    mapping = {k: v for k, v in raw.items() if not k.startswith("//")}
+    bad = sorted(set(mapping) & SHADOWED)
+    if bad and not force_shadowed:
+        sys.exit(
+            f"refusing to rename shadowed names: {bad}\n"
+            "These 2-char names are also declared in inner scopes; a global\n"
+            "rename would corrupt those scopes. Verify each occurrence by hand,\n"
+            "then re-run with --force-shadowed if you are certain."
+        )
+    dupes = [v for v in mapping.values() if list(mapping.values()).count(v) > 1]
+    if dupes:
+        sys.exit(f"duplicate target names in renames.json: {sorted(set(dupes))}")
+    return mapping
 
 
 def anchor_of(chunk):
@@ -201,6 +262,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--analyse", action="store_true")
+    ap.add_argument("--force-shadowed", action="store_true",
+                    help="allow renaming names that are shadowed in inner scopes")
     args = ap.parse_args()
     if not (args.write or args.analyse):
         args.analyse = True
@@ -253,8 +316,12 @@ def main():
         return
 
     OUT.mkdir(exist_ok=True)
+    renames = load_renames(args.force_shadowed)
+    if renames:
+        print(f"\napplying {len(renames)} rename(s) from {RENAMES}")
     manifest = []
     counters = {}
+    shorthand_hits = []
     for s in sections:
         k = s["kind"]
         counters[k] = counters.get(k, 0) + 1
@@ -271,11 +338,14 @@ def main():
             f"// Identifiers are minifier-mangled; nothing here has been renamed.\n"
             f"// Regenerate with: python3 tools/split_bundle.py --write\n\n"
         )
-        path.write_text(header + body, encoding="utf8")
+        renamed, shorthand = substitute(body, renames)
+        if shorthand:
+            shorthand_hits.extend((path.name, n) for n in set(shorthand))
+        path.write_text(header + renamed, encoding="utf8")
         manifest.append({
             "file": path.name, "section": k,
             "bundle_start_line": start_line,
-            "bytes": len(body), "statements": s["n"],
+            "bytes": len(renamed), "statements": s["n"],
             "header_bytes": len(header),
         })
 
@@ -285,15 +355,28 @@ def main():
         "files": manifest,
     }, indent=2), encoding="utf8")
 
-    # ---- integrity check: reassemble and compare ----
+    # ---- integrity check ----
+    # With renames applied, byte-identity only holds after undoing them. So we
+    # apply the INVERSE map and compare. This proves every rename was a pure
+    # identifier substitution and nothing structural changed.
+    inverse = {v: k for k, v in renames.items()}
     rebuilt = []
     for m in manifest:
         raw = (OUT / m["file"]).read_text(encoding="utf8")
-        rebuilt.append(raw[m["header_bytes"]:])
+        body = raw[m["header_bytes"]:]
+        if inverse:
+            body, _ = substitute(body, inverse)
+        rebuilt.append(body)
     rebuilt = "".join(rebuilt)
     ok = rebuilt == app
     print(f"\nwrote {len(manifest)} files to {OUT}/")
-    print(f"REASSEMBLY CHECK: {'PASS — byte-identical to app section' if ok else 'FAIL'}")
+    if shorthand_hits:
+        print("\nWARNING — renamed in shorthand-property position (changes a KEY,")
+        print("which the inverse check cannot detect). Verify by hand:")
+        for fn, n in sorted(set(shorthand_hits)):
+            print(f"    {fn}: {n}")
+    label = "byte-identical after inverse rename" if inverse else "byte-identical to app section"
+    print(f"REASSEMBLY CHECK: {'PASS — ' + label if ok else 'FAIL'}")
     if not ok:
         a = next((i for i, (x, y) in enumerate(zip(rebuilt, app)) if x != y), min(len(rebuilt), len(app)))
         print(f"  first divergence at app offset {a}")

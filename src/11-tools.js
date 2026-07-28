@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class Z_ {
+class PlacementTool {
   constructor(t, e, n) {
     K(this, "world");
     K(this, "camera");
@@ -35,11 +35,11 @@ class Z_ {
     ((this.marker = new he(s, this.ghostMat)),
       (this.marker.visible = !1),
       n.add(this.marker),
-      (this.chalk = new K_(n)));
+      (this.chalk = new BuildOverlays(n)));
   }
   setTool(t, e) {
     ((this.tool = t),
-      (this.variant = e ?? (t ? La[t][0].key : "")),
+      (this.variant = e ?? (t ? BUILD_CATALOGUE[t][0].key : "")),
       this.reset(),
       this.chalk.clearMarks(),
       t === "carve" && this.chalk.markCarvables(this.world),
@@ -110,7 +110,7 @@ class Z_ {
       this.stage === 1 && this.firstPoint)
     )
       if (this.tool === "vault") {
-        const a = pr[this.variant] ?? pr.market;
+        const a = VAULT_FOOTPRINTS[this.variant] ?? VAULT_FOOTPRINTS.market;
         this.chalk.footprint(
           this.firstPoint.x,
           this.firstPoint.z,
@@ -179,7 +179,7 @@ class Z_ {
             };
       case "vault": {
         if (this.stage === 0 || !this.firstPoint) return null;
-        const s = pr[this.variant] ?? pr.market,
+        const s = VAULT_FOOTPRINTS[this.variant] ?? VAULT_FOOTPRINTS.market,
           r = t.x - this.firstPoint.x,
           o = t.z - this.firstPoint.z,
           a = Math.max(12, Math.hypot(r, o)),
@@ -279,7 +279,7 @@ class Z_ {
       ((e = new Fe(t.r, t.r, 0.4, 28)),
         e.translate(t.x, qt(t.x, t.z) + 0.3, t.z));
     else {
-      const r = Da({ ...t, id: 999999 }),
+      const r = buildStructureMesh({ ...t, id: 999999 }),
         o = [];
       for (const a of Object.keys(r.pieces))
         for (const c of r.pieces[a]) o.push(c);
@@ -298,7 +298,7 @@ class Z_ {
   costOf(t) {
     if (t.t === "carve") return { stone: 30, timber: 10 };
     if (t.t === "designate") return { stone: 0, timber: 0 };
-    const e = Da({ ...t, id: 999998 });
+    const e = buildStructureMesh({ ...t, id: 999998 });
     return {
       stone: Math.round(e.cost.stone),
       timber: Math.round(e.cost.timber),
@@ -314,7 +314,7 @@ class Z_ {
       if (e < 2 || e > 40) return !1;
     }
     if (t.t === "vault") {
-      const e = yt.folio ? 75 : yt.res.favor >= 60 ? 60 : 40;
+      const e = gameState.folio ? 75 : gameState.res.favor >= 60 ? 60 : 40;
       if (t.l > e) return !1;
     }
     return !0;
@@ -349,10 +349,10 @@ class Z_ {
     const o = this.costOf(r);
     return this.validate(r)
       ? Fl(o)
-        ? ((r.id = yt.nextId++),
+        ? ((r.id = gameState.nextId++),
           W_(o),
-          r.t === "carve" && (yt.res.stone += 15),
-          yt.playerActions.push(structuredClone(r)),
+          r.t === "carve" && (gameState.res.stone += 15),
+          gameState.playerActions.push(structuredClone(r)),
           this.world.applyAction(r),
           this.onCommit?.(r),
           this.reset(),

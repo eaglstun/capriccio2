@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-function Dh(i, t, e) {
+function renderPlateImage(i, t, e) {
   return new Promise((n) => {
     const s = new Image();
     ((s.onload = () => {

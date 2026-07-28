@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-function M_(i) {
+function buildSpan(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 23),
     n = i.age ?? 0.07,
@@ -185,7 +185,7 @@ function M_(i) {
     }
   return ((t.cost.stone = Math.round(a * Math.max(4, _) * 0.09)), t);
 }
-function S_(i) {
+function buildRise(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 37),
     n = i.age ?? 0.07;
@@ -368,7 +368,7 @@ function S_(i) {
   }
   return ((t.cost.stone = Math.round(o * u * 0.9)), t);
 }
-function b_(i) {
+function buildVault(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 53),
     n = i.age ?? 0.07,
@@ -496,7 +496,7 @@ function b_(i) {
   }
   return ((t.cost.stone = Math.round(o * a * 0.32 + c * (o + a) * 0.22)), t);
 }
-function E_(i) {
+function buildWall(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 71),
     n = i.age ?? 0.3,
@@ -570,7 +570,7 @@ function E_(i) {
   }
   return ((t.cost.stone = Math.round(a * i.h * 0.11)), t);
 }
-function w_(i) {
+function buildOrnament(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 87),
     n = i.y;
@@ -628,20 +628,20 @@ function w_(i) {
   }
   return ((t.cost.stone = 4), t);
 }
-function Da(i) {
+function buildStructureMesh(i) {
   switch (i.t) {
     case "anchor":
-      return y_(i);
+      return buildAnchor(i);
     case "span":
-      return M_(i);
+      return buildSpan(i);
     case "rise":
-      return S_(i);
+      return buildRise(i);
     case "vault":
-      return b_(i);
+      return buildVault(i);
     case "wall":
-      return E_(i);
+      return buildWall(i);
     case "emb":
-      return w_(i);
+      return buildOrnament(i);
     default:
       return Ci();
   }

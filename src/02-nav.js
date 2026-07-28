@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class Rl {
+class NavGraph {
   constructor() {
     K(this, "nodes", []);
     K(this, "cell", new Map());

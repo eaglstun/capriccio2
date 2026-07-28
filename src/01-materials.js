@@ -5,23 +5,23 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-function jn(i = {}) {
+function createStoneMaterial(i = {}) {
   const t = new Ea({ color: 16777215, side: i.side ?? _n, fog: !0 }),
     e = new Ht(i.stone ?? "#e8e0cb");
   return (
     (t.onBeforeCompile = (n) => {
-      ((n.uniforms.uHatchFreq = Ge.uHatchFreq),
-        (n.uniforms.uInkCol = { value: Ge.uInkCol.value }),
-        (n.uniforms.uCutting = Ge.uCutting),
-        (n.uniforms.uHatchGain = Ge.uHatchGain),
-        (n.uniforms.uSunDirW = Ge.uSunDirW),
-        (n.uniforms.uSunLum = Ge.uSunLum),
-        (n.uniforms.uAmbSky = Ge.uAmbSky),
-        (n.uniforms.uAmbGround = Ge.uAmbGround),
+      ((n.uniforms.uHatchFreq = engravingUniforms.uHatchFreq),
+        (n.uniforms.uInkCol = { value: engravingUniforms.uInkCol.value }),
+        (n.uniforms.uCutting = engravingUniforms.uCutting),
+        (n.uniforms.uHatchGain = engravingUniforms.uHatchGain),
+        (n.uniforms.uSunDirW = engravingUniforms.uSunDirW),
+        (n.uniforms.uSunLum = engravingUniforms.uSunLum),
+        (n.uniforms.uAmbSky = engravingUniforms.uAmbSky),
+        (n.uniforms.uAmbGround = engravingUniforms.uAmbGround),
         (n.uniforms.uStoneCol = { value: e }),
         (n.uniforms.uJointAlpha = { value: i.jointAlpha ?? 0.34 }),
         (n.uniforms.uCourseH = { value: i.courseH ?? 1.02 }),
-        (n.uniforms.uDebugView = Ge.uDebugView),
+        (n.uniforms.uDebugView = engravingUniforms.uDebugView),
         (n.uniforms.uLocalGain = { value: i.gain ?? 1 }),
         (n.vertexShader = n.vertexShader
           .replace(
@@ -47,14 +47,14 @@ varying vec2 vToneE;`,
   );
 }
 function n_() {
-  const i = jn({ stone: "#e8e0cb", jointAlpha: 0.34, courseH: 1.02 }),
-    t = jn({ stone: "#e2d9c0", jointAlpha: 0.42, courseH: 0.88 }),
-    e = jn({ stone: "#ded6c2", jointAlpha: 0.4, courseH: 2.3 }),
-    n = jn({ stone: "#d3bf9c", jointAlpha: 0.16, courseH: 0.42 }),
-    s = jn({ stone: "#eee6d2", jointAlpha: 0.07 }),
-    r = jn({ stone: "#6b7a5e", jointAlpha: 0 }),
-    o = jn({ stone: "#a2604f", jointAlpha: 0 }),
-    a = jn({ stone: "#e7e0cf", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
+  const i = createStoneMaterial({ stone: "#e8e0cb", jointAlpha: 0.34, courseH: 1.02 }),
+    t = createStoneMaterial({ stone: "#e2d9c0", jointAlpha: 0.42, courseH: 0.88 }),
+    e = createStoneMaterial({ stone: "#ded6c2", jointAlpha: 0.4, courseH: 2.3 }),
+    n = createStoneMaterial({ stone: "#d3bf9c", jointAlpha: 0.16, courseH: 0.42 }),
+    s = createStoneMaterial({ stone: "#eee6d2", jointAlpha: 0.07 }),
+    r = createStoneMaterial({ stone: "#6b7a5e", jointAlpha: 0 }),
+    o = createStoneMaterial({ stone: "#a2604f", jointAlpha: 0 }),
+    a = createStoneMaterial({ stone: "#e7e0cf", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
     c = new Vd({
       color: "#d1a63c",
       emissive: "#7a5a12",

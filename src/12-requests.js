@@ -87,7 +87,7 @@ const j_ = [
     "Laundry lines appeared between the columns overnight, like rigging.",
     "Children have invented seventeen names for the big pier. All are rude.",
   ];
-class $_ {
+class Requests {
   constructor() {
     K(this, "active", null);
     K(this, "queue");
@@ -97,13 +97,13 @@ class $_ {
     this.resync();
   }
   resync() {
-    ((this.queue = j_.filter((t) => !yt.doneRequests.has(t.id))),
+    ((this.queue = j_.filter((t) => !gameState.doneRequests.has(t.id))),
       (this.active = this.queue[0] ?? null));
   }
   check(t, e) {
     if (this.active && this.active.done(t, e)) {
-      ((yt.res.favor += this.active.favor),
-        yt.doneRequests.add(this.active.id));
+      ((gameState.res.favor += this.active.favor),
+        gameState.doneRequests.add(this.active.id));
       const n = this.active;
       if (
         ((this.queue = this.queue.filter((s) => s !== n)),

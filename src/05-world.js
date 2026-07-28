@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class T_ {
+class World {
   constructor(t, e) {
     K(this, "scene");
     K(this, "mats");
@@ -14,7 +14,7 @@ class T_ {
     K(this, "structGroup", new rn());
     K(this, "waterGroup", new rn());
     K(this, "infillGroup", new rn());
-    K(this, "nav", new Rl());
+    K(this, "nav", new NavGraph());
     K(this, "pockets", []);
     K(this, "structures", new Map());
     K(this, "anchors", new Map());
@@ -82,7 +82,7 @@ class T_ {
     return this.buildStruct(t, e);
   }
   buildStruct(t, e = !0) {
-    const n = Da(t),
+    const n = buildStructureMesh(t),
       s = [];
     for (const a of Object.keys(n.pieces)) {
       const c = n.pieces[a];
@@ -279,7 +279,7 @@ class T_ {
       (this.waterSources = [Vr.springPool.clone()]),
       (this.designations = []),
       this.clearDesignationMarks(),
-      (this.nav = new Rl()),
+      (this.nav = new NavGraph()),
       this.seedNav(),
       (this.actions = []));
     for (const e of t) this.applyAction(structuredClone(e));

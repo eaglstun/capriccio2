@@ -5,7 +5,7 @@
 // Identifiers are minifier-mangled; nothing here has been renamed.
 // Regenerate with: python3 tools/split_bundle.py --write
 
-class J_ {
+class SectionMode {
   constructor(t, e) {
     K(this, "world");
     K(this, "renderer");
@@ -17,7 +17,7 @@ class J_ {
     ((this.world = t), (this.renderer = e));
   }
   set(t) {
-    ((this.active = t), (Ge.uCutting.value = t ? 1 : 0), this.apply());
+    ((this.active = t), (engravingUniforms.uCutting.value = t ? 1 : 0), this.apply());
   }
   setAxis(t) {
     ((this.axis = t), this.apply());
@@ -39,7 +39,7 @@ class J_ {
       (this.renderer.clippingPlanes = [this.plane]));
   }
 }
-class Q_ {
+class WanderMode {
   constructor(t, e, n) {
     K(this, "world");
     K(this, "camera");

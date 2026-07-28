@@ -489,7 +489,7 @@ function be(i, t, e, n, s = 0) {
   return (s && i.rotateY(s), i.translate(t, e, n), i);
 }
 const dn = (i, t, e) => new P(i, t, e);
-function y_(i) {
+function buildAnchor(i) {
   const t = Ci(),
     e = Je(i.id * 7919 + 11),
     n = qt(i.x, i.z),

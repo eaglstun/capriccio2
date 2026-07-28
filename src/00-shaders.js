@@ -302,7 +302,7 @@ class J0 {
     );
   }
 }
-const Ge = {
+const engravingUniforms = {
   uHatchFreq: { value: 3.1 },
   uInkCol: { value: new Ht("#241d12") },
   uCutting: { value: 0 },
@@ -313,13 +313,13 @@ const Ge = {
   uAmbGround: { value: 0.15 },
   uDebugView: { value: 0 },
 };
-function wh(i, t) {
+function syncLightUniforms(i, t) {
   const e = (s) => 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
-  Ge.uSunDirW.value.copy(i.position).sub(i.target.position).normalize();
+  engravingUniforms.uSunDirW.value.copy(i.position).sub(i.target.position).normalize();
   const n = 1 / Math.PI;
-  ((Ge.uSunLum.value = i.intensity * e(i.color) * n),
-    (Ge.uAmbSky.value = t.intensity * e(t.color) * n),
-    (Ge.uAmbGround.value = t.intensity * e(t.groundColor) * n));
+  ((engravingUniforms.uSunLum.value = i.intensity * e(i.color) * n),
+    (engravingUniforms.uAmbSky.value = t.intensity * e(t.color) * n),
+    (engravingUniforms.uAmbGround.value = t.intensity * e(t.groundColor) * n));
 }
 const Q0 = `
 #include <fog_vertex>
