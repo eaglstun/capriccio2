@@ -538,6 +538,7 @@ window.CAP = {
   citizens: ei,
   requests: oi,
   state: gameState,
+  score,
   wander: ni,
   section: Qn,
   undo: rc,
