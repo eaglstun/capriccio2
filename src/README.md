@@ -16,15 +16,35 @@ The tool fails loudly rather than silently producing garbage: it verifies that
 concatenating these files in `manifest.json` order reproduces the original app
 section **byte for byte**, and it aborts if any anchor stops matching.
 
-## What this is NOT
+## It is now a module tree
 
-**These are not yet working ES modules.** They cannot be imported or built.
-Every file references identifiers declared in other files, and there is not a
-single `import` or `export` among them — because the original was one
-concatenated scope and the identifiers are all mangled to one or two
-characters. Wiring them up requires scope analysis that has not been done yet.
+18 ES modules, **210 import bindings, 107 exported names**, every local import
+verified to resolve against an actual export. 89 identifiers renamed, including
+all 48 three.js symbols, so imports read as real code:
 
-`public/` remains the only runnable copy of the game. Serve from there.
+```js
+import { Vector3, Mesh, BoxGeometry } from "three";
+import { clamp, seededRng, terrainHeightAt } from "./01-materials.js";
+```
+
+**Still not built or run.** Nothing has executed these modules — `three` is not
+installed, there is no bundler config, and the boot sequence in
+`17-bootstrap.js` has not been exercised. Resolving is not the same as
+running.
+
+`public/` remains the only _known-working_ copy of the game. Serve from there.
+
+### Two things to know before trusting it
+
+**`_runtime.js` is a shim.** `defineField` (124 calls) is esbuild's
+`__publicField`, emitted because the original source used class-field syntax.
+It is not part of three.js and must never be imported from it. Once the class
+bodies are rewritten to real field syntax, every call site and that file can
+be deleted.
+
+**`DynamicDrawUsage` is imported under its mangled name `Lu`**, because a local
+in `07-citizens.js` shadows it. Renaming it globally would have corrupted that
+scope.
 
 ## The split
 
