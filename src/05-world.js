@@ -1062,6 +1062,237 @@ function C_(i) {
     const mV = new Mesh(Nl(pipes), i.mats.verdigris);
     ((mV.castShadow = !1), i.scene.add(mV));
   }
+  // ---- three more things nobody came back for ----
+  // the outfall (infrastructure still running), the crane (work stopped
+  // mid-action), the drained reservoir (the water left, slowly).
+  // Scene-only, fixed seed, merged; never in structGroup.
+  {
+    const q = seededRng(61207),
+      oc = [],      // concrete → stoneOld (board-formed pour seams)
+      orst = [],    // rust
+      otox = [],    // the yellow-green — sludge, crust, pools
+      otim = [],    // timber
+      odark = [],   // near-black: voids, cables, stains-as-line
+      ostn = [];    // the big stain ribbon, its own dark bile colour
+    // a strut between two points — lattice is just repeated boxes
+    const strut = (x1, y1, z1, x2, y2, z2, th, arr) => {
+      const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1,
+        b = new BoxGeometry(Math.hypot(dx, dy, dz), th, th);
+      (b.rotateZ(Math.atan2(dy, Math.hypot(dx, dz))),
+        b.rotateY(Math.atan2(-dz, dx)),
+        b.translate((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+        arr.push(b));
+    };
+    // -- the outfall: a concrete main cantilevered over the canyon rim,
+    // still discharging. Nobody is upstream. Something is still pumping.
+    {
+      const oz = 24, ry = terrainHeightAt(37, oz);
+      const pipe = new CylinderGeometry(1.5, 1.5, 13, 12);
+      (pipe.rotateZ(Math.PI / 2), pipe.translate(39.5, ry + 1.7, oz), oc.push(pipe));
+      const mouth = new CylinderGeometry(1.22, 1.22, 0.5, 12);
+      (mouth.rotateZ(Math.PI / 2), mouth.translate(45.85, ry + 1.7, oz), odark.push(mouth));
+      for (const sx of [34.5, 37.8]) {
+        const sad = new BoxGeometry(1.6, 1.6, 3.4);
+        (sad.translate(sx, ry + 0.5, oz), oc.push(sad));
+      }
+      // crusted deposits around the mouth — years of it
+      for (let k = 0; k < 7; k++) {
+        const ca = q() * Math.PI * 2,
+          cr = new BoxGeometry(0.5 + q() * 0.7, 0.3 + q() * 0.4, 0.5 + q() * 0.6);
+        (cr.rotateY(q() * 3),
+          cr.translate(45.6 + q() * 0.8, ry + 1.7 + Math.sin(ca) * 1.5, oz + Math.cos(ca) * 1.5),
+          otox.push(cr));
+      }
+      // the discharge: a slow viscous column, straight down to the slope
+      const fallH = ry + 1.2 - terrainHeightAt(46, oz),
+        col = new BoxGeometry(0.85, fallH, 0.7);
+      (col.translate(46, ry + 1.2 - fallH / 2, oz), otox.push(col));
+      // service walkway alongside, railings gone — posts remain
+      const walk = new BoxGeometry(8.5, 0.16, 1.15);
+      (walk.translate(38, ry + 0.92, oz - 2.35), orst.push(walk));
+      for (let k = 0; k < 7; k++) {
+        const post = new BoxGeometry(0.08, 0.85, 0.08);
+        (q() < 0.3 && post.rotateX(0.5 + q() * 0.6),
+          post.translate(34.4 + k * 1.25, ry + 1.4, oz - 2.85),
+          orst.push(post));
+      }
+      // the stain: a ribbon draped down the rock face, widening as it
+      // falls — this is the part that reads from across the canyon
+      const sPos = [], sNrm = [];
+      let px = 44.6;
+      const steps = 9;
+      for (let k = 0; k < steps; k++) {
+        const xa = px, xb = px + (k < 2 ? 1.0 : 1.35),
+          wa = 0.55 + (k / steps) * 2.6, wb = 0.55 + ((k + 1) / steps) * 2.6,
+          ya = terrainHeightAt(xa, oz) + 0.18, yb = terrainHeightAt(xb, oz) + 0.18,
+          quad = [
+            [xa, ya, oz - wa], [xb, yb, oz - wb], [xa, ya, oz + wa],
+            [xa, ya, oz + wa], [xb, yb, oz - wb], [xb, yb, oz + wb],
+          ];
+        for (const v of quad) (sPos.push(v[0], v[1], v[2]), sNrm.push(0, 1, 0));
+        px = xb;
+      }
+      const stain = new BufferGeometry();
+      (stain.setAttribute("position", new BufferAttribute(new Float32Array(sPos), 3)),
+        stain.setAttribute("normal", new BufferAttribute(new Float32Array(sNrm), 3)),
+        ostn.push(stain));
+      // pooled at the bottom, going nowhere
+      const pool = new CylinderGeometry(3.1, 3.8, 0.26, 12),
+        pf = terrainHeightAt(53.5, oz + 1);
+      (pool.translate(53.5, pf + 0.18, oz + 1), otox.push(pool));
+    }
+    // -- the tower crane: load still on the hook. Cranes are how a city
+    // gets built; this one stopped mid-sentence.
+    {
+      const cx = -92, cz = 60, gy = terrainHeightAt(cx, cz),
+        mh = 34, s = 0.85,
+        jx = Math.SQRT1_2, jz = -Math.SQRT1_2; // jib bears toward the city
+      // footing
+      const foot = new BoxGeometry(3.6, 1.1, 3.6);
+      (foot.translate(cx, gy + 0.55, cz), oc.push(foot));
+      // mast: four chords, rungs and alternating diagonals
+      for (const [ox, oz2] of [[-s, -s], [s, -s], [-s, s], [s, s]])
+        strut(cx + ox, gy, cz + oz2, cx + ox, gy + mh, cz + oz2, 0.16, orst);
+      for (let lv = 0; lv < 13; lv++) {
+        const y = gy + 2.2 + lv * 2.45, y2 = y + 2.45;
+        (strut(cx - s, y, cz - s, cx + s, y, cz - s, 0.09, orst),
+          strut(cx - s, y, cz + s, cx + s, y, cz + s, 0.09, orst),
+          strut(cx - s, y, cz - s, cx - s, y, cz + s, 0.09, orst),
+          strut(cx + s, y, cz - s, cx + s, y, cz + s, 0.09, orst));
+        if (lv < 12)
+          (lv % 2
+            ? (strut(cx - s, y, cz - s, cx + s, y2, cz - s, 0.08, orst),
+              strut(cx - s, y2, cz + s, cx + s, y, cz + s, 0.08, orst))
+            : (strut(cx + s, y, cz - s, cx - s, y2, cz - s, 0.08, orst),
+              strut(cx + s, y2, cz + s, cx - s, y, cz + s, 0.08, orst)));
+      }
+      // slew platform, cab, apex
+      const ty = gy + mh;
+      const slew = new BoxGeometry(2.6, 0.7, 2.6);
+      (slew.translate(cx, ty + 0.35, cz), orst.push(slew));
+      const cab = new BoxGeometry(1.5, 1.7, 1.9);
+      (cab.rotateY(Math.atan2(jx, jz)),
+        cab.translate(cx + jx * 1.9, ty + 1.4, cz + jz * 1.9),
+        odark.push(cab));
+      const apex = { x: cx - jx * 0.6, y: ty + 5.2, z: cz - jz * 0.6 };
+      (strut(cx - s * 0.9, ty + 0.7, cz - s * 0.9, apex.x, apex.y, apex.z, 0.12, orst),
+        strut(cx + s * 0.9, ty + 0.7, cz + s * 0.9, apex.x, apex.y, apex.z, 0.12, orst));
+      // jib: 25m of triangular lattice toward the city
+      const jl = 25, jy = ty + 0.9;
+      for (const lat of [-0.55, 0.55])
+        strut(cx + lat * -jz, jy, cz + lat * jx, cx + jx * jl + lat * -jz, jy, cz + jz * jl + lat * jx, 0.11, orst);
+      strut(cx, jy + 1.05, cz, cx + jx * (jl - 2.5), jy + 1.05, cz + jz * (jl - 2.5), 0.11, orst);
+      for (let k = 1; k * 2.3 < jl; k++) {
+        const t2 = k * 2.3, bx2 = cx + jx * t2, bz2 = cz + jz * t2;
+        (strut(bx2 - 0.55 * -jz, jy, bz2 - 0.55 * jx, bx2, jy + 1.05, bz2, 0.07, orst),
+          strut(bx2 + 0.55 * -jz, jy, bz2 + 0.55 * jx, bx2, jy + 1.05, bz2, 0.07, orst),
+          strut(bx2 - 0.55 * -jz, jy, bz2 - 0.55 * jx, bx2 + 0.55 * -jz, jy, bz2 + 0.55 * jx, 0.07, orst));
+      }
+      // counter-jib and its dead weight
+      const bl = 8.5;
+      const cdeck = new BoxGeometry(bl, 0.28, 2.0);
+      (cdeck.rotateY(Math.atan2(-jx, -jz) + Math.PI / 2),
+        cdeck.translate(cx - jx * bl * 0.5, jy + 0.1, cz - jz * bl * 0.5),
+        orst.push(cdeck));
+      for (let k = 0; k < 3; k++) {
+        const cw = new BoxGeometry(0.55, 2.3, 1.7);
+        (cw.rotateY(Math.atan2(jx, jz)),
+          cw.translate(cx - jx * (bl - 1.1 - k * 0.75), jy - 1.0, cz - jz * (bl - 1.1 - k * 0.75)),
+          oc.push(cw));
+      }
+      (strut(apex.x, apex.y, apex.z, cx + jx * (jl - 1), jy + 0.2, cz + jz * (jl - 1), 0.07, orst),
+        strut(apex.x, apex.y, apex.z, cx - jx * (bl - 0.5), jy + 0.1, cz - jz * (bl - 0.5), 0.07, orst));
+      // the trolley, the cables, and the load — hanging, not landed
+      const tt = 16.5, hx = cx + jx * tt, hz = cz + jz * tt;
+      const trol = new BoxGeometry(1.1, 0.35, 1.1);
+      (trol.rotateY(Math.atan2(jx, jz)), trol.translate(hx, jy - 0.25, hz), orst.push(trol));
+      const loadY = gy + 3.4;
+      (strut(hx - 0.28, jy - 0.4, hz, hx - 0.28, loadY + 0.9, hz, 0.045, odark),
+        strut(hx + 0.28, jy - 0.4, hz, hx + 0.28, loadY + 0.9, hz, 0.045, odark));
+      const blk = new BoxGeometry(0.55, 0.8, 0.4);
+      (blk.translate(hx, loadY + 0.55, hz), odark.push(blk));
+      const pal = new BoxGeometry(1.75, 0.14, 1.35);
+      (pal.rotateY(0.4), pal.translate(hx, loadY, hz), otim.push(pal));
+      for (let k = 0; k < 7; k++) {
+        const bb2 = new BoxGeometry(0.5, 0.5, 0.5);
+        (bb2.rotateY(0.4 + (q() - 0.5) * 0.15),
+          bb2.translate(hx + ((k % 3) - 1) * 0.52, loadY + 0.33 + Math.floor(k / 3) * 0.52, hz + (Math.floor(k / 3) % 2 ? 0.26 : -0.22)),
+          oc.push(bb2));
+      }
+    }
+    // -- the drained reservoir: tide-lines are years, not an event.
+    // Everything else here is sudden absence; this one is decline.
+    {
+      const rx = -24, rz = 160, seg = 18, rad = 24,
+        baseY = -3.4, topY = 4.3, floorY = 0.35;
+      for (let k = 0; k < seg; k++) {
+        const a = ((k + 0.5) / seg) * Math.PI * 2,
+          wx = rx + Math.sin(a) * rad, wz = rz + Math.cos(a) * rad,
+          wall = new BoxGeometry(9.0, topY - baseY, 1.3);
+        (wall.rotateY(a),
+          wall.translate(wx, (topY + baseY) / 2, wz),
+          oc.push(wall));
+        // parapet coping, broken in places
+        if (q() < 0.8) {
+          const cop = new BoxGeometry(8.6, 0.35, 1.7);
+          (cop.rotateY(a), cop.translate(wx, topY + 0.17, wz), oc.push(cop));
+        }
+      }
+      // tide-lines: each ring a level the water held long enough to stain.
+      // The spacing tightens near the floor — the last years went slowly.
+      let ty2 = 3.3;
+      for (let ring = 0; ring < 6; ring++) {
+        for (let k = 0; k < seg; k++) {
+          const a = ((k + 0.5) / seg) * Math.PI * 2,
+            tl = new BoxGeometry(8.2, 0.14 + ring * 0.025, 0.22);
+          (tl.rotateY(a),
+            tl.translate(rx + Math.sin(a) * (rad - 0.85), ty2, rz + Math.cos(a) * (rad - 0.85)),
+            odark.push(tl));
+        }
+        ty2 -= 0.95 - ring * 0.09;
+      }
+      // cracked mud floor, and the cracks drawn on it
+      const flo = new CylinderGeometry(rad - 0.6, rad - 0.6, 1.1, seg);
+      (flo.translate(rx, floorY - 0.55, rz), oc.push(flo));
+      for (let k = 0; k < 30; k++) {
+        const a = q() * Math.PI * 2, r2 = Math.sqrt(q()) * (rad - 3),
+          crk = new BoxGeometry(2.2 + q() * 4.2, 0.05, 0.09);
+        (crk.rotateY(q() * Math.PI * 2),
+          crk.translate(rx + Math.sin(a) * r2, floorY + 0.035, rz + Math.cos(a) * r2),
+          odark.push(crk));
+      }
+      // the intake tower — absurdly tall now, its waterline doors in the air
+      const ix = rx + 7, iz = rz - 5;
+      const twr = new CylinderGeometry(1.6, 1.9, 8.2, 10);
+      (twr.translate(ix, floorY + 4.1, iz), oc.push(twr));
+      const cab2 = new BoxGeometry(3.2, 1.7, 3.2);
+      (cab2.rotateY(0.3), cab2.translate(ix, floorY + 9.05, iz), oc.push(cab2));
+      for (let k = 0; k < 3; k++) {
+        const dor = new BoxGeometry(0.7, 1.0, 0.2);
+        (dor.rotateY(2.2),
+          dor.translate(ix + 1.35, floorY + 2.0 + k * 2.1, iz + 0.6), odark.push(dor));
+      }
+      // and a boat, on its side in the mud, keel to the sky
+      const hull2 = new BoxGeometry(3.4, 0.9, 1.3);
+      (hull2.rotateZ(1.25), hull2.rotateY(0.8),
+        hull2.translate(rx - 6, floorY + 0.55, rz + 7), otim.push(hull2));
+      const keel = new BoxGeometry(3.0, 0.16, 0.16);
+      (keel.rotateZ(1.25), keel.rotateY(0.8),
+        keel.translate(rx - 6.45, floorY + 0.62, rz + 7), otim.push(keel));
+    }
+    const mOC = new Mesh(Nl(oc), i.mats.stoneOld);
+    ((mOC.castShadow = !0), (mOC.receiveShadow = !0), i.scene.add(mOC));
+    const mOR = new Mesh(Nl(orst), i.mats.rust);
+    ((mOR.castShadow = !0), (mOR.receiveShadow = !0), i.scene.add(mOR));
+    const mOX = new Mesh(Nl(otox), i.mats.toxic);
+    ((mOX.castShadow = !1), (mOX.receiveShadow = !0), i.scene.add(mOX));
+    const mOT = new Mesh(Nl(otim), i.mats.timber);
+    ((mOT.castShadow = !0), i.scene.add(mOT));
+    const mOD = new Mesh(Nl(odark), new MeshBasicMaterial({ color: "#241a3e", fog: !0 }));
+    ((mOD.castShadow = !1), i.scene.add(mOD));
+    const mOS = new Mesh(Nl(ostn), new MeshBasicMaterial({ color: "#5d6a24", fog: !0 }));
+    ((mOS.castShadow = !1), i.scene.add(mOS));
+  }
 }
 function P_(i) {
   const t = new BufferGeometry(),
