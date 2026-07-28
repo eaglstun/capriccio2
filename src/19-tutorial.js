@@ -18,6 +18,14 @@ import { Vector3 } from "three";
 const TUT_KEY = "capriccio-tutorial-v1";
 const SAVE_KEY = "capriccio-save-v1";
 
+/**
+ * Should the walkthrough run at all?
+ *
+ * Only when its own key is absent AND the game is genuinely fresh — no save, no
+ * player actions. Stored under `capriccio-tutorial-v1`, a SEPARATE key, because
+ * the save format is frozen and must not gain a field. `?fresh` clears both,
+ * which is the one place the two keys interact.
+ */
 function eligible() {
   try {
     if (localStorage.getItem(TUT_KEY)) return !1;
@@ -63,6 +71,27 @@ const tutCss = `
   bottom: 160px; text-align: center; } #tut-card { bottom: 160px; } }
 `;
 
+/**
+ * The six-beat first-run walkthrough.
+ *
+ *   1 look        drag and scroll, each clause dimming as it is satisfied
+ *   2 inhabited   the shanties and the people already here
+ *   3 establish   a pier — advances only on a committed anchor action
+ *   4 connect     a stair — a pier alone is a post
+ *   5 the answer  someone moves into a pocket their structure made
+ *   6 hand off    to Marcus's request, the game's own first job
+ *
+ * Beat 5 is the one that matters: it is where the player learns they build
+ * architecture and the citizens decide what it becomes.
+ *
+ * Every action beat advances on the REAL action, never a timer. The camera
+ * yields permanently for a beat on any input, and clicking the request cedes
+ * it for the rest of the walkthrough. Nothing is ever blocked and the skip is
+ * always visible.
+ *
+ * Wraps `CAP.hud.cb.onTool`, `CAP.tools.onCommit` and `onRequestClick` rather
+ * than replacing them, so the game's own handlers keep running.
+ */
 function startWalkthrough() {
   const CAP = window.CAP,
     cam = CAP.camera,
