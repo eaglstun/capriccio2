@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         about: "about.html",
+        howToPlay: "how-to-play.html",
       },
     },
     outDir: "dist",
