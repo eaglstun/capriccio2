@@ -1,0 +1,94 @@
+{
+  "00-shaders.js": [
+    "967c583b6113dbbd",
+    31593
+  ],
+  "01-materials.js": [
+    "edd4c15e19e2f299",
+    10695
+  ],
+  "02-nav.js": [
+    "c6fbf558d59c9d32",
+    3661
+  ],
+  "03-geometry.js": [
+    "28cae3998a1febc6",
+    18138
+  ],
+  "04-builders.js": [
+    "08ca0549df8dbc96",
+    17666
+  ],
+  "05-world.js": [
+    "22cab7bca92be181",
+    38139
+  ],
+  "06-infill.js": [
+    "90bed4c698a1d8d1",
+    9474
+  ],
+  "07-citizens.js": [
+    "94b12602f00bdb7c",
+    9650
+  ],
+  "08-save.js": [
+    "7b4934fceab81bc1",
+    608
+  ],
+  "09-catalogue.js": [
+    "ba0caba4fb555179",
+    1898
+  ],
+  "10-overlays.js": [
+    "741f05346b136751",
+    3125
+  ],
+  "11-tools.js": [
+    "32e84804a5ef3a8e",
+    9285
+  ],
+  "12-requests.js": [
+    "d9dd708e021341e2",
+    3592
+  ],
+  "13-modes.js": [
+    "10a60a477d01209a",
+    4569
+  ],
+  "14-plates.js": [
+    "a9de4fc3e40f4e54",
+    2340
+  ],
+  "15-audio.js": [
+    "ddd6260bf47cdad2",
+    4193
+  ],
+  "16-hud.js": [
+    "c586b8321e28de26",
+    23236
+  ],
+  "17-bootstrap.js": [
+    "4a76239060e5af0e",
+    17407
+  ],
+  "18-music.js": [
+    "59b25935b1d2d958",
+    5318
+  ],
+  "19-tutorial.js": [
+    "491267e1db9b715e",
+    11954
+  ],
+  "_hoisted.js": [
+    "6059759666e23583",
+    240
+  ],
+  "_runtime.js": [
+    "0afbebdb0bc4bb65",
+    183
+  ],
+  "index.js": [
+    "47f485e8a207c0fc",
+    508
+  ]
+}

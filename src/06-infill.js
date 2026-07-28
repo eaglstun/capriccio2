@@ -21,6 +21,25 @@ class InfillSystem {
     defineField(this, "capacity", 0);
     this.world = t;
   }
+  /**
+   * One growth tick. Called every ~2.2s from the frame loop.
+   *
+   * `t` is the hour; `e` is DEMAND, computed by the caller as
+   *   10 + clearance(favor) * 0.28 + (pockets that aren't terrace_p) * 0.12
+   *
+   * Two things happen. First every unfinished building rises a little —
+   * `stage` runs 0..1 and drives `scale.y` from 0.18 to 1, so a building
+   * visibly grows out of the ground. Then, maybe, one new one starts.
+   *
+   * The two gates on starting are the whole pacing of the game:
+   *   - at most TWO buildings under construction at once, so the city grows
+   *     at a legible pace instead of erupting
+   *   - nothing starts unless demand exceeds `items.length * 0.9`
+   *
+   * That second one is why a fresh city stalls at ~16 buildings and looks
+   * finished when it isn't. It is waiting for clearance, which comes from
+   * completing citizen requests. See docs/PROGRESSION.md.
+   */
   grow(t, e) {
     for (const o of this.items)
       o.stage < 1 &&
@@ -37,6 +56,28 @@ class InfillSystem {
     const r = this.chooseKind(s);
     this.spawn(s, r);
   }
+  /**
+   * Choose where the city builds next: the highest-scoring vacant, reachable
+   * pocket — or null if nothing is good enough.
+   *
+   * The score, term by term:
+   *   shelter x1.2      roofed beats exposed
+   *   light   x0.5
+   *   scenic  x0.4      the outlook value, which is never shown in the HUD
+   *   neighbours x0.8   sum of (1 - dist/40) over existing infill within 40u,
+   *                     capped at 3. This is what makes growth CLUMP into
+   *                     districts instead of scattering evenly.
+   *   centre  x1.4      proximity to (-18, 28); the city pulls inward
+   *   water   +0.9 within 45u, +0.3 within 90u
+   *   designation +2.4  <- larger than shelter, light and scenic combined
+   *   under_arch  +0.5  a small thumb on the scale for the Piranesi shape
+   *
+   * DESIGNATION DOMINATES ON PURPOSE. INVITE is the player's one direct lever
+   * on where life appears; everything else is influence.
+   *
+   * The 1.6 floor means genuinely poor ground is never built on at all —
+   * growth stalls rather than sprawling into the wasteland.
+   */
   pickPocket() {
     let t = null,
       e = -1;
@@ -63,6 +104,23 @@ class InfillSystem {
     }
     return e > 1.6 ? t : null;
   }
+  /**
+   * Decide what kind of building goes in a pocket.
+   *
+   * A designation is an instruction and is obeyed exactly:
+   *   garden -> garden, trade -> stall, dwelling -> house, gathering -> shrine
+   *
+   * Undesignated pockets fall through to a roll seeded from
+   * `hashString(structId + ":" + idx)` — DETERMINISTIC, derived from the
+   * pocket's own identity rather than from Math.random(). It has to be: the
+   * save replays the action log, and a city that rebuilt itself with different
+   * buildings each load would not be the same city.
+   *
+   * The remaining rules read the space: niches are too small for anything but
+   * a shrine, decks near water lean garden, arches suit stalls and workshops,
+   * interiors suit trade and worship, and bright well-watered ground can grow
+   * something green.
+   */
   chooseKind(t) {
     if (t.designation === "garden") return "garden";
     if (t.designation === "trade") return "stall";
@@ -91,6 +149,21 @@ class InfillSystem {
                 ? "house"
                 : "workshop";
   }
+  /**
+   * Build a `e`-kind building in pocket `t`. Pass `n` true to skip construction
+   * and appear finished immediately (the save-restore path).
+   *
+   * The key is `structId:kind:counter` — stable, unique, and reproducible,
+   * which is what lets `restore` match saved buildings back to their pockets.
+   * That same key seeds the PRNG, so a rebuilt building is identical down to
+   * its jitter.
+   *
+   * Two nested groups: the outer one carries position and rotation, the inner
+   * one is scaled on Y as the building rises. Scaling the outer group would
+   * drag the scaffold up with it.
+   *
+   * Marks the pocket occupied by index into `items`.
+   */
   spawn(t, e, n = !1) {
     const s = `${t.structId}:${e}`,
       r = (this.counters.get(s) ?? 0) + 1;
@@ -124,6 +197,23 @@ class InfillSystem {
       d
     );
   }
+  /**
+   * Complete a building: full height, scaffold removed and its geometry
+   * disposed (three.js will not free GPU buffers on its own).
+   *
+   * Then two side effects that matter more than they look.
+   *
+   * CAPACITY = completed houses x4 + 8, and population is
+   * `min(132, 14 + capacity)`. Only HOUSES count — stalls, gardens and shrines
+   * add nothing. So 28 finished houses maxes the city permanently and every
+   * house after that is scenery.
+   *
+   * A finished GARDEN pushes a new water source at its position. Since
+   * `pickPocket` pays +0.9 for water within 45 units, planting a garden makes
+   * its whole neighbourhood more attractive to build in. It is the only
+   * feedback loop in the system where one building changes the terms for the
+   * next.
+   */
   finish(t) {
     ((t.building.scale.y = 1),
       t.scaffold &&
@@ -140,6 +230,13 @@ class InfillSystem {
         t.kind === "garden" &&
         this.world.waterSources.push(new Vector3(...e.pos)));
   }
+  /**
+   * The infill state for the save file — four fields per building.
+   *
+   * No geometry and no transform: the mesh is regenerated from `kind` and the
+   * pocket it sits in, and the jitter comes back identical because it is
+   * seeded from `key`. This is why the save stays a few KB.
+   */
   serialize() {
     return this.items.map((t) => ({
       key: t.key,
@@ -148,6 +245,15 @@ class InfillSystem {
       pocketIdx: t.pocketIdx,
     }));
   }
+  /**
+   * Rebuild saved infill. `e` is a lookup from saved key back to a live
+   * pocket, supplied by the caller (the pockets themselves are regenerated
+   * from the replayed action log, so the mapping has to be recomputed).
+   *
+   * Skips anything whose pocket has vanished or is already taken — a saved
+   * building whose supporting structure was undone simply does not come back.
+   * Buildings caught mid-construction resume at their saved stage.
+   */
   restore(t, e) {
     for (const n of t) {
       const s = e(n.key);
@@ -157,6 +263,7 @@ class InfillSystem {
         n.stage < 1 && (r.building.scale.y = 0.18 + n.stage * 0.82));
     }
   }
+  /** Remove every building and dispose its geometry. Used by "begin anew". */
   clear() {
     for (const t of this.items)
       (t.group.parent?.remove(t.group),
@@ -166,6 +273,14 @@ class InfillSystem {
     ((this.items = []), this.counters.clear(), (this.capacity = 0));
   }
 }
+/**
+ * The scaffold that stands around a building while it goes up: four corner
+ * poles, rails, a diagonal brace and a plank. Removed and disposed by
+ * `finish`.
+ *
+ * Sized to the building kind — houses and workshops get a bigger frame than
+ * stalls, and gardens get a short one since there is no wall to climb.
+ */
 function U_(i, t, e) {
   const n = new Group(),
     s = t === "house" || t === "workshop" ? 5.4 : 3.6,
@@ -186,6 +301,18 @@ function U_(i, t, e) {
   const l = new Mesh(a.merge(), i.mats.timber);
   return ((l.castShadow = !0), n.add(l), n);
 }
+/**
+ * Build the actual mesh for one infill building.
+ *
+ * `i` world, `t` group to add into, `e` an array that collects window meshes
+ * for the caller, `n` the pocket, `s` the kind, `r` the seeded PRNG.
+ *
+ * Every dimension and every roll comes from `r`, which the caller seeded from
+ * the building's stable key — so this function is a pure function of (kind,
+ * pocket, key) and reproduces exactly on reload.
+ *
+ * Branches per kind below: house, stall, workshop, shrine, garden.
+ */
 function N_(i, t, e, n, s, r) {
   const o = i.mats,
     a = (l, h, u = !0) => {

@@ -11,14 +11,32 @@ import { $n, isFlatGround, terrainHeightAt } from "./01-materials.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
+/**
+ * The walkable graph the citizens move on.
+ *
+ * Nodes are points in 3D with weighted links to their neighbours, bucketed
+ * into a spatial hash (10-unit cells) so `nearest` doesn't scan everything.
+ * Ground nodes come from `seedTerrain`; structures add their own when built,
+ * tagged with the id of the structure that created them.
+ *
+ * NODE INDICES ARE STABLE AND REFERENCED FROM OUTSIDE. Pockets store a
+ * `navNode` index, agents store `homeNode`/`workNode`. Nothing may ever splice
+ * the array — see `removeStruct`.
+ */
 class NavGraph {
   constructor() {
     defineField(this, "nodes", []);
     defineField(this, "cell", new Map());
   }
+  /** Spatial-hash bucket for a world (x, z). 10-unit cells. */
   key(t, e) {
     return `${Math.round(t / 10)},${Math.round(e / 10)}`;
   }
+  /**
+   * Add a node at position `t`, owned by structure `e` (-1 = terrain), where
+   * `n` marks it as ground. Returns its index — callers keep that index, so it
+   * must stay valid for the life of the graph.
+   */
   add(t, e = -1, n = !1) {
     const s = this.nodes.length;
     this.nodes.push({ p: t.clone(), links: new Map(), ground: n, structId: e });
@@ -26,6 +44,14 @@ class NavGraph {
     let o = this.cell.get(r);
     return (o || ((o = []), this.cell.set(r, o)), o.push(s), s);
   }
+  /**
+   * Connect two nodes, both ways, with a movement cost.
+   *
+   * Cost is horizontal distance plus 1.5x the height difference — climbing is
+   * penalised, so a citizen prefers a longer flat route to a shorter steep
+   * one. `n` scales the whole thing for links that should be discouraged or
+   * favoured.
+   */
   link(t, e, n = 1) {
     if (t === e || t < 0 || e < 0) return;
     const s = this.nodes[t].p,
@@ -34,6 +60,17 @@ class NavGraph {
       a = (s.distanceTo(r) + o * 1.5) * n;
     (this.nodes[t].links.set(e, a), this.nodes[e].links.set(t, a));
   }
+  /**
+   * Nearest node to point `t` within radius `e`, or -1.
+   *
+   * Only scans the spatial-hash cells the radius can reach. Vertical distance
+   * is weighted 1.6x, so a node on your own floor beats an equidistant one on
+   * the storey above — which is what makes multi-level cities path sensibly.
+   *
+   * `n` is an optional predicate (node, index) => boolean for callers that
+   * need a filtered search. Tombstoned nodes (structId -999) are always
+   * skipped.
+   */
   nearest(t, e = 9, n) {
     let s = -1,
       r = e * e;
@@ -56,6 +93,18 @@ class NavGraph {
       }
     return s;
   }
+  /**
+   * A* from node `t` to node `e`. Returns the node indices to walk, or [] if
+   * unreachable.
+   *
+   * Straight-line distance to the goal as the heuristic (admissible, since
+   * link costs are >= euclidean distance). `s` is g-score, `r` is came-from,
+   * `a` is the closed set, `n` is the binary heap below.
+   *
+   * Capped at 20,000 expansions. On a disconnected or pathological graph this
+   * returns [] rather than stalling the frame — a citizen who cannot find a
+   * route simply doesn't move, which is invisible; a locked-up tab is not.
+   */
   path(t, e) {
     if (t < 0 || e < 0) return [];
     if (t === e) return [t];
@@ -88,6 +137,16 @@ class NavGraph {
     }
     return [];
   }
+  /**
+   * Lay the ground grid: a node every `$n` units across each region in `t`,
+   * but only where `isFlatGround` says the slope is walkable.
+   *
+   * Links go in four directions (E, N, NE, SE — the reverse directions come
+   * free because `link` is bidirectional). Two rejections matter:
+   *   - a step of more than 2.4 units is a cliff, not a walk
+   *   - the midpoint must also be flat, so a link cannot bridge a gully by
+   *     connecting the two flat rims across it
+   */
   seedTerrain(t) {
     const e = new Map();
     for (const n of t)
@@ -117,6 +176,17 @@ class NavGraph {
       }
     }
   }
+  /**
+   * Detach every node belonging to structure `t` (used by UNDO).
+   *
+   * TOMBSTONES, DOES NOT SPLICE. The node objects stay in the array at their
+   * original indices with structId -999 and no links; `nearest` skips them.
+   *
+   * That looks wasteful and is deliberate: pockets and agents hold node
+   * indices, so removing an element would silently re-point every index above
+   * it at the wrong node. Leaking a few dead entries is much cheaper than
+   * rewriting every reference in the game.
+   */
   removeStruct(t) {
     for (let e = 0; e < this.nodes.length; e++) {
       const n = this.nodes[e];
@@ -127,6 +197,14 @@ class NavGraph {
     }
   }
 }
+/**
+ * Binary min-heap used as A*'s open set.
+ *
+ * Two parallel arrays — `ids` (node index) and `ks` (priority) — rather than
+ * objects, to avoid allocating a wrapper per push in the inner pathfinding
+ * loop. push/pop are O(log n); a sorted-array queue would be O(n) per insert
+ * and shows up immediately with 46 citizens repathing.
+ */
 class p_ {
   constructor() {
     defineField(this, "ids", []);
@@ -135,6 +213,7 @@ class p_ {
   get size() {
     return this.ids.length;
   }
+  /** Insert id `t` with priority `e`, then sift up to restore the heap. */
   push(t, e) {
     (this.ids.push(t), this.ks.push(e));
     let n = this.ids.length - 1;
@@ -144,6 +223,7 @@ class p_ {
       (this.swap(n, s), (n = s));
     }
   }
+  /** Remove and return the lowest-priority id: swap the last item in, sift down. */
   pop() {
     const t = this.ids[0],
       e = this.ids.length - 1;
