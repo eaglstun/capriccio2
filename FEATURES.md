@@ -38,27 +38,46 @@ uses that fact except reload.
 
 ---
 
-## The freeze decision — this is the call to make first
+## What is still constrained — and what no longer is
 
-Eight passes stayed safe because seven things never moved: `pickPocket`, the
-five stat formulas, `applyAction`, the pocket model, the save format, catalogue
-`key` values, and structure envelopes. Every pass was checked against them.
+**No one has played this yet. There are no saves in the world to protect.**
+Every constraint that existed to preserve backward compatibility is lifted.
 
-Some features below need that relaxed. **Unfreezing is not the end of the
-world, but it must be deliberate and narrow** — one named system at a time,
-with the rest still enforced, and with a stated way to tell whether it broke.
+That is a real unblocking, but it does not lift everything, because several
+items on the old frozen list were never about compatibility at all. Sort them:
 
-Two things I would keep frozen regardless:
+### Lifted — these were compat constraints
 
-- **`applyAction` and the pocket model.** These are what make replay
-  deterministic. Break them and old saves quietly rebuild into different
-  cities.
-- **Existing catalogue `key` values.** _Adding_ a key is safe; changing one
-  orphans every save that used it.
+- **The save format may change.** Add fields, rename fields, restructure it.
+  Bump `v` and drop the old-version branch if that is cleaner.
+- **Catalogue `key` values may change.** They are referenced by `chooseKind`
+  and the builders, so it is a refactor — but a safe one, and no save will be
+  orphaned.
+- **Resource field names may change.** `res.timber` can genuinely become
+  `res.salvage` rather than a label-only rename. See A14.
 
----
+### Still constrained — these are correctness, not compat
 
----
+- **`applyAction` and the pocket model must stay deterministic.** This was
+  never about old saves. The save IS an action log, so if replay is not
+  deterministic then saving and reloading gives you a *different city* — the
+  feature breaks against itself, today, with no history involved.
+- **Every builder must keep seeding from the action id.** Same reason.
+- **Structure envelopes still govern pockets.** Changing a footprint changes
+  what the city grows, which is a gameplay decision rather than a bug — make it
+  deliberately if at all, not as a side effect of restyling.
+- **`public/` is never edited.** It is the original artifact and the reference
+  everything is verified against.
+- **Never run `split_bundle.py --write`**; never delete `src/.hand-edited`.
+  `src/` is hand-edited and regenerating would silently destroy it.
+- **No shipped binary assets or runtime fetches.** Procedural or nothing.
+
+### The verification numbers still apply
+
+A fresh city should still report **24 structures, 48 pockets, 1331 navNodes,
+46 pop, kinds 12/34/1/1** unless a change is *meant* to move them. They are the
+cheapest signal that something drifted by accident, and that is worth keeping
+whether or not anyone has a save.
 
 ## A0. The named citizens do not exist — and the tutorial sends you to find them ⭐ do first
 
@@ -575,26 +594,19 @@ Alternatives if it does not sit right: SCRAP (blunter), SHEET (more technical),
 COMPOSITE (colder). Avoid POLYMER — it competes with the cypress hint, which
 already uses "in polymer".
 
-#### Scope — display only, and this matters
+#### Scope: rename it properly
 
-**Rename the LABEL, not the field.** `gameState.res.timber` is written into the
-save, and renaming the key would orphan every existing save. Do exactly what
-was done for CLEARANCE: change the HUD text, leave the data model alone.
+No saves exist, so this is **not** a label-only change like CLEARANCE was.
+Rename the field: `gameState.res.timber` becomes `res.salvage` throughout —
+state, costs, the income tick, `costOf`, the affordability check, the save
+object, the HUD id.
 
-The HUD element id (`#r-timber`) can stay too — it is internal.
+Also update `docs/PROGRESSION.md` and the how-to-play page, which both name it.
 
-Also update:
-
-- The **cost readouts** wherever the price of an action is shown
-- `docs/PROGRESSION.md` and the **how-to-play page**, which both name it
-- The **material** is separately called `mats.timber` in code. That is internal
-  and can stay, but if the surfaces it draws still read as *planks* rather than
-  as salvaged sheet, that is worth a look while in there.
-
-#### Verify
-
-An existing save loads and still shows the right number under the new label,
-and the save blob still contains `timber` as its key.
+The material is separately `mats.timber` in code. Rename that too while in
+there — and if the surfaces it draws still read as *planks* rather than as
+salvaged sheet, that is worth fixing at the same time, since the word and the
+look should agree.
 
 ### A4. Ambient life
 
