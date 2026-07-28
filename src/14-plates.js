@@ -97,4 +97,4 @@ function tv(i) {
 }
 
 // --- generated exports ---
-export { renderPlateImage };
+export { renderPlateImage, tv };

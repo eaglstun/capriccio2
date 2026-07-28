@@ -360,13 +360,20 @@ async function Uh(i = !1) {
     r = gameState.plates.length + 1,
     a = `${bi.length ? bi[0].name : gameState.cityName} · day ${te.day}`,
     c = await renderPlateImage(s, a, r);
-  (gameState.plates.push({
+  gameState.plates.push({
     cam: [...ie.position.toArray(), ...Te.target.toArray()],
     hour: te.hour,
     caption: a,
     n: r,
-  }),
-    fe.showPlate(c, `capriccio-plate-${String(r).padStart(2, "0")}.png`),
+  });
+  // the save keeps plates.slice(-16); past sixteen, each new plate pushes
+  // the oldest out of the record. Show which one.
+  const l =
+    gameState.plates.length > 16
+      ? gameState.plates[gameState.plates.length - 17]
+      : null;
+  (fe.showPlate(c, `capriccio-plate-${String(r).padStart(2, "0")}.png`, l),
+    fe.updateFolio(gameState.plates.slice(-16)),
     (gameState.res.favor += 6),
     (gameState.dirty = !0));
 }
@@ -436,6 +443,7 @@ if (hn) {
     }
 }
 ei.sync();
+fe.updateFolio(gameState.plates.slice(-16));
 {
   const i = document.querySelector("#veil"),
     t = document.createElement("div");
@@ -565,6 +573,9 @@ window.CAP = {
   section: Qn,
   undo: rc,
   doSave: ac,
+  engrave(i = !0) {
+    return Uh(i);
+  },
   async plateTest() {
     const i = ke.snap(je, ie, 800, 533);
     return (await renderPlateImage(i, "test plate · day 1", 1)).length;

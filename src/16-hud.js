@@ -9,6 +9,7 @@
 import { Vector3 } from "three";
 import { gameState } from "./07-citizens.js";
 import { BUILD_CATALOGUE } from "./09-catalogue.js";
+import { tv } from "./14-plates.js";
 import { rv } from "./_hoisted.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
@@ -72,6 +73,12 @@ const nv = `
 #platectl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #platectl .btnrow { display: flex; gap: 6px; margin: 6px 0; }
 #platectl .engrave { width: 100%; padding: 8px; font-size: 11px; margin-top: 4px; }
+/* the folio: sixteen slots, never labelled as sixteen — the player
+   discovers the count by filling it */
+#folio-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 9px; }
+#folio-strip i { display: block; aspect-ratio: 3/2; border: 1px solid rgba(111,245,234,0.3); font-style: normal; }
+#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); }
+#folio-strip i.last { border-color: #ff71ce; box-shadow: 0 0 5px rgba(255,113,206,0.6); }
 #wanderhint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 7px 18px;
   font-size: 11px; letter-spacing: 0.15em; display: none; font-style: italic; }
 #platemark { position: absolute; inset: 9px; border: 1px solid rgba(255,113,206,0.35); pointer-events: none; }
@@ -214,6 +221,7 @@ class Hud {
         <div>LENS <input type="range" id="plate-fov" min="22" max="70" value="42"/></div>
         <div>HOUR <input type="range" id="plate-hour" min="5.6" max="20.4" value="16.2" step="0.1"/></div>
         <button class="engrave" id="plate-go">ENGRAVE THIS PLATE</button>
+        <div id="folio-strip"></div>
       </div>
       <div id="wanderhint" class="panel">W A S D walk · SHIFT hurry · ESC return</div>
       <div id="frame"><div class="bar" id="fb-t"></div><div class="bar" id="fb-b"></div><div class="bar" id="fb-l"></div><div class="bar" id="fb-r"></div></div>
@@ -463,7 +471,25 @@ class Hud {
       (s.classList.toggle("on", t === "x"),
       r.classList.toggle("on", t === "z"));
   }
-  showPlate(t, e) {
+  // The folio holds what the save holds: the last sixteen plates. Filled
+  // slots read as prints in a case; hover names each one. No caption, no
+  // count — the strip is discovered by filling it.
+  updateFolio(t) {
+    const e = this.root.querySelector("#folio-strip");
+    if (e) {
+      e.innerHTML = "";
+      for (let n = 0; n < 16; n++) {
+        const s = document.createElement("i"),
+          r = t[n];
+        (r &&
+          (s.classList.add("held"),
+          (s.title = `Tav. ${tv(r.n)} — ${r.caption}`),
+          n === t.length - 1 && s.classList.add("last")),
+          e.appendChild(s));
+      }
+    }
+  }
+  showPlate(t, e /* , evicted */) {
     const n = document.createElement("div");
     n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(14,7,34,0.82);
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto`;
@@ -489,10 +515,20 @@ class Hud {
       ((a.href = t), (a.download = e), a.click());
     }),
       (o("CLOSE").onclick = () => n.remove()),
-      n.appendChild(r),
-      (n.onclick = (a) => {
-        a.target === n && n.remove();
-      }),
+      n.appendChild(r));
+    // the seventeenth plate pushes the first out. Say which one, and
+    // nothing else — the event is the explanation.
+    if (arguments[2]) {
+      const a = arguments[2],
+        c = document.createElement("div");
+      ((c.style.cssText =
+        "font-size:11px;font-style:italic;letter-spacing:0.14em;opacity:0.72;color:#f4e9ff"),
+        (c.textContent = `Tav. ${tv(a.n)} — ${a.caption} — leaves the record`),
+        n.appendChild(c));
+    }
+    ((n.onclick = (a) => {
+      a.target === n && n.remove();
+    }),
       this.root.appendChild(n));
   }
   updateFrame(t, e, n) {
