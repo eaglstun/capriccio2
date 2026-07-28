@@ -68,7 +68,8 @@ function n_() {
       fog: !0,
     }),
     l = new MeshBasicMaterial({ color: "#1c1440", fog: !0 }),
-    h = new MeshLambertMaterial({ color: "#2e2152", fog: !0 }),
+    // near-white base: the citizens' per-instance colours carry the clothing
+    h = new MeshLambertMaterial({ color: "#d8d2e6", fog: !0 }),
     u = new MeshBasicMaterial({
       color: "#35d4e0",
       transparent: !0,

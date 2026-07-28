@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Object3D, SphereGeometry, Vector3 } from "three";
+import { BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Object3D, SphereGeometry, Vector3 } from "three";
 import { hashString, r_, seededRng } from "./01-materials.js";
 import { Co } from "./06-infill.js";
 import { defineField } from "./_runtime.js";
@@ -47,6 +47,26 @@ class Citizens {
         offset: Math.random() * 1.6 - 0.8,
         bob: Math.random() * 7,
       });
+    // a population, not a uniform: clothing colour and build derived
+    // deterministically from the agent index — render-side only
+    this.look = [];
+    const lk = seededRng(9091),
+      hues = [0.86, 0.55, 0.72, 0.62, 0.09, 0.33, 0.94, 0.5];
+    for (let r = 0; r < Co; r++) {
+      const c = new Color();
+      lk() < 0.06
+        ? c.setHSL(0.07, 0.95, 0.58) // one hi-vis jacket in twenty
+        : c.setHSL(
+            (hues[Math.floor(lk() * hues.length)] + (lk() - 0.5) * 0.06 + 1) % 1,
+            0.18 + lk() * 0.5,
+            0.26 + lk() * 0.4,
+          );
+      this.look.push({
+        col: c,
+        sx: 0.88 + lk() * 0.3,
+        sy: 0.88 + lk() * 0.26,
+      });
+    }
   }
   spawnPoints() {
     const t = [];
@@ -189,13 +209,18 @@ class Citizens {
         const f = c.path[Math.min(c.seg + 1, c.path.length - 1)];
         this.dummy.lookAt(f.x, this.dummy.position.y, f.z);
       } else this.dummy.rotation.set(0, c.offset * 23.1, 0);
-      (this.dummy.updateMatrix(),
+      const lk = this.look[a];
+      (this.dummy.scale.set(lk.sx, lk.sy, lk.sx),
+        this.dummy.updateMatrix(),
         h.setMatrixAt(u, this.dummy.matrix),
+        h.setColorAt(u, lk.col),
         (o[l] = u + 1));
     }
     for (let c = 0; c < 3; c++)
       ((this.meshes[c].count = o[c]),
-        (this.meshes[c].instanceMatrix.needsUpdate = !0));
+        (this.meshes[c].instanceMatrix.needsUpdate = !0),
+        this.meshes[c].instanceColor &&
+          (this.meshes[c].instanceColor.needsUpdate = !0));
   }
 }
 function Po(i) {
