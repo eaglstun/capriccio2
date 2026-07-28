@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Object3D, SphereGeometry, Vector3 } from "three";
+import { BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Mesh, Object3D, OctahedronGeometry, SphereGeometry, Vector3 } from "three";
 import { hashString, r_, seededRng } from "./01-materials.js";
 import { Co } from "./06-infill.js";
 import { defineField } from "./_runtime.js";
@@ -33,7 +33,19 @@ class Citizens {
     defineField(this, "agents", []);
     defineField(this, "population", 16);
     defineField(this, "dummy", new Object3D());
+    // the current speaker: index of the one agent voicing the active
+    // request, or -1 when nobody is asking. Derived by the caller from the
+    // request id (never stored — the save format is frozen), so a reload
+    // produces the same Marcus. See setSpeaker().
+    defineField(this, "speaker", -1);
+    defineField(this, "marker");
+    defineField(this, "speakerCol", new Color("#ff71ce"));
     ((this.world = t), (this.infill = e));
+    // a small floating mark over the speaker's head. It shares the world's
+    // glow material, so it dims to a lamp at dusk like everything else lit —
+    // findable once framed, not a quest beacon across the map.
+    this.marker = new Mesh(new OctahedronGeometry(0.34, 0), t.glowMat);
+    ((this.marker.scale.y = 1.6), (this.marker.visible = !1), n.add(this.marker));
     const s = t.mats.figure;
     this.meshes = [Po(0), Po(1), Po(2)].map((r) => {
       const o = new InstancedMesh(r, s, Co);
@@ -80,6 +92,22 @@ class Citizens {
         sy: 0.88 + lk() * 0.26,
       });
     }
+  }
+  /**
+   * Mark agent `t` as the current speaker, or clear with -1.
+   *
+   * One speaker, one marker, tied to the active request. When the last
+   * request completes nobody is marked — the empty state is deliberate.
+   * The speaker stays an ordinary agent in every other way: same routine,
+   * same route, only the colour and the mark over their head.
+   */
+  setSpeaker(t) {
+    ((this.speaker = t), t < 0 && (this.marker.visible = !1));
+  }
+  /** The agent currently speaking, or null. */
+  speakerAgent() {
+    const t = this.agents[this.speaker];
+    return t && t.active ? t : null;
   }
   /** Nav nodes citizens live at: every FINISHED house. Homes are houses only. */
   spawnPoints() {
@@ -280,10 +308,22 @@ class Citizens {
         this.dummy.lookAt(f.x, this.dummy.position.y, f.z);
       } else this.dummy.rotation.set(0, c.offset * 23.1, 0);
       const lk = this.look[a];
+      if (a === this.speaker) {
+        // the speaker reads as someone: HUD magenta, and the mark turning
+        // slowly overhead, riding their walk
+        const mk = this.marker;
+        ((mk.visible = !0),
+          mk.position.set(
+            this.dummy.position.x,
+            this.dummy.position.y + 2.15 + Math.sin(c.bob * 0.35) * 0.12,
+            this.dummy.position.z,
+          ),
+          (mk.rotation.y += t * 1.4));
+      }
       (this.dummy.scale.set(lk.sx, lk.sy, lk.sx),
         this.dummy.updateMatrix(),
         h.setMatrixAt(u, this.dummy.matrix),
-        h.setColorAt(u, lk.col),
+        h.setColorAt(u, a === this.speaker ? this.speakerCol : lk.col),
         (o[l] = u + 1));
     }
     for (let c = 0; c < 3; c++)

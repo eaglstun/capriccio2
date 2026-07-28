@@ -9,7 +9,7 @@
 import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders.js";
-import { Aa, Nn, Vr, clamp, lerp, n_ } from "./01-materials.js";
+import { Aa, Nn, Vr, clamp, hashString, lerp, n_ } from "./01-materials.js";
 import { Ah, C_, P_, World } from "./05-world.js";
 import { InfillSystem } from "./06-infill.js";
 import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
@@ -82,11 +82,31 @@ const dc_dusk = new Color("#ff8c46"),      // violent orange
   dc_hemiDawn = new Color("#c3cfe6"),
   dc_paperDay = new Color("#f0ddeb"),      // bleached high day
   dc_paperDusk = new Color("#eb9f76"),     // the hot sheet
-  dc_paperDawn = new Color("#bfc8d8");     // cool blue-grey
+  dc_paperDawn = new Color("#bfc8d8"),     // cool blue-grey
+  dc_paperNight = new Color("#221a30"),    // the sheet gone cold and dark
+  dc_hemiNight = new Color("#4a4666");
+// The clock runs 5.6 → 29.6 (= 5.6 next morning); hours past 20.5 are the
+// night, which the frame loop drives at NIGHT_RATE so dark is an event, not
+// a wait. os() takes the raw hour, so it must accept the whole 5.6–29.6 range.
+const NIGHT_START = 20.5,
+  DAY_END = 29.6,
+  NIGHT_HOURS = DAY_END - NIGHT_START, // 9.1
+  NIGHT_RATE = 2.5;
 function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
-    e = lerp(2.05, -2.05, t),
-    n = 0.09 + Math.sin(Math.PI * t) * 0.43,
+    // night phase: 0 at 20.5, 1 at 29.6 (which is 5.6 tomorrow)
+    u = clamp((i - NIGHT_START) / NIGHT_HOURS, 0, 1),
+    // full dark plateaus through the middle of the night and releases
+    // into dawn before the wrap, so both boundaries are seamless
+    nightAmt = Nn(0, 0.14, u) * (1 - Nn(0.8, 0.97, u)),
+    // by night the sun keeps rotating the long way round, landing exactly
+    // on the dawn azimuth (2.05 - 2π ≡ 2.05) as the clock wraps
+    e = u > 0 ? -2.05 - u * (2 * Math.PI - 4.1) : lerp(2.05, -2.05, t),
+    n =
+      0.09 +
+      Math.sin(Math.PI * t) * 0.43 -
+      // below the horizon in the middle of the night, back up for dawn
+      Math.sin(Math.PI * u) * 0.55,
     s = new Vector3(
       Math.sin(e) * Math.cos(n),
       Math.sin(n),
@@ -98,31 +118,74 @@ function os(i) {
   // Between them the day bleaches. Free variety, twice a day.
   const r = 1 - Math.sin(Math.PI * t),
     o = Nn(0.45, 0.95, r),
-    hv = Nn(0.42, 0.58, t),
+    // through the night dusk hands over to dawn late — the last quarter —
+    // which keeps the birds (gated on dusk < 0.55) silent until the
+    // pre-dawn chorus, and lands duskAmt/dawnAmt exactly on their 5.6
+    // values as the clock wraps
+    hv = u > 0 ? 1 - Nn(0.72, 0.98, u) : Nn(0.42, 0.58, t),
     duskAmt = o * hv,
     dawnAmt = o * (1 - hv);
   (Pe.color.set("#fff3ec"),
     Pe.color.lerp(dc_dusk, Nn(0.2, 0.8, duskAmt)),
     Pe.color.lerp(dc_dawn, Nn(0.2, 0.8, dawnAmt)),
-    (Pe.intensity = lerp(3.5, 2.55, o)),
-    (Nr.intensity = lerp(0.6, 0.42, o)),
-    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt),
+    (Pe.intensity = lerp(3.5, 2.55, o) * (1 - nightAmt)),
+    // ambient down hard: enough to read silhouettes, no more
+    (Nr.intensity = lerp(lerp(0.6, 0.42, o), 0.08, nightAmt)),
+    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt).lerp(dc_hemiNight, nightAmt),
     ke.setDusk(duskAmt),
     ke.setDawn(dawnAmt),
+    ke.setNight(nightAmt),
     ke.setSunDir(Pe.position.clone().normalize()),
     syncLightUniforms(Pe, Nr));
   // paper follows the hour — blue-grey morning, bleached high day, hot
-  // dusk — and the fog agrees with the sheet
-  const pc = dc_paperDay.clone().lerp(dc_paperDusk, duskAmt).lerp(dc_paperDawn, dawnAmt);
+  // dusk, cold dark night — and the fog agrees with the sheet
+  const pc = dc_paperDay
+    .clone()
+    .lerp(dc_paperDusk, duskAmt)
+    .lerp(dc_paperDawn, dawnAmt)
+    .lerp(dc_paperNight, nightAmt);
   (ke.setPaper(pc), je.fog.color.copy(pc));
-  // artificial light takes over as the sun drops — harder at dusk
+  // artificial light takes over as the sun drops — harder at dusk, and at
+  // night it is the only real light there is
   const a = Kt.glowMat,
-    c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9;
+    c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9 + nightAmt * 1.5;
   a.color.setRGB(1.05 * c + 0.12, 0.42 * c + 0.06, 0.85 * c + 0.12);
 }
 os(te.hour);
 let fn = "build",
   Fr = !1;
+// One shared camera ease — the request panel and the folio slots both fly
+// the camera rather than cutting it. Smoothstepped, ~2s, and any real drag
+// or wheel cancels it instantly: the player always outranks the machine.
+let Sf = null;
+function flyCam(i, t, e = 1.9) {
+  Sf = {
+    k: 0,
+    dur: e * 1000,
+    p0: ie.position.clone(),
+    p1: i.clone(),
+    g0: Te.target.clone(),
+    g1: t.clone(),
+  };
+}
+// --- the current speaker -------------------------------------------------
+// Whoever is voicing the active request. DERIVED from the request id, never
+// stored — the save format is frozen, and hashing the id means a reload
+// produces the same Marcus, and any future request gets a speaker for free.
+// Modulo 14 because population is never below the base 14, so the speaker
+// is always an active, walking citizen. The "voice:" salt is not decoration:
+// it is the one prefix under which all five request ids land on five
+// DIFFERENT citizens — Marcus and Tullia must not share a body.
+let Uv = "";
+function syncSpeaker() {
+  const i = oi.active;
+  if (!i) {
+    (ei.setSpeaker(-1), (Uv = ""));
+    return;
+  }
+  (ei.setSpeaker(hashString("voice:" + i.id) % 14),
+    (Uv = (i.text.match(/—\s*(.*)$/s)?.[1] ?? "").trim()));
+}
 const Or = { pos: new Vector3(), target: new Vector3() },
   Mn = new PlacementTool(Kt, ie, je),
   Qn = new SectionMode(Kt, us),
@@ -184,6 +247,29 @@ const Or = { pos: new Vector3(), target: new Vector3() },
       ((oc = !0),
         localStorage.removeItem("capriccio-save-v1"),
         location.reload());
+    },
+    // click the request and the camera goes to the citizen who spoke —
+    // keeping the player's azimuth, so the view turns to face them rather
+    // than swinging around the city
+    onRequestClick: () => {
+      const i = ei.speakerAgent();
+      if (!i) return;
+      const t = i.pos.clone();
+      t.y += 1.3;
+      const e = Math.atan2(ie.position.x - t.x, ie.position.z - t.z);
+      flyCam(
+        new Vector3(t.x + Math.sin(e) * 24, t.y + 11, t.z + Math.cos(e) * 24),
+        t,
+      );
+    },
+    // a folio slot returns the camera to exactly the plate's stored pose
+    onPlateSlot: (i) => {
+      i?.cam?.length === 6 &&
+        flyCam(
+          new Vector3(i.cam[0], i.cam[1], i.cam[2]),
+          new Vector3(i.cam[3], i.cam[4], i.cam[5]),
+          2.2,
+        );
     },
   });
 function av(i) {
@@ -251,11 +337,19 @@ function sc() {
 }
 const On = { x: 0, y: 0, t: 0, down: !1 };
 us.domElement.addEventListener("pointerdown", (i) => {
-  ((On.x = i.clientX),
+  ((Sf = null), // the player's hand cancels any camera flight
+    (On.x = i.clientX),
     (On.y = i.clientY),
     (On.t = performance.now()),
     (On.down = !0));
 });
+us.domElement.addEventListener(
+  "wheel",
+  () => {
+    Sf = null;
+  },
+  { passive: !0 },
+);
 us.domElement.addEventListener("pointerup", (i) => {
   if (!On.down) return;
   On.down = !1;
@@ -385,20 +479,37 @@ function updateQualityMeters() {
     n = i.length ? i.reduce((a, c) => a + c.light, 0) / i.length : 0.5,
     s = Kt.actions.filter((a) => a.t === "emb" && a.kind === "lantern").length,
     r = clamp(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
+  // GRANDEUR is two independently capped halves — structure (0.60) and
+  // ornament (0.40) — so neither maxes the meter alone: grandeur requires a
+  // city that is both built and adorned. Cypress scores 0 (12 of the 18
+  // seeded ornaments are trees; any value lets starting scenery dominate —
+  // and a tree is the one thing here nobody built). Passage scores 0: a
+  // door is circulation, not monument; the 8m Gate is the ceremonial one.
+  // Lanterns score almost nothing because they already feed BELONGING.
   let o = 0;
   for (const [, a] of Kt.structures) {
     const c = a.action;
-    (c.t === "span" && (o += 0.14),
-      c.t === "vault" && (o += 0.12),
-      c.t === "rise" && (o += 0.08),
-      c.t === "anchor" && c.style === "giant" && (o += 0.08));
+    (c.t === "span" && (o += 0.042),
+      c.t === "vault" && (o += 0.036),
+      c.t === "rise" && (o += 0.025),
+      c.t === "anchor" && c.style === "giant" && (o += 0.032));
+  }
+  let orn = 0;
+  for (const a of Kt.actions) {
+    (a.t === "emb" &&
+      (a.kind === "statue" && (orn += 0.026),
+      a.kind === "obelisk" && (orn += 0.026),
+      a.kind === "fountain" && (orn += 0.022),
+      a.kind === "lantern" && (orn += 0.005)),
+      a.t === "carve" && a.w >= 8 && (orn += 0.022),
+      a.t === "anchor" && a.style === "column" && (orn += 0.018));
   }
   fe.updateQuals({
     ACCESS: t,
     SHELTER: e,
     LIGHT: n,
     BELONGING: r,
-    GRANDEUR: clamp(o, 0, 1),
+    GRANDEUR: clamp(o, 0, 0.6) + clamp(orn, 0, 0.4),
   });
 }
 let oc = !1;
@@ -473,11 +584,20 @@ fe.updateFolio(gameState.plates.slice(-16));
     }),
     i.appendChild(e));
 }
+// The handover: on completion the marker leaves the speaker at once — they
+// go back into the crowd — and the next speaker is marked only when their
+// request is announced, after the existing 9s delay. When the last request
+// is done nobody is marked at all; the empty state is the point.
 oi.onDone = (i) => {
-  (fe.toast(i.thanks + `  (+${i.favor} clearance)`, 7e3), fe.setRequest(null));
+  (fe.toast(i.thanks + `  (+${i.favor} clearance)`, 7e3),
+    fe.setRequest(null),
+    ei.setSpeaker(-1),
+    (Uv = ""));
 };
-oi.onNew = (i) => fe.setRequest(i.text);
-oi.active && fe.setRequest(oi.active.text);
+oi.onNew = (i) => {
+  (fe.setRequest(i.text), syncSpeaker());
+};
+oi.active && (fe.setRequest(oi.active.text), syncSpeaker());
 Kt.onStructureBuilt = () => {};
 let Ns = performance.now(),
   Do = 0,
@@ -486,10 +606,14 @@ te.paused = !0;
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
   if (((Aa.value += t), ov(Aa.value), Kt.sceneTick && Kt.sceneTick(Aa.value), !te.paused)) {
-    ((te.hour += t * te.speed),
-      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (gameState.dirty = !0)),
+    // the dark hours run at NIGHT_RATE — a full day is ~11.7 real minutes,
+    // ~2.3 of them night — and the day turns over at the 29.6 → 5.6 wrap
+    const hourDelta =
+      t * te.speed * (te.hour > NIGHT_START ? NIGHT_RATE : 1);
+    ((te.hour += hourDelta),
+      te.hour >= DAY_END && ((te.hour -= 24), te.day++, (gameState.dirty = !0)),
       os(te.hour),
-      V_(t * te.speed),
+      V_(hourDelta),
       ei.update(t, te.hour),
       ni.active && ni.update(t),
       (Lo += t),
@@ -514,10 +638,25 @@ function Nh(i) {
       };
     (Lh.update(t, Vv), score.update(t, Vv));
   }
+  if (Sf) {
+    ((Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur)));
+    const n = Sf.k,
+      r = n * n * (3 - 2 * n);
+    (ie.position.lerpVectors(Sf.p0, Sf.p1, r),
+      Te.target.lerpVectors(Sf.g0, Sf.g1, r),
+      n >= 1 && (Sf = null));
+  }
+  // one world-space name, because there is only ever one speaker — the
+  // district-label system carries it
+  const Rv = ei.speakerAgent(),
+    Ev =
+      Rv && Uv
+        ? [...bi, { x: Rv.pos.x, y: Rv.pos.y + 3.1, z: Rv.pos.z, name: Uv }]
+        : bi;
   (ni.active || Te.update(),
     fe.updateResources(ei.population),
-    fe.updateClock(te.day, te.hour),
-    fe.updateLabels(bi, ie, (fn === "build" || fn === "section") && !Mn.tool));
+    fe.updateClock(te.day, te.hour % 24),
+    fe.updateLabels(Ev, ie, (fn === "build" || fn === "section") && !Mn.tool));
 }
 function cc() {
   const i = performance.now();
@@ -570,6 +709,8 @@ window.CAP = {
   infill: Ne,
   citizens: ei,
   requests: oi,
+  // the agent voicing the active request, or null — derived, never stored
+  speaker: () => ei.speakerAgent(),
   state: gameState,
   score,
   wander: ni,
@@ -620,7 +761,7 @@ window.CAP = {
     return (ei.sync(), (bi = Rh(Kt, Ne)), setDistricts(bi), Ne.items.length);
   },
   skip(i) {
-    for (te.hour += i; te.hour > 20.5; ) ((te.hour -= 14.9), te.day++);
+    for (te.hour += i; te.hour >= DAY_END; ) ((te.hour -= 24), te.day++);
     os(te.hour);
   },
   pathTest(i, t, e, n) {

@@ -11,6 +11,14 @@ import { clamp, seededRng, terrainHeightAt } from "./01-materials.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
+/**
+ * Merge many BufferGeometries into one. A local copy of three.js's
+ * `mergeGeometries` — vendored so the addon does not need importing.
+ *
+ * All inputs must share the same attribute set and index-ness or it returns
+ * null. This is the single most important function for the draw-call budget:
+ * the entire city ends up as a handful of merged meshes rather than hundreds.
+ */
 function ec(i, t = !1) {
   const e = i[0].index !== null,
     n = new Set(Object.keys(i[0].attributes)),
@@ -139,6 +147,7 @@ function ec(i, t = !1) {
   }
   return c;
 }
+/** Concatenate BufferAttributes of matching type. Helper for the merge above. */
 function Cl(i) {
   let t,
     e,
@@ -197,12 +206,24 @@ function Cl(i) {
 const Pl = new Matrix4(),
   Dl = new Quaternion(),
   m_ = new Vector3(1, 1, 1);
+/**
+ * Accumulates primitives and merges them into a single geometry.
+ *
+ * The workhorse of every structure builder. You add boxes and cylinders with
+ * positions and rotations, then call `merge()` once — so a whole building is
+ * one draw call instead of thirty.
+ *
+ * `age` (0..1) is the weathering parameter carried into the tone attribute, so
+ * a builder can hand down "this is old" to everything it adds without passing
+ * it to each call.
+ */
 class MeshBuilder {
   constructor(t = 0) {
     defineField(this, "geoms", []);
     defineField(this, "age");
     this.age = t;
   }
+  /** Add a geometry at position `e`, rotated `n` about Y, tone `s`, age `r`. */
   add(t, e, n = 0, s = 1, r = this.age) {
     if (e) {
       const o = Array.isArray(e) ? new Vector3(...e) : e;
@@ -212,17 +233,22 @@ class MeshBuilder {
     }
     return (setToneAttribute(t, s, r), this.geoms.push(t), this);
   }
+  /** Add a geometry already positioned in local space — no transform applied. */
   addRaw(t, e = 1, n = this.age) {
     return (setToneAttribute(t, e, n), this.geoms.push(t), this);
   }
+  /** Add a box of size (t, e, n) at position `s`, rotated `r`, tone `o`. */
   box(t, e, n, s, r = 0, o = 1) {
     const a = new BoxGeometry(t, e, n);
     return (a.translate(0, e / 2, 0), this.add(a, s, r, o));
   }
+  /** Add a cylinder: radius `t`, height `e`, at `n`, `s` radial segments,
+   * tone `r`, top radius `o` (differs from `t` to make a taper or a cone). */
   cylinder(t, e, n, s = 14, r = 1, o = t) {
     const a = new CylinderGeometry(o, t, e, s);
     return (a.translate(0, e / 2, 0), this.add(a, n, 0, r));
   }
+  /** Collapse everything accumulated into one geometry. Call once, at the end. */
   merge() {
     if (this.geoms.length === 0) return new BufferGeometry();
     const t = this.geoms.map((n) => (n.index ? n.toNonIndexed() : n)),
@@ -230,6 +256,13 @@ class MeshBuilder {
     return (t.forEach((n) => n.dispose()), e);
   }
 }
+/**
+ * Install the custom `aTone` vertex attribute the engraving shader reads.
+ *
+ * TWO FLOATS PER VERTEX, and every geometry the stone material touches must
+ * have it. A missing attribute does not throw — the shader reads garbage and
+ * one mesh renders wrong — so all geometry goes through this one helper.
+ */
 function setToneAttribute(i, t = 1, e = 0) {
   const n = i.attributes.position.count;
   if (!i.attributes.aTone || i.attributes.aTone.count !== n) {
@@ -250,6 +283,18 @@ function Ri(i, t, e, n, s, r = 0) {
   }
   return (i.setAttribute("aTone", new BufferAttribute(c, 2)), i);
 }
+/**
+ * THE ARCH GENERATOR. Builds a wall of width `i` and height `t` pierced by the
+ * openings in `n`, each `{cx, r, springY}` — centre, radius, springing height.
+ *
+ * Everything arched in the game comes through here: spans, gates, carved
+ * passages, the arcades of the seeded ruins. It builds a `Shape` with holes and
+ * extrudes it, so the arch is real geometry rather than a texture.
+ *
+ * `ruin` (0..1) breaks the top edge down; `rings` adds the raised band around
+ * each opening. The silhouette this produces is the game's identity — see
+ * FEATURES.md on why arches must stay arches.
+ */
 function Hn(i, t, e, n, s = {}) {
   const r = s.ruin ?? 0,
     o = s.rng ?? seededRng(1234),
@@ -347,6 +392,13 @@ function Hn(i, t, e, n, s = {}) {
     !1,
   );
 }
+/**
+ * An arcade: `n` evenly spaced arches across width `i`, computed and handed to
+ * the arch generator above.
+ *
+ * `archFrac` is how much of each bay is opening rather than pier (0.72 by
+ * default), and `springFrac` how high the arch springs.
+ */
 function Ji(i, t, e, n, s = {}) {
   const r = i / n,
     o = (r * (s.archFrac ?? 0.72)) / 2,
@@ -426,6 +478,8 @@ function Il(i, t, e, n = 0.25) {
   const a = new ExtrudeGeometry(o, { depth: s, bevelEnabled: !1 });
   return (a.rotateY(Math.PI / 2), a.translate(-s / 2, 0, 0), a);
 }
+/** The synthetic palm that replaced the cypress: leaning segmented trunk,
+ * drooping fronds. Seeded from `t`. */
 function buildTree(i, t) {
   // synthetic palm: the cypress slots survive, the species did not
   const e = new MeshBuilder(),
@@ -504,6 +558,14 @@ function x_(i, t, e) {
   }
   return l.merge();
 }
+/**
+ * Rubble. Tilted concrete slab fragments with rebar proud of the breaks — and
+ * roughly one drum in ten is an antique column drum instead.
+ *
+ * That tenth piece is SPOLIA: older material reused in newer construction,
+ * which is exactly what late antiquity did with the ruins it inherited. It is
+ * the only surviving trace of the first era in the fabric.
+ */
 function Pa(i) {
   // concrete debris: tilted slab fragments, rebar proud of the breaks.
   // one drum in ten is older than everything else here — spolia
@@ -539,6 +601,16 @@ function Pa(i) {
   const n = t.merge();
   return (Ri(n, 0, 1.2, 0.86, 1), n);
 }
+/**
+ * The empty accumulator every structure builder fills and returns.
+ *
+ * `pieces` maps material name -> geometries (so the caller can merge per
+ * material), `navPts` are walkable points to add to the graph, `pockets` the
+ * habitable voids this structure emits, `water`/`waterSources` any water it
+ * carries, and `cost` what it charges the player.
+ *
+ * A builder's whole contract is: take an action, return one of these.
+ */
 function newStructureParts() {
   return {
     pieces: {},
@@ -549,6 +621,7 @@ function newStructureParts() {
     cost: { stone: 0, timber: 0 },
   };
 }
+/** Add geometry `e` to parts `i` under material `t`, installing aTone on the way. */
 function Yt(i, t, e) {
   var n;
   (setToneAttribute(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
@@ -558,10 +631,21 @@ function Ur(i, t, e, n, s) {
   const r = x_(t, e, s);
   r && Yt(i, "green", r);
 }
+/** Rotate about Y then translate a geometry in place. Returns it, for chaining. */
 function be(i, t, e, n, s = 0) {
   return (s && i.rotateY(s), i.translate(t, e, n), i);
 }
 const dn = (i, t, e) => new Vector3(i, t, e);
+/**
+ * A pier, giant pier or column — the foundations everything else springs from.
+ *
+ * Registers an entry in `world.anchors` carrying its `top` point, and that is
+ * what the placement tool snaps spans and stairs to. A span cannot begin in
+ * mid-air; it begins on one of these.
+ *
+ * A giant pier's base is itself habitable ("colossal — its base becomes a
+ * place"), so it emits pockets where an ordinary pier does not.
+ */
 function buildAnchor(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 11),

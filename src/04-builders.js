@@ -11,6 +11,20 @@ import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials.js";
 import { Hn, Ji, Ll, MeshBuilder, Pa, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, newStructureParts, setToneAttribute, v_ } from "./03-geometry.js";
 // --- end generated imports ---
 
+/**
+ * A crossing on arches — bridge, aqueduct or gallery.
+ *
+ * The action carries 3D endpoints (ax,ay,az)-(bx,by,bz), so span endpoints have
+ * HEIGHT. That is why the city can layer over itself.
+ *
+ * Piers are placed along the run and the arcade generator spans between them,
+ * so a longer span gets more arches rather than bigger ones. Aqueducts add a
+ * channel and register water sources along the deck — which is how water
+ * reaches a terrace, and downstream why gardens change where the city grows.
+ *
+ * Seeded `seededRng(id * 7919 + 37)`; the prime offset differs per builder so
+ * two structures sharing an id do not share a random stream.
+ */
 function buildSpan(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 23),
@@ -202,6 +216,15 @@ function buildSpan(i) {
     }
   return ((t.cost.stone = Math.round(a * Math.max(4, _) * 0.09)), t);
 }
+/**
+ * A stair — direct, ceremonial (broad and shallow) or switchback (folded up a
+ * steep face).
+ *
+ * Steps are generated between the endpoints; the gradient limits live in the
+ * placement tool, so an impossible climb is refused before it reaches here.
+ * Emits nav points along the flight, which is literally how citizens get to
+ * the high terrace.
+ */
 function buildRise(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 37),
@@ -385,6 +408,16 @@ function buildRise(i) {
   }
   return ((t.cost.stone = Math.round(o * u * 0.9)), t);
 }
+/**
+ * A roofed hall — the only structure producing genuinely sheltered pockets.
+ *
+ * Emits `interior` pockets with shelter near 1.0 against the ~0.11 of an open
+ * terrace, which is why vaulting over somewhere people ALREADY live is the only
+ * real way to move the SHELTER meter.
+ *
+ * Intact vaults also get rooftop accretion — tanks, fans, masts — from their
+ * own deterministic stream.
+ */
 function buildVault(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 53),
@@ -542,6 +575,17 @@ function buildVault(i) {
   }
   return ((t.cost.stone = Math.round(o * a * 0.32 + c * (o + a) * 0.22)), t);
 }
+/**
+ * A wall: two endpoints, height, thickness, and `openings` cut by CARVE.
+ *
+ * `openings` is mutated in place by `applyAction` and the mesh rebuilt, so a
+ * wall's geometry is a function of its own action plus every carve that ever
+ * targeted it. That is why a carve stores a `target` id instead of being a
+ * structure in its own right.
+ *
+ * Seeded ruins carry `age` 0.4-0.6; player walls have `age: null`. Nothing the
+ * player builds ever weathers, and the contrast is deliberate.
+ */
 function buildWall(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 71),
@@ -616,6 +660,14 @@ function buildWall(i) {
   }
   return ((t.cost.stone = Math.round(a * i.h * 0.11)), t);
 }
+/**
+ * Everything FURNISH places — statue, fountain, lantern, cypress — plus the
+ * seeded-only obelisk.
+ *
+ * The most numerous structure type in the world: 18 of the 24 seeded ruins are
+ * ornament, and 12 of those are cypresses. Fountains register a water source;
+ * lanterns attach glow geometry, which feeds BELONGING and a little GRANDEUR.
+ */
 function buildOrnament(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 87),
@@ -702,6 +754,13 @@ function buildOrnament(i) {
   }
   return ((t.cost.stone = 4), t);
 }
+/**
+ * The dispatcher: action type -> builder.
+ *
+ * Returns empty parts for anything unrecognised rather than throwing, so an
+ * unknown action from a future save degrades to nothing visible instead of
+ * taking the game down.
+ */
 function buildStructureMesh(i) {
   switch (i.t) {
     case "anchor":

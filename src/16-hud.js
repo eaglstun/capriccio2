@@ -51,7 +51,8 @@ const nv = `
 #variants .var .vh { font-size: 10.5px; font-style: italic; opacity: 0.7; margin-top: 1px; }
 #variants .var.on { background: #ff71ce; color: #1a1036; }
 #request { position: absolute; bottom: 12px; left: 12px; max-width: 340px; padding: 10px 16px;
-  font-size: 12.5px; font-style: italic; line-height: 1.5; }
+  font-size: 12.5px; font-style: italic; line-height: 1.5; cursor: pointer; }
+#request:hover { border-color: #6ff5ea; }
 #request .who { font-style: normal; font-size: 10.5px; letter-spacing: 0.16em; opacity: 0.7; margin-top: 4px; }
 #modes { position: absolute; bottom: 12px; right: 12px; display: flex; }
 .mode { padding: 9px 13px 8px; cursor: pointer; font-size: 10.5px; letter-spacing: 0.18em; border-right: none !important; }
@@ -77,7 +78,8 @@ const nv = `
    discovers the count by filling it */
 #folio-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 9px; }
 #folio-strip i { display: block; aspect-ratio: 3/2; border: 1px solid rgba(111,245,234,0.3); font-style: normal; }
-#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); }
+#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); cursor: pointer; }
+#folio-strip i.held:hover { border-color: #6ff5ea; }
 #folio-strip i.last { border-color: #ff71ce; box-shadow: 0 0 5px rgba(255,113,206,0.6); }
 #wanderhint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 7px 18px;
   font-size: 11px; letter-spacing: 0.15em; display: none; font-style: italic; }
@@ -297,7 +299,11 @@ class Hud {
         this.qualBars.set(m, _.querySelector("i")));
     }
     ((t.querySelector("#undo").onclick = () => this.cb.onUndo()),
-      (t.querySelector("#folio-line").onclick = () => this.cb.onFolio()));
+      (t.querySelector("#folio-line").onclick = () => this.cb.onFolio()),
+      // the panel is the affordance: click it and the camera goes to find
+      // whoever is asking
+      (this.requestEl.title = "find who is asking"),
+      (this.requestEl.onclick = () => this.cb.onRequestClick?.()));
     const o = t.querySelector("#anew-line");
     let a = 0;
     o.onclick = () => {
@@ -445,7 +451,7 @@ class Hud {
         "dusk",
       ],
       s =
-        e < 6
+        e < 6 || e >= 21.7
           ? 0
           : e < 7.5
             ? 1
@@ -489,6 +495,10 @@ class Hud {
         (r &&
           (s.classList.add("held"),
           (s.title = `Tav. ${tv(r.n)} — ${r.caption}`),
+          // each plate keeps its full camera pose; clicking the slot eases
+          // the camera back to exactly that view — then and now, compared
+          // from the same position
+          (s.onclick = () => this.cb.onPlateSlot?.(r)),
           n === t.length - 1 && s.classList.add("last")),
           e.appendChild(s));
       }
