@@ -429,6 +429,9 @@ window.addEventListener("keydown", (i) => {
       fn !== "wander" &&
       Uh(fn !== "plate"));
 });
+// the placement tool stamps day/hour onto each committed action (the
+// Chronicle enabler) — hand it the live clock
+Mn.clock = te;
 Mn.onMessage = (i) => fe.toast(i);
 Mn.onCommit = (i) => {
   gameState.dirty = !0;
@@ -804,6 +807,9 @@ window.CAP = {
   act(i) {
     return (
       (i.id = i.id ?? gameState.nextId++),
+      // same stamp the placement tool applies — CAP.act is the other door
+      (i.day = i.day ?? te.day),
+      (i.hour = i.hour ?? Math.round(te.hour * 10) / 10),
       gameState.playerActions.push(structuredClone(i)),
       Kt.applyAction(i)
     );
