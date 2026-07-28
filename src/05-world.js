@@ -37,6 +37,7 @@ class World {
       (this.glowMat = i_()),
       t.add(this.structGroup, this.waterGroup, this.infillGroup));
   }
+  /** Build and add the terrain mesh. Once, at world gen. */
   buildTerrain() {
     const t = f_();
     ((this.terrainMesh = new Mesh(t, this.mats.rock)),
@@ -44,6 +45,7 @@ class World {
       (this.terrainMesh.castShadow = !0),
       this.scene.add(this.terrainMesh));
   }
+  /** Lay the ground nav grid over the buildable regions. */
   seedNav() {
     this.nav.seedTerrain([
       { x0: -140, x1: 40, z0: -44, z1: 120 },
@@ -53,6 +55,28 @@ class World {
       { x0: -140, x1: 40, z0: -160, z1: -150 },
     ]);
   }
+  /**
+   * THE HEART OF THE GAME. Apply one action to the world.
+   *
+   * Every structure in the city — the seeded ruins and everything the player
+   * builds — arrives through here, and the save replays its whole action log
+   * through this method to rebuild the city on load. Which is why it must stay
+   * deterministic: same action, same world, same result, always.
+   *
+   * Three kinds of action behave differently:
+   *
+   * - **carve** does not create a structure. It mutates an EXISTING one — it
+   *   appends to a wall's `openings` array, or sets `carveAxis` on a giant
+   *   pier — and rebuilds that structure's mesh. Returns null.
+   * - **designate** does not create a structure either. It records a circle
+   *   `{kind, x, z, r}` and stamps the designation onto every unoccupied
+   *   pocket inside it.
+   * - everything else builds a structure, registers its pockets, and adds its
+   *   nav nodes.
+   *
+   * `e` controls whether the action is also pushed to the render/nav side or
+   * only recorded — used when rebuilding in bulk.
+   */
   applyAction(t, e = !0) {
     if ((this.actions.push(t), t.t === "carve")) {
       const n = this.structures.get(t.target);
@@ -90,6 +114,17 @@ class World {
     }
     return this.buildStruct(t, e);
   }
+  /**
+   * Turn an action into geometry and register what it produces.
+   *
+   * Calls the mesh builder for the action type, then walks the parts it
+   * returns: pockets get registered, nav points get added and linked, water
+   * sources recorded, glow meshes attached.
+   *
+   * The builder seeds its randomness from the action id, so this is a pure
+   * function of the action — the same action always produces the same
+   * building.
+   */
   buildStruct(t, e = !0) {
     const n = buildStructureMesh(t),
       s = [];
@@ -139,6 +174,16 @@ class World {
     const o = { action: t, result: n, meshes: s, navIds: r };
     return (this.structures.set(t.id, o), this.onStructureBuilt?.(t.id), o);
   }
+  /**
+   * Record a habitable void and wire it into the world.
+   *
+   * Assigns its index, attaches it to the nearest nav node so citizens can
+   * reach it, computes its distance to water, and applies any designation
+   * whose circle already covers it.
+   *
+   * Pockets are the game's central abstraction — see docs/SIMULATION.md. Their
+   * qualities are set by the builder that emitted them, not here.
+   */
   registerPocket(t, e) {
     const n = new Vector3(...t.pos),
       s = this.nav.nearest(n, 14);
@@ -157,6 +202,7 @@ class World {
       designation: o,
     });
   }
+  /** Emit the terrace pockets a structure creates on the ground around it. */
   emitGroundPockets(t) {
     const e = seededRng((t.id ?? 1) * 331 + 7),
       n = t.x ?? (t.ax + t.bx) / 2,
@@ -189,6 +235,7 @@ class World {
         );
     }
   }
+  /** Draw the painted circle showing where an INVITE applies. */
   addDesignationMark(t) {
     const e = t.id ?? -1;
     if (this.desigMarks.has(e)) return;
@@ -236,6 +283,13 @@ class World {
         }));
     this.desigMarks.clear();
   }
+  /**
+   * Scatter the initial ground pockets across a region at world gen — the
+   * places people can live before the player has built anything.
+   *
+   * This is why a fresh city already has 48 pockets and 46 citizens: the ruins
+   * come inhabited.
+   */
   seedGroundPockets(t, e, n, s, r, o = 55) {
     const a = seededRng(o);
     for (let c = 0; c < n; c++) {
@@ -265,6 +319,12 @@ class World {
         );
     }
   }
+  /**
+   * Rebuild one structure's mesh in place, after a carve changed it.
+   *
+   * Disposes the old geometry first — three.js will not free GPU buffers on
+   * its own, and this runs every time a wall is pierced.
+   */
   rebuildStruct(t) {
     const e = this.structures.get(t);
     if (e) {
@@ -278,6 +338,14 @@ class World {
         this.buildStruct(e.action, !0));
     }
   }
+  /**
+   * Clear the world and rebuild it from a list of actions.
+   *
+   * Used on load and by UNDO (which pops the last action and rebuilds from
+   * what remains, rather than trying to reverse a build in place).
+   *
+   * This is the method a Chronicle replay would drive — see CHRONICLE.md.
+   */
   rebuildAll(t) {
     for (const e of this.structures.values())
       for (const n of e.meshes) (n.parent?.remove(n), n.geometry.dispose());
@@ -293,9 +361,23 @@ class World {
       (this.actions = []));
     for (const e of t) this.applyAction(structuredClone(e));
   }
+  /**
+   * The objects the placement tool may hit.
+   *
+   * Deliberately just the terrain and `structGroup` — scene-only decoration
+   * (skyline, billboards, overpasses, landfill) is excluded, which is what
+   * stops the player building on the backdrop.
+   */
   raycastTargets() {
     return [this.terrainMesh, ...this.structGroup.children];
   }
+  /**
+   * Distance to the nearest water source, or a large sentinel if there is
+   * none.
+   *
+   * Read by `pickPocket` (+0.9 within 45 units) and by the ambient audio,
+   * whose water gain falls off with the square of this.
+   */
   waterDistAt(t) {
     let e = 1e9;
     for (const n of this.waterSources) e = Math.min(e, n.distanceTo(t));

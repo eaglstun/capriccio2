@@ -48,6 +48,11 @@ class PlacementTool {
       n.add(this.marker),
       (this.chalk = new BuildOverlays(n)));
   }
+  /**
+   * Select a tool and its variant (e.g. "span" + "aqueduct"). Passing null
+   * puts the tool down. Always resets the multi-click state — switching tools
+   * mid-placement must not leave a stale first point behind.
+   */
   setTool(t, e) {
     ((this.tool = t),
       (this.variant = e ?? (t ? BUILD_CATALOGUE[t][0].key : "")),
@@ -56,6 +61,7 @@ class PlacementTool {
       t === "carve" && this.chalk.markCarvables(this.world),
       (t === "span" || t === "rise") && this.chalk.markAnchors(this.world));
   }
+  /** Clear the multi-stage placement state: stage, first point, first anchor. */
   reset() {
     ((this.stage = 0),
       (this.firstPoint = null),
@@ -64,12 +70,21 @@ class PlacementTool {
       this.chalk.clearLive(),
       (this.marker.visible = this.tool !== null));
   }
+  /** Remove the translucent preview mesh and dispose its geometry. */
   clearGhost() {
     this.ghost &&
       (this.ghost.parent?.remove(this.ghost),
       this.ghost.geometry.dispose(),
       (this.ghost = null));
   }
+  /**
+   * Raycast the pointer into the world. Returns the hit point, the surface it
+   * belongs to, and `anchorId` if the ray landed on a pier or column top.
+   *
+   * Only `world.raycastTargets()` is tested — scene-only decoration is
+   * deliberately excluded, which is why the skyline, billboards and overpasses
+   * cannot be clicked or built on.
+   */
   pick(t) {
     this.ray.setFromCamera(t, this.camera);
     const e = this.ray.intersectObjects(this.world.raycastTargets(), !1);
@@ -86,6 +101,14 @@ class PlacementTool {
     }
     return { p: s, anchorId: o, structId: r };
   }
+  /**
+   * Per-frame cursor update: repick, redraw the ghost, and refresh whatever
+   * guide the current tool wants (a string to the first point, a footprint
+   * rectangle, carvable marks).
+   *
+   * Also decides whether the ghost shows as valid or invalid, which is the
+   * player's only warning before a click is refused.
+   */
   hover(t) {
     if (!this.tool) {
       this.marker.visible = !1;
@@ -139,6 +162,17 @@ class PlacementTool {
       this.ghostOk = a;
     } else this.clearGhost();
   }
+  /**
+   * Build the action object a click would commit, or null if it is not legal.
+   *
+   * THIS IS WHERE ALL PLACEMENT RULES LIVE — snapping, minimum and maximum
+   * lengths, the clearance-gated span and vault limits, gradient limits on
+   * stairs, and which surfaces a given tool may target.
+   *
+   * It returns a plain object of exactly the shape the save stores and
+   * `applyAction` consumes, so what you preview is literally what gets
+   * recorded and replayed.
+   */
   draftAction(t, e) {
     switch (this.tool) {
       case "anchor": {
@@ -261,6 +295,8 @@ class PlacementTool {
     }
     return null;
   }
+  /** Build the translucent preview from a drafted action, in ghost or ghostBad
+   * material depending on validity. */
   showGhost(t) {
     this.clearGhost();
     let e = null;
@@ -306,6 +342,7 @@ class PlacementTool {
       s
     );
   }
+  /** Stone and timber an action would cost. Sandbox mode (`folio`) is free. */
   costOf(t) {
     if (t.t === "carve") return { stone: 30, timber: 10 };
     if (t.t === "designate") return { stone: 0, timber: 0 };
@@ -315,6 +352,14 @@ class PlacementTool {
       timber: Math.round(e.cost.timber),
     };
   }
+  /**
+   * Final legality check before commit — the length and size limits that
+   * depend on CLEARANCE.
+   *
+   * Spans cap at 55 / 95 / 150 and vaults at 40 / 60 / 75 as clearance passes
+   * 60 and 150. This is the mechanism by which answering citizens literally
+   * extends your reach; see docs/PROGRESSION.md.
+   */
   validate(t) {
     if (t.t === "span") {
       const e = Math.hypot(t.bx - t.ax, t.bz - t.az);
@@ -330,6 +375,17 @@ class PlacementTool {
     }
     return !0;
   }
+  /**
+   * Commit a click.
+   *
+   * Spans, stairs and vaults are TWO-STAGE: the first click stores
+   * `firstPoint` (snapped to a pier top if the ray hit one) and returns; the
+   * second drafts and commits the action. Everything else commits on one
+   * click.
+   *
+   * Returns true if the click was consumed, so the caller knows whether to
+   * treat it as a camera drag instead.
+   */
   click(t) {
     if (!this.tool) return !1;
     const e = this.pick(t);
