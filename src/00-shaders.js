@@ -81,20 +81,38 @@ void main() {
 
   // ============ SKY ============
   if (skyC) {
-    vec3 sky = uPaper;
     float elev = worldDir.y;
+    // perpetual-sunset gradient: warm horizon through magenta to violet zenith
+    vec3 horizonCol = vec3(1.00, 0.64, 0.46);
+    vec3 midCol     = vec3(0.93, 0.44, 0.72);
+    vec3 zenithCol  = vec3(0.30, 0.21, 0.50);
+    vec3 sky = mix(horizonCol, midCol, smoothstep(-0.04, 0.30, elev));
+    sky = mix(sky, zenithCol, smoothstep(0.18, 0.75, elev));
+    // by day the gradient relaxes toward the paper; dusk saturates it
+    sky = mix(sky, uPaper, (1.0 - uDusk) * 0.34);
+    float sunDot = dot(worldDir, uSunDir);
+    float sunAmt = pow(max(sunDot, 0.0), 18.0);
     // faint horizontal burin lines, denser toward horizon, broken by cloudy noise
     float band = 1.0 - smoothstep(0.02, 0.38, elev);
     float cloud = vnoise(worldDir.xz / max(0.12, abs(worldDir.y)) * 0.35 + vec2(3.7, 9.1));
     cloud = smoothstep(0.35, 0.75, cloud);
-    float sunAmt = pow(max(dot(worldDir, uSunDir), 0.0), 18.0);
     float lineY = sin(vUv.y * uResolution.y * 0.9);
     float lines = smoothstep(0.55, 1.0, lineY * lineY);
     float skyInk = band * cloud * lines * 0.075 * (1.0 - sunAmt * 0.9);
+    sky = mix(sky, zenithCol * 0.8, skyInk * 1.3);
+    // the banded low sun: gaps widen below its centre, vaporwave-style
+    float rel = uSunDir.y - elev;
+    float gapW = clamp(rel * 3.2, 0.0, 0.44);
+    float stripes = smoothstep(gapW, gapW + 0.07, fract(elev * 30.0));
+    float disc = smoothstep(0.9880, 0.9903, sunDot) * stripes;
+    vec3 sunCol = mix(vec3(1.00, 0.42, 0.76), vec3(1.00, 0.92, 0.70),
+                      smoothstep(0.9903, 0.9968, sunDot));
+    sky = mix(sky, sunCol, disc);
+    sky += vec3(1.0, 0.36, 0.62) * sunAmt * 0.30 * (1.0 - disc);
     // dusk warms and darkens the paper sky a touch near the sun's side
-    vec3 duskTint = mix(vec3(1.0), vec3(1.0, 0.93, 0.82), uDusk * (0.35 + 0.65 * sunAmt));
-    sky = sky * duskTint * (1.0 - skyInk);
-    sky *= 1.0 - uDusk * 0.16 * (1.0 - sunAmt);
+    vec3 duskTint = mix(vec3(1.0), vec3(1.04, 0.80, 0.92), uDusk * (0.35 + 0.65 * sunAmt));
+    sky = sky * duskTint;
+    sky *= 1.0 - uDusk * 0.22 * (1.0 - sunAmt);
     color = sky;
   } else {
     // ============ INK OUTLINES ============
@@ -137,18 +155,23 @@ void main() {
     // near boost: foreground strokes read heavier
     edge *= mix(1.5, 0.8, smoothstep(8.0, 220.0, distC));
 
-    color = mix(color, uInk, clamp(edge, 0.0, 1.0) * 0.92);
+    // neon rim light: hot pink up close, dissolving to cyan haze far off
+    vec3 rimCol = mix(uInk, vec3(0.36, 0.94, 1.0), smoothstep(30.0, 180.0, distC));
+    color = mix(color, rimCol, clamp(edge, 0.0, 1.0) * 0.92);
   }
 
   // ============ PAPER ============
-  // grain: two frequencies of static screen-space tooth
+  // tube tooth: static CRT scanlines + a coarse chroma wobble
   float g1 = vnoise(vUv * uResolution * 0.5);
   float g2 = vnoise(vUv * uResolution * 0.11 + 57.0);
-  float grain = (g1 - 0.5) * 0.055 + (g2 - 0.5) * 0.035;
-  color *= 1.0 + grain * uGrain;
+  float scan = sin(vUv.y * uResolution.y * 1.5708);
+  color *= 1.0 - (scan * 0.5 + 0.5) * 0.085 * uGrain;
+  color *= 1.0 + (g1 - 0.5) * 0.030 * uGrain;
+  color.r *= 1.0 + (g2 - 0.5) * 0.05 * uGrain;
+  color.b *= 1.0 - (g2 - 0.5) * 0.05 * uGrain;
 
-  // slight warm paper tint multiply + dusk warmth
-  vec3 tint = mix(vec3(1.0, 0.985, 0.94), vec3(1.0, 0.94, 0.85), uDusk);
+  // slight cool phosphor tint multiply + dusk magenta
+  vec3 tint = mix(vec3(1.0, 0.975, 1.015), vec3(1.03, 0.91, 1.04), uDusk);
   color *= tint;
 
   // vignette
@@ -168,8 +191,8 @@ class J0 {
     defineField(this, "postScene");
     defineField(this, "postCam");
     defineField(this, "ss");
-    defineField(this, "paper", new Color("#efe8d8"));
-    defineField(this, "ink", new Color("#231d13"));
+    defineField(this, "paper", new Color("#e9b8d6"));
+    defineField(this, "ink", new Color("#ff3fae"));
     defineField(this, "fogDensity", 0.0021);
     defineField(this, "w", 4);
     defineField(this, "h", 4);
@@ -213,7 +236,7 @@ class J0 {
           uPaper: { value: new Color(this.paper) },
           uInk: { value: new Color(this.ink) },
           uDusk: { value: 0 },
-          uVignette: { value: 0.42 },
+          uVignette: { value: 0.58 },
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
         },
@@ -309,7 +332,7 @@ class J0 {
 }
 const engravingUniforms = {
   uHatchFreq: { value: 3.1 },
-  uInkCol: { value: new Color("#241d12") },
+  uInkCol: { value: new Color("#2b1a52") },
   uCutting: { value: 0 },
   uHatchGain: { value: 1 },
   uSunDirW: { value: new Vector3(0.5, 0.7, 0.3) },
@@ -506,7 +529,7 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   float age = vToneE.y;
   vec3 stone = uStoneCol * (0.90 + 0.10 * smoothstep(0.2, 0.9, bb));
   stone *= 1.0 + mas.y * 0.085;
-  stone *= mix(vec3(1.0), vec3(0.88, 0.83, 0.72), age * 0.85);
+  stone *= mix(vec3(1.0), vec3(0.83, 0.78, 0.92), age * 0.85);
 
   vec3 engraved = mix(stone, uInkCol, clamp(ink, 0.0, 1.0));
 
@@ -514,7 +537,7 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   if (uCutting > 0.5 && !gl_FrontFacing) {
     float s = (vWorldPosE.x + vWorldPosE.y * 1.3 + vWorldPosE.z) * 5.0;
     float pl = lineAA(s, 0.32);
-    engraved = mix(vec3(0.16, 0.13, 0.10), vec3(0.32, 0.28, 0.22), pl);
+    engraved = mix(vec3(0.13, 0.09, 0.24), vec3(0.30, 0.20, 0.42), pl);
   }
 
   if (uDebugView > 0.5) {

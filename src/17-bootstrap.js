@@ -38,7 +38,7 @@ Te.maxPolarAngle = Math.PI * 0.49;
 Te.minDistance = 5;
 Te.maxDistance = 520;
 Te.update();
-const Pe = new DirectionalLight("#fff4e0", 3.5);
+const Pe = new DirectionalLight("#ffe9f2", 3.5);
 Pe.castShadow = !0;
 Pe.shadow.mapSize.set(Is ? 2048 : 4096, Is ? 2048 : 4096);
 Pe.shadow.camera.left = -240;
@@ -51,7 +51,7 @@ Pe.shadow.bias = -3e-4;
 Pe.shadow.normalBias = 0.35;
 je.add(Pe);
 je.add(Pe.target);
-const Nr = new HemisphereLight("#dfe3dd", "#8d8064", 0.6);
+const Nr = new HemisphereLight("#d8cdf0", "#8d6f9e", 0.6);
 je.add(Nr);
 const ic = n_();
 for (const i of Object.values(ic)) i.clipShadows = !0;
@@ -81,7 +81,7 @@ function os(i) {
   (Pe.position.copy(s.multiplyScalar(420)), Pe.target.position.set(0, 0, 0));
   const r = 1 - Math.sin(Math.PI * t),
     o = Nn(0.45, 0.95, r);
-  (Pe.color.setStyle(o > 0.4 ? "#ffdba6" : "#fff4e0"),
+  (Pe.color.setStyle(o > 0.4 ? "#ff9ecf" : "#ffe9f2"),
     (Pe.intensity = lerp(3.5, 2.55, o)),
     (Nr.intensity = lerp(0.6, 0.42, o)),
     ke.setDusk(o),
@@ -89,7 +89,7 @@ function os(i) {
     syncLightUniforms(Pe, Nr));
   const a = Kt.glowMat,
     c = 0.3 + o * 1.25;
-  a.color.setRGB(1.05 * c + 0.1, 0.74 * c + 0.08, 0.36 * c + 0.04);
+  a.color.setRGB(1.05 * c + 0.12, 0.42 * c + 0.06, 0.85 * c + 0.12);
 }
 os(te.hour);
 let fn = "build",

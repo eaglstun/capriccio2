@@ -12,7 +12,7 @@ import { Q0, e_, engravingUniforms, t_ } from "./00-shaders.js";
 
 function createStoneMaterial(i = {}) {
   const t = new MeshLambertMaterial({ color: 16777215, side: i.side ?? DoubleSide, fog: !0 }),
-    e = new Color(i.stone ?? "#e8e0cb");
+    e = new Color(i.stone ?? "#ead4e6");
   return (
     (t.onBeforeCompile = (n) => {
       ((n.uniforms.uHatchFreq = engravingUniforms.uHatchFreq),
@@ -52,39 +52,39 @@ varying vec2 vToneE;`,
   );
 }
 function n_() {
-  const i = createStoneMaterial({ stone: "#e8e0cb", jointAlpha: 0.34, courseH: 1.02 }),
-    t = createStoneMaterial({ stone: "#e2d9c0", jointAlpha: 0.42, courseH: 0.88 }),
-    e = createStoneMaterial({ stone: "#ded6c2", jointAlpha: 0.4, courseH: 2.3 }),
-    n = createStoneMaterial({ stone: "#d3bf9c", jointAlpha: 0.16, courseH: 0.42 }),
-    s = createStoneMaterial({ stone: "#eee6d2", jointAlpha: 0.07 }),
-    r = createStoneMaterial({ stone: "#6b7a5e", jointAlpha: 0 }),
-    o = createStoneMaterial({ stone: "#a2604f", jointAlpha: 0 }),
-    a = createStoneMaterial({ stone: "#e7e0cf", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
+  const i = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02 }),
+    t = createStoneMaterial({ stone: "#ddc2de", jointAlpha: 0.42, courseH: 0.88 }),
+    e = createStoneMaterial({ stone: "#cdb9d8", jointAlpha: 0.4, courseH: 2.3 }),
+    n = createStoneMaterial({ stone: "#78ccc4", jointAlpha: 0.16, courseH: 0.42 }),
+    s = createStoneMaterial({ stone: "#f4e0f0", jointAlpha: 0.07 }),
+    r = createStoneMaterial({ stone: "#4fb3a5", jointAlpha: 0 }),
+    o = createStoneMaterial({ stone: "#f0619e", jointAlpha: 0 }),
+    a = createStoneMaterial({ stone: "#dcc9e8", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
     c = new MeshPhongMaterial({
-      color: "#d1a63c",
-      emissive: "#7a5a12",
-      specular: "#fff3c0",
+      color: "#e07ac0",
+      emissive: "#6a1d5a",
+      specular: "#c0fff6",
       shininess: 70,
       fog: !0,
     }),
-    l = new MeshBasicMaterial({ color: "#231d12", fog: !0 }),
-    h = new MeshLambertMaterial({ color: "#332c22", fog: !0 }),
+    l = new MeshBasicMaterial({ color: "#1c1440", fog: !0 }),
+    h = new MeshLambertMaterial({ color: "#2e2152", fog: !0 }),
     u = new MeshBasicMaterial({
-      color: "#5d6c7b",
+      color: "#35d4e0",
       transparent: !0,
       opacity: 0.42,
       depthWrite: !1,
       fog: !1,
     }),
     d = new MeshBasicMaterial({
-      color: "#8a4a3a",
+      color: "#ff3860",
       transparent: !0,
       opacity: 0.4,
       depthWrite: !1,
       fog: !1,
     }),
     f = new MeshLambertMaterial({
-      color: "#9fb6b4",
+      color: "#8fd8e4",
       fog: !0,
       polygonOffset: !0,
       polygonOffsetFactor: -1,
@@ -146,7 +146,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
 }
 const Aa = { value: 0 };
 function i_() {
-  const i = new MeshBasicMaterial({ color: "#ffcf7a", fog: !1 });
+  const i = new MeshBasicMaterial({ color: "#ffa8e0", fog: !1 });
   return ((i.toneMapped = !1), i);
 }
 function seededRng(i) {

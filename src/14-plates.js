@@ -17,19 +17,19 @@ function renderPlateImage(i, t, e) {
         h = document.createElement("canvas");
       ((h.width = c), (h.height = l));
       const u = h.getContext("2d");
-      ((u.fillStyle = "#f1ead9"),
+      ((u.fillStyle = "#f6e0ef"),
         u.fillRect(0, 0, c, l),
-        (u.strokeStyle = "rgba(35,29,19,0.75)"),
+        (u.strokeStyle = "rgba(43,26,82,0.75)"),
         (u.lineWidth = Math.max(1.5, s.width / 900)),
         u.strokeRect(o - 6, r - 6, s.width + 12, s.height + 12),
         u.drawImage(s, o, r));
       const d = Math.round(s.height * 0.032);
-      ((u.fillStyle = "#2a2318"),
-        (u.font = `${d}px "Iowan Old Style", Palatino, Georgia, serif`),
+      ((u.fillStyle = "#2b1a52"),
+        (u.font = `${d}px "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif`),
         (u.textAlign = "center"),
         u.fillText(t.toUpperCase(), c / 2, s.height + r + a * 0.45));
       const f = tv(e);
-      ((u.font = `italic ${Math.round(d * 0.82)}px "Iowan Old Style", Palatino, Georgia, serif`),
+      ((u.font = `italic ${Math.round(d * 0.82)}px "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif`),
         u.fillText(`— Tav. ${f} —`, c / 2, s.height + r + a * 0.75),
         n(h.toDataURL("image/png")));
     }),

@@ -194,7 +194,7 @@ class World {
     if (this.desigMarks.has(e)) return;
     const n = new Group(),
       s = new LineDashedMaterial({
-        color: "#8f4a34",
+        color: "#ff5fc8",
         transparent: !0,
         opacity: 0.32,
         dashSize: 0.9,
@@ -554,7 +554,7 @@ function P_(i) {
       0, 0, 0,
     ]);
   (t.setAttribute("position", new BufferAttribute(e, 3)), t.computeVertexNormals());
-  const n = new MeshBasicMaterial({ color: "#3a3226", side: DoubleSide, fog: !0 }),
+  const n = new MeshBasicMaterial({ color: "#33245c", side: DoubleSide, fog: !0 }),
     s = 11,
     r = new InstancedMesh(t, n, s);
   ((r.frustumCulled = !1), i.scene.add(r));
