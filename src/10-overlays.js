@@ -16,6 +16,7 @@ class BuildOverlays {
     defineField(this, "marks", new Group());
     defineField(this, "live", new Group());
     defineField(this, "dashMat");
+    defineField(this, "carveMat");
     defineField(this, "stringMat");
     (t.add(this.marks, this.live),
       (this.dashMat = new LineDashedMaterial({
@@ -25,6 +26,16 @@ class BuildOverlays {
         dashSize: 0.6,
         gapSize: 0.45,
       })),
+      // the CARVE guide is emphatic where the always-on scribes are quiet:
+      // hotter, near-opaque, denser dashes — context has one tool selected,
+      // so the volume is earned here and nowhere else
+      (this.carveMat = new LineDashedMaterial({
+        color: "#ffd24a",
+        transparent: !0,
+        opacity: 0.95,
+        dashSize: 1.0,
+        gapSize: 0.35,
+      })),
       (this.stringMat = new LineBasicMaterial({
         color: "#2ec8d4",
         transparent: !0,
@@ -33,9 +44,8 @@ class BuildOverlays {
   }
   /** A dashed line through points `t`. computeLineDistances is required or the
    * dash pattern silently does nothing. */
-  dashedLine(t) {
-    const e = new BufferGeometry().setFromPoints(t),
-      n = new Line(e, this.dashMat);
+  dashedLine(t, e = this.dashMat) {
+    const n = new Line(new BufferGeometry().setFromPoints(t), e);
     return (n.computeLineDistances(), n);
   }
   /** Drop the persistent marks layer (carvable faces, anchor tops). */
@@ -61,32 +71,37 @@ class BuildOverlays {
           o = (n.bz - n.az) / s,
           a = Math.cos(Math.atan2(r, o)),
           c = -Math.sin(Math.atan2(r, o));
-        for (const l of [-1, 1]) {
-          const h = [];
-          for (let u = 2; u <= s - 2; u += 5) {
-            const d = n.ax + r * u + a * l * (n.th / 2 + 0.3),
-              f = n.az + o * u + c * l * (n.th / 2 + 0.3);
-            h.push(new Vector3(d, terrainHeightAt(d, f) + 1.35, f));
+        for (const l of [-1, 1])
+          // two rails, ankle and lintel height, so the marked face reads
+          // as a FACE rather than a line on the ground
+          for (const m of [1.35, 5.6]) {
+            const h = [];
+            for (let u = 2; u <= s - 2; u += 5) {
+              const d = n.ax + r * u + a * l * (n.th / 2 + 0.3),
+                f = n.az + o * u + c * l * (n.th / 2 + 0.3);
+              h.push(new Vector3(d, terrainHeightAt(d, f) + m, f));
+            }
+            h.length > 1 && this.marks.add(this.dashedLine(h, this.carveMat));
           }
-          h.length > 1 && this.marks.add(this.dashedLine(h));
-        }
       } else if (
         e.action.t === "anchor" &&
         e.action.style === "giant" &&
         !e.action.carveAxis
       ) {
         const n = e.action,
-          s = 5.2,
-          r = [];
-        for (const [o, a] of [
-          [-s, -s],
-          [s, -s],
-          [s, s],
-          [-s, s],
-          [-s, -s],
-        ])
-          r.push(new Vector3(n.x + o, terrainHeightAt(n.x + o, n.z + a) + 1.35, n.z + a));
-        this.marks.add(this.dashedLine(r));
+          s = 5.2;
+        for (const m of [1.35, 5.6]) {
+          const r = [];
+          for (const [o, a] of [
+            [-s, -s],
+            [s, -s],
+            [s, s],
+            [-s, s],
+            [-s, -s],
+          ])
+            r.push(new Vector3(n.x + o, terrainHeightAt(n.x + o, n.z + a) + m, n.z + a));
+          this.marks.add(this.dashedLine(r, this.carveMat));
+        }
       }
   }
   /** Ring the top of every pier and column — the snap targets a span can start

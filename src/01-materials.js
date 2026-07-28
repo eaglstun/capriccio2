@@ -41,6 +41,7 @@ function createStoneMaterial(i = {}) {
         (n.uniforms.uDebugView = engravingUniforms.uDebugView),
         (n.uniforms.uLocalGain = { value: i.gain ?? 1 }),
         (n.uniforms.uDither = { value: i.dither ? 1 : 0 }),
+        (n.uniforms.uCarvable = { value: i.carvable ? 1 : 0 }),
         (n.uniforms.uPxScale = engravingUniforms.uPxScale),
         (n.uniforms.uBlueNoise = engravingUniforms.uBlueNoise),
         (n.uniforms.uDistrictPos = districtUniforms.uDistrictPos),
@@ -64,7 +65,7 @@ varying vec2 vToneE;`,
           .replace("#include <opaque_fragment>", e_)));
     }),
     (t.customProgramCacheKey = () =>
-      `engraved|${i.stone ?? ""}|${i.jointAlpha ?? 0.34}|${i.courseH ?? 1.02}|${i.gain ?? 1}|${i.dither ? 1 : 0}`),
+      `engraved|${i.stone ?? ""}|${i.jointAlpha ?? 0.34}|${i.courseH ?? 1.02}|${i.gain ?? 1}|${i.dither ? 1 : 0}|${i.carvable ? 1 : 0}`),
     t
   );
 }
@@ -87,6 +88,11 @@ function n_() {
   // thing on the horizon, and the far field going 1-bit doubles as
   // depth arbitration.
   const i = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02, dither: !0 }),
+    // same fabric, plus the setting-out scribes: worn by surfaces a CARVE
+    // will accept (walls, uncarved giant piers). World.buildStruct swaps
+    // this in for their "stone" pieces; a carved giant pier rebuilds with
+    // plain stone and stops reading as carvable.
+    stoneCarve = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02, dither: !0, carvable: !0 }),
     t = createStoneMaterial({ stone: "#ddc2de", jointAlpha: 0.42, courseH: 0.88 }),
     e = createStoneMaterial({ stone: "#cdb9d8", jointAlpha: 0.4, courseH: 2.3 }),
     n = createStoneMaterial({ stone: "#78ccc4", jointAlpha: 0.16, courseH: 0.42 }),
@@ -183,6 +189,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
     }),
     {
       stone: i,
+      stoneCarve,
       stoneOld: t,
       rock: e,
       timber: n,

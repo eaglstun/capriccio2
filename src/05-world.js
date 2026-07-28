@@ -127,12 +127,25 @@ class World {
    */
   buildStruct(t, e = !0) {
     const n = buildStructureMesh(t),
-      s = [];
+      s = [],
+      // carvable surfaces wear the setting-out scribes: walls always
+      // (they take any number of openings), giant piers only until their
+      // one carve sets carveAxis — rebuildStruct re-enters here with the
+      // axis set and the pier reverts to plain stone. Same geometry, same
+      // draw count; only the material binding differs.
+      o2 =
+        t.t === "wall" ||
+        (t.t === "anchor" && t.style === "giant" && !t.carveAxis);
     for (const a of Object.keys(n.pieces)) {
       const c = n.pieces[a];
       if (!c.length) continue;
       const l = Ul(c),
-        h = a === "glow" ? this.glowMat : this.mats[a],
+        h =
+          a === "glow"
+            ? this.glowMat
+            : o2 && a === "stone"
+              ? this.mats.stoneCarve
+              : this.mats[a],
         u = new Mesh(l, h);
       ((u.castShadow = a !== "water" && a !== "glow"),
         (u.receiveShadow = a !== "glow" && a !== "water"),

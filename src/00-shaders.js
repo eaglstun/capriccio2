@@ -738,6 +738,7 @@ uniform float uCourseH;
 uniform float uDebugView;
 uniform float uLocalGain;
 uniform float uDither;
+uniform float uCarvable;
 uniform float uPxScale;
 uniform vec3 uDistrictPos[8];
 uniform vec3 uDistrictCol[8];
@@ -950,6 +951,28 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
       float sLum = dot(stone, vec3(0.2126, 0.7152, 0.0722));
       float dLum = dot(dCol, vec3(0.2126, 0.7152, 0.0722));
       stone = mix(stone, dCol * (sLum / max(dLum, 0.05)), min(dW, 1.0) * 0.62);
+    }
+  }
+
+  // carvable fabric: faint setting-out scribes — dashed vertical grooves
+  // every 3.6m, each with a raised lit edge beside it, the way a mason
+  // marks a face before opening it. Deliberately quiet (CARVE is one tool
+  // of seven); the LIT edge is what keeps it legible at night, when a
+  // dark groove on dark fabric would vanish. Orthogonal to the era split:
+  // this reads on top of the panelling, not instead of it. A carved giant
+  // pier is rebuilt with the plain material and stops carrying the marks.
+  if (uCarvable > 0.5) {
+    vec3 anC = abs(wn);
+    if (anC.y < 0.72) {
+      float alongC = anC.x > anC.z ? vWorldPosE.z : vWorldPosE.x;
+      float dashC = step(0.42, fract(vWorldPosE.y * 0.36 + 0.2));
+      float wuC = fwidth(alongC) + 0.02;
+      float fuC = abs(fract(alongC / 3.6) - 0.5) * 3.6;
+      float grooveC = 1.0 - smoothstep(0.035, 0.035 + wuC, fuC);
+      float litC = 1.0 - smoothstep(0.06, 0.06 + wuC, abs(fuC - 0.18));
+      float fadeC = 1.0 - smoothstep(0.5, 1.2, wuC);   // dissolve far off
+      ink = max(ink, grooveC * dashC * 0.34 * fadeC);
+      stone *= 1.0 + litC * dashC * 0.22 * fadeC;
     }
   }
 
