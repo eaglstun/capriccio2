@@ -245,6 +245,18 @@ void main() {
 
     float edge = max(depthEdge, normalEdge);
 
+    // ============ CITIZEN MASK ============
+    // the figure material writes a marker alpha (0.5) into the otherwise
+    // unused alpha channel of the RGBA intermediate; every other material
+    // lands 1.0. LinearFilter interpolates it across exactly the edges the
+    // outline lives on, so test a band, not equality — and take the min
+    // over the same kernel the edges use, so the whole silhouette line
+    // reads as the citizen's, not just its inner half.
+    float aMin = min(texture2D(tDiffuse, suv).a, min(
+      min(texture2D(tDiffuse, suv + o1).a, texture2D(tDiffuse, suv - o1).a),
+      min(texture2D(tDiffuse, suv + o2).a, texture2D(tDiffuse, suv - o2).a)));
+    float isFig = (aMin > 0.38 && aMin < 0.66) ? 1.0 : 0.0;
+
     // distance fade (matched exp2 fog) — lines dissolve into haze
     float fogF = 1.0 - exp(-uFogDensity * uFogDensity * distC * distC);
     edge *= (1.0 - fogF * 0.9);
@@ -253,6 +265,9 @@ void main() {
 
     // neon rim light: hot pink up close, dissolving to cyan haze far off
     vec3 rimCol = mix(uInk, vec3(0.36, 0.94, 1.0), smoothstep(30.0, 180.0, distC));
+    // the citizens get their own line: warm amber against the cold neon.
+    // The only living things in frame, and the outline says so without UI.
+    rimCol = mix(rimCol, vec3(1.05, 0.74, 0.34), isFig);
     color = mix(color, rimCol, clamp(edge, 0.0, 1.0) * 0.92);
 
     // graded haze: the low city drowns in smog-coloured air

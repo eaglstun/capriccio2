@@ -131,6 +131,21 @@ function n_() {
       polygonOffsetUnits: -1,
     });
   return (
+    // citizens mark themselves in the intermediate target's spare alpha:
+    // the figure material writes 0.5 where everything else writes 1.0.
+    // The material is opaque and blending is off, so the value changes
+    // nothing about how it draws — it simply lands in the RGBA buffer,
+    // where the post pass reads it and gives the living things their own
+    // outline colour. The post pass always outputs alpha 1.0, so nothing
+    // downstream (plate exports included) ever sees the marker.
+    (h.onBeforeCompile = (m) => {
+      m.fragmentShader = m.fragmentShader.replace(
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
+gl_FragColor.a = 0.5;`,
+      );
+    }),
+    (h.customProgramCacheKey = () => "figureAlphaMark"),
     (f.onBeforeCompile = (m) => {
       ((m.uniforms.uTime = Aa),
         (m.vertexShader = m.vertexShader
