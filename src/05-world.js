@@ -678,32 +678,63 @@ function C_(i) {
         ((bx.fillStyle = bg), bx.fillRect(0, 0, 512, 128));
         ((bx.textAlign = "center"), fn(), bx.restore());
       },
-      big = (s2, col, y = 62) => {
-        ((bx.fillStyle = col), (bx.font = "bold 52px Georgia"), bx.fillText(s2, 256, y));
+      // measure and shrink until the line fits with margin — copy is safe
+      // by construction, not by luck. (At the old fixed bold 52px Georgia,
+      // EVERYDAY LOW PRICES measured 688px against the 512px cell and
+      // GRAND OPENING fit by 20px: the trap stayed armed for the next
+      // string.) `mk` builds the font string from a size, so each sign
+      // keeps its own face while the fitting is shared. Full fallback
+      // stacks throughout: a missing system font falls back silently, and
+      // without them the variety would quietly vanish on machines other
+      // than the one this was built on.
+      fitLine = (s2, col, y, size0, mk, trk = 0) => {
+        const cs = bx.letterSpacing !== void 0;
+        cs && (bx.letterSpacing = trk + "px");
+        let sz = size0;
+        for (bx.font = mk(sz); sz > 14 && bx.measureText(s2).width > 512 - 52; )
+          bx.font = mk(--sz);
+        ((bx.fillStyle = col), bx.fillText(s2, 256, y));
+        cs && (bx.letterSpacing = "0px");
       },
-      sml = (s2, col, y = 104) => {
-        ((bx.fillStyle = col), (bx.font = "italic 25px Georgia"), bx.fillText(s2, 256, y));
-      };
+      GEO = '"Futura", "Century Gothic", "Avenir Next", "URW Gothic", sans-serif',
+      AVE = '"Avenir Next", "Futura", "Century Gothic", sans-serif',
+      GRO = '"Helvetica Neue", Helvetica, Arial, sans-serif',
+      SLB = '"American Typewriter", "Courier New", Courier, monospace',
+      FAT = 'Impact, Haettenschweiler, "Arial Narrow", sans-serif',
+      SER = 'Georgia, "Times New Roman", serif';
+    // seven companies, seven faces: the soda geometric and tracked wide,
+    // the estates in the serif they thought looked old-money, the diner on
+    // a typewriter slab, the phone company a tight grotesque, the resort
+    // thin and airy, the retailer's serif banner, the supermarket fat and
+    // condensed. Weight, tracking and case vary as much as family — that
+    // jumble is what makes a strip read as a strip.
     (cellAt(0, "#ff5fa8", () => {
-      (big("SUNMIST", "#fff6e8"), sml("taste the weekend · now in peach", "#3c0f2e"));
+      (fitLine("SUNMIST", "#fff6e8", 62, 52, (z) => `600 ${z}px ${GEO}`, 7),
+        fitLine("taste the weekend · now in peach", "#3c0f2e", 104, 25, (z) => `italic ${z}px ${SER}`));
     }),
       cellAt(1, "#22307a", () => {
-        (big("MIRAMAR ESTATES", "#ffd98a"), sml("now leasing · move-in ready", "#dfe6ff"));
+        (fitLine("MIRAMAR ESTATES", "#ffd98a", 62, 52, (z) => `bold ${z}px ${SER}`, 2),
+          fitLine("now leasing · move-in ready", "#dfe6ff", 104, 25, (z) => `italic ${z}px ${SER}`));
       }),
       cellAt(2, "#17c3cf", () => {
-        (big("OPEN 24 HOURS", "#132437"), sml("hot meals · cold drinks · exit 12", "#123"));
+        (fitLine("OPEN 24 HOURS", "#132437", 62, 52, (z) => `bold ${z}px ${SLB}`),
+          fitLine("hot meals · cold drinks · exit 12", "#123", 104, 24, (z) => `${z}px ${SLB}`));
       }),
       cellAt(3, "#f2e6ff", () => {
-        (big("VISTAPHONE", "#7a2bd4"), sml("family plans from $9.99 a month", "#5a4a7a"));
+        (fitLine("Vistaphone", "#7a2bd4", 64, 58, (z) => `bold ${z}px ${GRO}`, -1),
+          fitLine("family plans from $9.99 a month", "#5a4a7a", 104, 25, (z) => `${z}px ${GRO}`));
       }),
       cellAt(4, "#ffb04a", () => {
-        (big("AZURE COAST", "#ffffff"), sml("you deserve a getaway", "#7a3c0f"));
+        (fitLine("AZURE COAST", "#ffffff", 62, 52, (z) => `200 ${z}px ${AVE}`, 10),
+          fitLine("you deserve a getaway", "#7a3c0f", 104, 25, (z) => `italic 300 ${z}px ${AVE}`, 2));
       }),
       cellAt(5, "#efeae2", () => {
-        (big("GRAND OPENING", "#d42a3e"), sml("saturday! free balloons for the kids", "#444"));
+        (fitLine("GRAND OPENING", "#d42a3e", 62, 52, (z) => `bold italic ${z}px ${SER}`),
+          fitLine("saturday! free balloons for the kids", "#444", 104, 25, (z) => `${z}px ${GRO}`));
       }),
       cellAt(6, "#d42a5e", () => {
-        (big("EVERYDAY LOW PRICES", "#ffffff", 58), sml("friendly · fresh · always", "#ffd7e2"));
+        (fitLine("EVERYDAY LOW PRICES", "#ffffff", 60, 56, (z) => `bold ${z}px ${FAT}`, 1),
+          fitLine("friendly · fresh · always", "#ffd7e2", 104, 25, (z) => `${z}px ${GRO}`, 3));
       }),
       cellAt(7, "#f5c518", () => {
         bx.fillStyle = "#191420";
