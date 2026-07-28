@@ -81,19 +81,30 @@ function buildSpan(i) {
       E.box(F - I + 0.05, 0.3, h + 0.55, [(I + F) / 2 - a / 2, B - 1.45, 0]));
   }
   const C = i.kind === "aqueduct",
-    L = C ? 1.45 : 1;
+    L = C ? 1.45 : 1,
+    Eg = new MeshBuilder(0);
   for (const w of [-1, 1])
     for (let I = 0; I < R; I++) {
       const F = (a * I) / R,
         B = (a * (I + 1)) / R,
         k = u((F + B) / 2);
-      E.box(B - F + 0.05, L, C ? 0.6 : 0.35, [
+      (E.box(B - F + 0.05, L, C ? 0.6 : 0.35, [
         (F + B) / 2 - a / 2,
         k,
         w * (h / 2 - 0.3),
-      ]);
+      ]),
+        // neon runner along the parapet crest
+        Eg.box(B - F - 0.3, 0.09, 0.1, [
+          (F + B) / 2 - a / 2,
+          k + L,
+          w * (h / 2 - 0.3),
+        ]));
     }
-  const y = E.merge();
+  const y = E.merge(),
+    yg = Eg.merge();
+  (yg.rotateY(l - Math.PI / 2),
+    yg.translate((s.x + r.x) / 2, 0, (s.z + r.z) / 2),
+    Yt(t, "glow", yg));
   if (
     (y.rotateY(l - Math.PI / 2),
     y.translate((s.x + r.x) / 2, 0, (s.z + r.z) / 2),
@@ -456,6 +467,35 @@ function buildVault(i) {
       h,
     ),
     Yt(t, "stone", f));
+  if (s < 0.15) {
+    // rooftop accretion: tanks, extract fans, masts, neon eaves (visual only)
+    const q = seededRng(i.id * 7919 + 141),
+      qc = new MeshBuilder(n),
+      qg = new MeshBuilder(0),
+      qy = c + o / 2 + 0.9;
+    for (const qs of [-1, 1])
+      qg.box(Math.max(2, d - 1.2), 0.09, 0.14, [0, c + 0.06, qs * (o / 2 + 0.82)]);
+    const qn = 2 + Math.floor(q() * 3);
+    for (let qk = 0; qk < qn; qk++) {
+      const qx = (q() - 0.5) * (a - 5),
+        qp = q();
+      if (qp < 0.4)
+        qc.box(1.4 + q() * 1.2, 0.9 + q() * 0.9, 1.2, [qx, qy - 0.4, 0]);
+      else if (qp < 0.7) {
+        const qf = new CylinderGeometry(0.7 + q() * 0.4, 0.8 + q() * 0.4, 0.4, 9);
+        (qf.translate(qx, qy + 0.05, 0), qc.addRaw(qf));
+      } else {
+        const qh = 3 + q() * 4;
+        (qc.box(0.16, qh, 0.16, [qx, qy - 0.3, 0]),
+          qc.box(1.1, 0.06, 0.06, [qx, qy - 0.3 + qh * 0.75, 0]),
+          qg.box(0.22, 0.3, 0.22, [qx, qy - 0.3 + qh, 0]));
+      }
+    }
+    const qm = qc.merge();
+    (be(qm, i.x, r, i.z, h), Yt(t, "timber", qm));
+    const qgm = qg.merge();
+    (be(qgm, i.x, r, i.z, h), Yt(t, "glow", qgm));
+  }
   const m = new MeshBuilder(n);
   m.box(a + 3, 0.9, o + 3, [0, -0.9, 0]);
   const _ = m.merge();
@@ -588,13 +628,18 @@ function buildOrnament(i) {
     (s.box(1.6, 1.9, 1.6, [0, 0, 0]), s.box(1.25, 0.32, 1.25, [0, 1.9, 0]));
     const r = s.merge();
     (be(r, i.x, n, i.z, i.rotY), Yt(t, "stone", r));
-    const o = new MeshBuilder(0);
-    (o.box(0.55, 1.5, 0.42, [0, 0, 0]),
-      o.cylinder(0.2, 0.34, [0, 1.55, 0], 8),
-      o.box(0.85, 0.2, 0.3, [0, 1.1, 0]));
+    // a figure in chrome where the orator stood
+    const c = i.rotY + e(),
+      o = new MeshBuilder(0);
+    (o.box(0.72, 2.6, 0.3, [0, 0, 0]),
+      o.box(0.5, 0.42, 0.2, [0, 2.6, 0]),
+      o.box(1.0, 0.14, 0.24, [0, 1.72, 0]));
     const a = o.merge();
-    (be(a, i.x, n + 2.22, i.z, i.rotY + e()),
-      Yt(t, "gold", a),
+    (be(a, i.x, n + 2.22, i.z, c), Yt(t, "gold", a));
+    const l = new BoxGeometry(0.06, 2.2, 0.05);
+    (l.translate(0.42, 1.24, 0),
+      be(l, i.x, n + 2.22, i.z, c),
+      Yt(t, "glow", l),
       t.pockets.push({
         kind: "niche",
         pos: [i.x + 2, n, i.z],
@@ -606,31 +651,54 @@ function buildOrnament(i) {
         scenic: 0.9,
       }));
   } else if (i.kind === "fountain") {
+    // coolant basin: the water still rises, the plumbing shows now
     const s = new MeshBuilder(0.05);
     (s.cylinder(2.3, 0.9, [0, 0, 0], 14),
-      s.cylinder(0.4, 1.7, [0, 0.4, 0], 8),
-      s.cylinder(1.1, 0.25, [0, 1.7, 0], 10));
+      s.cylinder(0.34, 1.9, [0, 0.4, 0], 8),
+      s.box(0.9, 0.5, 0.9, [0, 2.1, 0]),
+      s.cylinder(0.12, 1.3, [0.55, 0.5, 0.3], 6),
+      s.cylinder(0.12, 1.05, [-0.5, 0.5, -0.35], 6));
     const r = s.merge();
     (be(r, i.x, n, i.z, 0), Yt(t, "stone", r));
+    const a = new MeshBuilder(0);
+    for (let c = 0; c < 3; c++) {
+      const l = (c / 3) * Math.PI * 2 + 0.6;
+      a.box(0.08, 0.9, 0.08, [Math.sin(l) * 2.2, 0.55, Math.cos(l) * 2.2]);
+    }
+    const h = a.merge();
+    (be(h, i.x, n, i.z, 0), Yt(t, "glow", h));
     const o = new CylinderGeometry(2.05, 2.05, 0.12, 16);
     (o.translate(i.x, n + 0.82, i.z),
       Yt(t, "water", o),
       t.waterSources.push([i.x, n, i.z]));
   } else if (i.kind === "lantern") {
+    // neon standard: same slot, later filament
     const s = new MeshBuilder(0);
-    (s.cylinder(0.09, 3.4, [0, 0, 0], 6), s.box(0.5, 0.08, 0.5, [0, 3.4, 0]));
+    (s.cylinder(0.09, 3.4, [0, 0, 0], 6),
+      s.box(0.5, 0.08, 0.5, [0, 3.4, 0]),
+      s.box(0.3, 0.06, 0.06, [0.1, 2.05, 0]));
     const r = s.merge();
     (be(r, i.x, n, i.z, 0), Yt(t, "timber", r));
-    const o = new BoxGeometry(0.34, 0.4, 0.34);
-    (o.translate(i.x, n + 3.15, i.z), Yt(t, "glow", o));
+    const o = new BoxGeometry(0.1, 2.5, 0.18);
+    (o.translate(i.x + 0.24, n + 2.05, i.z), Yt(t, "glow", o));
+    const a = new BoxGeometry(0.34, 0.12, 0.34);
+    (a.translate(i.x, n + 3.44, i.z), Yt(t, "glow", a));
   } else if (i.kind === "obelisk") {
     const s = new MeshBuilder(0.1);
     (s.box(2.4, 1.1, 2.4, [0, 0, 0]),
       s.cylinder(0.85, 9, [0, 1.1, 0], 4, 1, 0.5));
     const r = s.merge();
     (be(r, i.x, n, i.z, Math.PI / 4), Yt(t, "stone", r));
+    // relay head: the axis mundi keeps transmitting
     const o = new ConeGeometry(0.52, 1, 4);
     (o.translate(i.x, n + 10.4, i.z), Yt(t, "gold", o));
+    const a = new MeshBuilder(0);
+    (a.box(1.7, 0.07, 0.07, [0, 9.3, 0]),
+      a.box(0.07, 0.07, 1.7, [0, 8.9, 0]));
+    const c = a.merge();
+    (be(c, i.x, n, i.z, Math.PI / 4), Yt(t, "timber", c));
+    const l = new BoxGeometry(0.2, 0.55, 0.2);
+    (l.translate(i.x, n + 11.35, i.z), Yt(t, "glow", l));
   }
   return ((t.cost.stone = 4), t);
 }

@@ -398,11 +398,35 @@ function Il(i, t, e, n = 0.25) {
   return (a.rotateY(Math.PI / 2), a.translate(-s / 2, 0, 0), a);
 }
 function buildTree(i, t) {
+  // synthetic palm: the cypress slots survive, the species did not
   const e = new MeshBuilder(),
-    n = i * 0.14 * (0.85 + t() * 0.3);
-  e.cylinder(n * 0.24, i * 0.1, [0, 0, 0], 6);
-  const s = new ConeGeometry(n, i * 0.92, 7);
-  return (s.translate(0, i * 0.1 + i * 0.46, 0), e.addRaw(s), e.merge());
+    n = i * 0.14 * (0.85 + t() * 0.3),
+    s = (t() - 0.5) * 0.5;
+  let r = 0,
+    o = 0;
+  const a = 4;
+  for (let c = 0; c < a; c++) {
+    const l = new CylinderGeometry(n * 0.16, n * 0.21, (i * 0.99) / a, 5);
+    (l.translate(0, (i * 0.99) / a / 2, 0),
+      l.rotateZ(s * ((c + 1) / a) * 0.55),
+      l.translate(r, o, 0),
+      e.addRaw(l));
+    ((r += Math.sin(s * ((c + 1) / a) * 0.55) * ((i * 0.99) / a) * -1),
+      (o += Math.cos(s * ((c + 1) / a) * 0.55) * ((i * 0.99) / a)));
+  }
+  const c = 5 + Math.floor(t() * 3);
+  for (let l = 0; l < c; l++) {
+    const h = (l / c) * Math.PI * 2 + t() * 0.6,
+      u = 0.42 + t() * 0.3,
+      d = new BoxGeometry(i * 0.5, 0.055, 0.3);
+    (d.translate(i * 0.25, 0, 0),
+      d.rotateZ(-0.45 - u),
+      d.rotateY(h),
+      d.translate(r, o + 0.05, 0),
+      e.addRaw(d));
+  }
+  const f = new BoxGeometry(0.28, 0.34, 0.28);
+  return (f.translate(r, o - 0.05, 0), e.addRaw(f), e.merge());
 }
 function x_(i, t, e) {
   const n = i.attributes.position;
@@ -513,6 +537,8 @@ function buildAnchor(i) {
     (Ri(c, 0, 4, 0.85, 1, r),
       Yt(t, "stone", be(c, i.x, n, i.z)),
       (t.cost.stone = Math.round(s * 3)));
+    const g = new CylinderGeometry(a * 1.08, a * 1.08, 0.13, 12);
+    (g.translate(i.x, n + s - 2.7, i.z), Yt(t, "glow", g));
   } else {
     const o = i.style === "giant" ? 9 : 4.6;
     if (i.style === "giant" && i.carveAxis) {
@@ -568,7 +594,20 @@ function buildAnchor(i) {
           scenic: 0.5,
         }));
     } else {
-      const a = g_(o, o, s + 1.5);
+      const a = g_(o, o, s + 1.5),
+        gg = new MeshBuilder(0);
+      for (const gk of [0, 1, 2, 3]) {
+        const gth = (gk * Math.PI) / 2,
+          gb = new BoxGeometry(o * 0.7, 0.12, 0.06);
+        (gb.rotateY(gth),
+          gb.translate(
+            Math.sin(gth) * (o * 0.5 + 0.08),
+            s + 0.2,
+            Math.cos(gth) * (o * 0.5 + 0.08),
+          ),
+          gg.addRaw(gb));
+      }
+      Yt(t, "glow", be(gg.merge(), i.x, n - 0.5, i.z));
       if ((be(a, i.x, n - 0.5, i.z), Yt(t, "stone", a), i.style === "giant")) {
         for (let c = 0; c < 4; c++) {
           const l = Hn(

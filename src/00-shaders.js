@@ -458,8 +458,8 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     float w = fwidth(wp.x + wp.z) + 0.012;
     ink = 1.0 - smoothstep(0.015, 0.015 + w, d);
     blockTone = eHash21(floor(co / g)) - 0.5;
-  } else {
-    // wall courses
+  } else if (ch < 0.95) {
+    // the first era: coursed roman masonry survives on the oldest stone
     float along = an.x > an.z ? wp.z : wp.x;
     float course = floor(wp.y / ch);
     float fy = abs(fract(wp.y / ch) - 0.5) * ch;
@@ -471,6 +471,35 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     float vJoint = 1.0 - smoothstep(0.012, 0.012 + wx, vx);
     ink = max(hJoint, vJoint * 0.8);
     blockTone = eHash21(vec2(course, floor((along + stag) / 2.1))) - 0.5;
+  } else {
+    // corporate panelling: staggered cladding seams, vent slats, corner bolts
+    float along = an.x > an.z ? wp.z : wp.x;
+    float ph = ch * 1.55;
+    float pw = ch * 2.7;
+    float row = floor(wp.y / ph);
+    float stag = mod(row, 2.0) * pw * 0.5;
+    float u = along + stag;
+    float fx = abs(fract(u / pw) - 0.5) * pw;
+    float fy = abs(fract(wp.y / ph) - 0.5) * ph;
+    float wy = fwidth(wp.y) + 0.012;
+    float wx = fwidth(along) + 0.012;
+    float hSeam = 1.0 - smoothstep(0.02, 0.02 + wy, ph * 0.5 - fy);
+    float vSeam = 1.0 - smoothstep(0.016, 0.016 + wx, pw * 0.5 - fx);
+    ink = max(hSeam, vSeam * 0.85);
+    float pid = eHash21(vec2(floor(u / pw), row));
+    // vent slats punched into the occasional panel
+    float vent = step(0.78, pid)
+      * (1.0 - smoothstep(pw * 0.24, pw * 0.30, fx))
+      * (1.0 - smoothstep(ph * 0.20, ph * 0.26, fy));
+    ink = max(ink, lineAA(wp.y * 3.6, 0.42) * vent * 0.62);
+    // inspection-plate outline on a few others
+    float plate = step(0.62, pid) * (1.0 - step(0.78, pid));
+    float po = abs(max(fx - pw * 0.17, fy - ph * 0.17));
+    ink = max(ink, plate * (1.0 - smoothstep(0.02, 0.02 + wx, po)) * 0.6);
+    // corner bolts
+    float bolt = 1.0 - smoothstep(0.055, 0.055 + wx, length(vec2(pw * 0.5 - fx, ph * 0.5 - fy) - vec2(0.2)));
+    ink = max(ink, bolt * 0.5);
+    blockTone = pid - 0.5;
   }
   return vec2(ink, blockTone);
 }
