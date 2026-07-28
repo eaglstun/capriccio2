@@ -463,7 +463,7 @@ ei.sync();
     i.appendChild(e));
 }
 oi.onDone = (i) => {
-  (fe.toast(i.thanks + `  (+${i.favor} favor)`, 7e3), fe.setRequest(null));
+  (fe.toast(i.thanks + `  (+${i.favor} clearance)`, 7e3), fe.setRequest(null));
 };
 oi.onNew = (i) => fe.setRequest(i.text);
 oi.active && fe.setRequest(oi.active.text);

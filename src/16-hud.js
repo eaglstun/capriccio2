@@ -187,7 +187,7 @@ class Hud {
       <div id="resources" class="panel">
         <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span></div>
         <div><span class="num" id="r-timber">0</span> <span class="lbl">TIMBER</span></div>
-        <div><span class="num" id="r-favor">0</span> <span class="lbl">FAVOR</span></div>
+        <div><span class="num" id="r-favor">0</span> <span class="lbl">CLEARANCE</span></div>
         <div><span class="num" id="r-pop">0</span> <span class="lbl">SOULS</span></div>
         <div id="folio-line" title="No costs, no span limits — build freely."
           style="margin-top:3px; font-size:10px; letter-spacing:0.16em; opacity:0.6; cursor:pointer; font-style:italic">✦ play without resources</div>
@@ -224,7 +224,8 @@ class Hud {
         <div class="hint">
           RAISE the great architecture — piers, spans, stairs, vaults.<br/>
           The citizens will find their own uses for what you leave them.<br/>
-          Bring a way, and water, to the high terrace.
+          Bring a way, and water, to the high terrace.<br/>
+          What you engrave is what remains.
         </div>
         <button class="begin">BEGIN</button>
       </div>
@@ -236,7 +237,7 @@ class Hud {
         ["rise", "RISE"],
         ["vault", "VAULT"],
         ["carve", "CARVE"],
-        ["emb", "ADORN"],
+        ["emb", "FURNISH"],
         ["designate", "INVITE"],
       ];
     for (const [m, _] of n) {

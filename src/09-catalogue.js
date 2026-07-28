@@ -22,18 +22,20 @@ const BUILD_CATALOGUE = {
         hint: "an open crossing on great arches",
       },
       {
+        // "Aqueduct" kept deliberately: infrastructure words are conservative.
+        // Nobody renames the thing that still carries the water.
         key: "aqueduct",
         label: "Aqueduct",
-        hint: "carries water along its back",
+        hint: "carries the water main on its back",
       },
-      { key: "arcade", label: "Gallery", hint: "a roofed colonnade crossing" },
+      { key: "arcade", label: "Gallery", hint: "a covered crossing on columns" },
     ],
     rise: [
       { key: "direct", label: "Stair", hint: "the shortest honest climb" },
       {
         key: "ceremonial",
-        label: "Ceremonial",
-        hint: "broad, slow, magnificent",
+        label: "Grand Stair",
+        hint: "broad, slow, unhurried",
       },
       {
         key: "switchback",
@@ -44,11 +46,11 @@ const BUILD_CATALOGUE = {
     vault: [
       {
         key: "court",
-        label: "Cloister Hall",
+        label: "Common Hall",
         hint: "intimate — 13 metres across",
       },
       { key: "market", label: "Market Hall", hint: "roomy — 17 metres across" },
-      { key: "basilica", label: "Basilica", hint: "vast — 22 metres across" },
+      { key: "basilica", label: "Concourse", hint: "vast — 22 metres across" },
     ],
     carve: [
       {
@@ -58,8 +60,8 @@ const BUILD_CATALOGUE = {
       },
       {
         key: "gate",
-        label: "Great Gate",
-        hint: "ceremonial breach, 8 metres wide",
+        label: "Gate",
+        hint: "a full breach, 8 metres wide",
       },
     ],
     emb: [

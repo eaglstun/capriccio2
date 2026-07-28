@@ -479,14 +479,14 @@ const districtUniforms = {
   uDistrictPos: { value: Array.from({ length: 8 }, () => new Vector3(0, 0, 0)) },
   uDistrictCol: { value: Array.from({ length: 8 }, () => new Color(0, 0, 0)) },
 };
-// the signature word of the name picks the hue: Ember runs hot, the
+// the signature word of the name picks the hue: Sodium runs hot, the
 // Cistern runs cold, and a player who notices has found something real
 const districtHues = {
-  Lantern: 0.09, Ember: 0.02, Candle: 0.13,
-  Cistern: 0.54, Spring: 0.47, Well: 0.60,
+  Lantern: 0.09, Sodium: 0.02, Candle: 0.13,
+  Cistern: 0.54, Runoff: 0.47, Well: 0.60,
   Garden: 0.33, Laurel: 0.40, Green: 0.29,
   Quiet: 0.72, Sleeping: 0.78, Patient: 0.64,
-  Bright: 0.15, Morning: 0.57, White: 0.83,
+  Halogen: 0.15, Morning: 0.57, White: 0.83,
 };
 function districtHash(i) {
   let t = 2166136261;

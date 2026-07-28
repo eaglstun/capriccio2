@@ -269,11 +269,16 @@ function O_(i) {
     o
   );
 }
-const z_ = ["Lantern", "Ember", "Candle"],
-  k_ = ["Cistern", "Spring", "Well"],
+// District names drift where the technology drifted and refuse where it
+// didn't. The light words went technical (Sodium, Halogen); the water and
+// garden words name things that never stopped existing. "Candle" stays on
+// purpose — a quarter still called the Candle Quarter, long after candles,
+// is how real place-names behave.
+const z_ = ["Lantern", "Sodium", "Candle"],
+  k_ = ["Cistern", "Runoff", "Well"],
   B_ = ["Garden", "Laurel", "Green"],
   H_ = ["Quiet", "Sleeping", "Patient"],
-  G_ = ["Bright", "Morning", "White"];
+  G_ = ["Halogen", "Morning", "White"];
 function Rh(i, t) {
   const e = t.items.filter((c) => c.stage >= 1);
   if (e.length < 2) return [];
@@ -331,7 +336,7 @@ function Rh(i, t) {
       A = [...d.entries()].sort((R, E) => E[1] - R[1])[0][0];
     let b = "Quarter";
     A === "under_arch"
-      ? (b = "Undercroft")
+      ? (b = "Underpass")
       : A === "landing"
         ? (b = "Stairs")
         : A === "interior"
