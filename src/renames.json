@@ -42,5 +42,24 @@
 
   "//batch1-misc": "",
   "lv": "updateQualityMeters",
-  "Dh": "renderPlateImage"
+  "Dh": "renderPlateImage",
+
+  "//batch2-math": "shared helpers that appear in nearly every expression",
+  "Xe": "clamp",
+  "zn": "lerp",
+  "Je": "seededRng",
+  "Ra": "hashString",
+
+  "//batch2-terrain": "l_ is raw noise height; qt terraces it in 2.3-unit steps",
+  "l_": "rawTerrainHeight",
+  "qt": "terrainHeightAt",
+  "h_": "terrainNormalAt",
+  "u_": "terrainSlopeAt",
+  "Ir": "isFlatGround",
+
+  "//batch2-geometry": "",
+  "oe": "MeshBuilder",
+  "Ci": "newStructureParts",
+  "Ue": "setToneAttribute",
+  "nc": "buildTree"
 }

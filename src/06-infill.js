@@ -39,15 +39,15 @@ class InfillSystem {
         const c = this.world.pockets[a.pocketIdx];
         if (!c) continue;
         const l = Math.hypot(c.pos[0] - n.pos[0], c.pos[2] - n.pos[2]);
-        l < 40 && (s += Xe(1 - l / 40, 0, 1));
+        l < 40 && (s += clamp(1 - l / 40, 0, 1));
       }
       const r = Math.hypot(n.pos[0] + 18, n.pos[2] - 28),
         o =
           n.shelter * 1.2 +
           n.light * 0.5 +
           n.scenic * 0.4 +
-          Xe(s, 0, 3) * 0.8 +
-          Xe(1 - r / 130, 0, 1) * 1.4 +
+          clamp(s, 0, 3) * 0.8 +
+          clamp(1 - r / 130, 0, 1) * 1.4 +
           (n.waterDist < 45 ? 0.9 : n.waterDist < 90 ? 0.3 : 0) +
           (n.designation ? 2.4 : 0) +
           (n.kind === "under_arch" ? 0.5 : 0);
@@ -60,7 +60,7 @@ class InfillSystem {
     if (t.designation === "trade") return "stall";
     if (t.designation === "dwelling") return "house";
     if (t.designation === "gathering") return "shrine";
-    const e = Je(Ra(t.structId + ":" + t.idx));
+    const e = seededRng(hashString(t.structId + ":" + t.idx));
     return t.kind === "niche"
       ? "shrine"
       : t.kind === "deck"
@@ -88,7 +88,7 @@ class InfillSystem {
       r = (this.counters.get(s) ?? 0) + 1;
     this.counters.set(s, r);
     const o = `${s}:${r}`,
-      a = Je(Ra(o)),
+      a = seededRng(hashString(o)),
       c = new rn(),
       l = new rn();
     c.add(l);
@@ -163,7 +163,7 @@ function U_(i, t, e) {
     s = t === "house" || t === "workshop" ? 5.4 : 3.6,
     r = t === "house" || t === "workshop" ? 4.6 : 3,
     o = t === "garden" ? 1.6 : 3.6 + e() * 1.2,
-    a = new oe(0);
+    a = new MeshBuilder(0);
   for (const h of [-1, 1])
     for (const u of [-1, 1])
       a.box(0.11, o, 0.11, [(h * s) / 2, 0, (u * r) / 2]);
@@ -181,7 +181,7 @@ function U_(i, t, e) {
 function N_(i, t, e, n, s, r) {
   const o = i.mats,
     a = (l, h, u = !0) => {
-      Ue(l);
+      setToneAttribute(l);
       const d = new he(l, h);
       return ((d.castShadow = u), (d.receiveShadow = !0), t.add(d), d);
     },
@@ -191,7 +191,7 @@ function N_(i, t, e, n, s, r) {
       h = 3 + r() * 1.2,
       u = 2.7 + r() * 1.1,
       d = n.height > 7 && r() < 0.45,
-      f = new oe(0.05);
+      f = new MeshBuilder(0.05);
     (f.box(l, u, h, [0, 0, 0]),
       d && f.box(l * 0.86, u * 0.85, h * 0.86, [0.1, u, -0.05]),
       a(f.merge(), r() < 0.4 ? o.plaster : o.timber));
@@ -220,7 +220,7 @@ function N_(i, t, e, n, s, r) {
     }
   } else if (s === "stall") {
     const l = 2.6 + r() * 1.2,
-      h = new oe(0);
+      h = new MeshBuilder(0);
     for (const f of [-1, 1])
       for (const m of [-1, 1])
         h.box(0.14, 2.3, 0.14, [f * l * 0.45, 0, m * 0.9]);
@@ -238,7 +238,7 @@ function N_(i, t, e, n, s, r) {
     const d = new le(0.24, 0.3, 0.24);
     (d.translate(l * 0.4, 2.1, 0.8), e.push(a(d, c, !1)));
   } else if (s === "garden") {
-    const l = new oe(0.1);
+    const l = new MeshBuilder(0.1);
     (l.box(3.4, 0.35, 2.4, [0, 0, 0]),
       l.box(2.8, 0.3, 2, [0.4, 0, 2.9]),
       a(l.merge(), o.stoneOld));
@@ -246,15 +246,15 @@ function N_(i, t, e, n, s, r) {
     (h.translate(0, 0.4, 0), a(h, o.green, !1));
     const u = new le(2.4, 0.45, 1.6);
     (u.translate(0.4, 0.35, 2.9), a(u, o.green, !1));
-    const d = nc(2.8 + r() * 1.8, r);
+    const d = buildTree(2.8 + r() * 1.8, r);
     (d.translate(-1.8, 0, 1.4), a(d, o.green));
-    const f = new oe(0);
+    const f = new MeshBuilder(0);
     (f.box(0.1, 2.2, 0.1, [1.8, 0, -0.9]),
       f.box(0.1, 2.2, 0.1, [1.8, 0, 0.9]),
       f.box(0.12, 0.12, 2, [1.8, 2.2, 0]),
       a(f.merge(), o.timber));
   } else if (s === "shrine") {
-    const l = new oe(0.15);
+    const l = new MeshBuilder(0.15);
     (l.box(1.7, 0.5, 1.4, [0, 0, 0]),
       l.box(0.24, 2, 0.24, [-0.6, 0.5, -0.45]),
       l.box(0.24, 2, 0.24, [0.6, 0.5, -0.45]),
@@ -268,7 +268,7 @@ function N_(i, t, e, n, s, r) {
     (u.translate(0.55, 0.65, 0.3), e.push(a(u, c, !1)));
   } else {
     const l = 3.8 + r() * 1.4,
-      h = new oe(0.08);
+      h = new MeshBuilder(0.08);
     (h.box(l, 3, 3.4, [0, 0, 0]), a(h.merge(), o.stoneOld));
     const u = Il(l, 3.4, 0.9);
     (u.translate(0, 3, 0), a(u, o.timber));

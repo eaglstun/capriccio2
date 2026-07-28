@@ -144,7 +144,7 @@ function i_() {
   const i = new yi({ color: "#ffcf7a", fog: !1 });
   return ((i.toneMapped = !1), i);
 }
-function Je(i) {
+function seededRng(i) {
   let t = i >>> 0;
   return function () {
     ((t |= 0), (t = (t + 1831565813) | 0));
@@ -166,7 +166,7 @@ function fr(i, t, e = 0) {
     ((n ^ (n >>> 16)) >>> 0) / 4294967296
   );
 }
-function Ra(i) {
+function hashString(i) {
   let t = 2166136261;
   for (let e = 0; e < i.length; e++)
     ((t ^= i.charCodeAt(e)), (t = Math.imul(t, 16777619)));
@@ -200,10 +200,10 @@ function Sr(i, t, e = 4, n = 0) {
       (r *= 2.02));
   return o / a;
 }
-const Xe = (i, t, e) => Math.max(t, Math.min(e, i)),
-  zn = (i, t, e) => i + (t - i) * e,
+const clamp = (i, t, e) => Math.max(t, Math.min(e, i)),
+  lerp = (i, t, e) => i + (t - i) * e,
   Nn = (i, t, e) => {
-    const n = Xe((e - i) / (t - i), 0, 1);
+    const n = clamp((e - i) / (t - i), 0, 1);
     return n * n * (3 - 2 * n);
   };
 function r_(i, t) {
@@ -218,49 +218,49 @@ const br = 20260726,
 function c_(i) {
   return o_ + Math.sin(i * 0.011) * 7;
 }
-function l_(i, t) {
+function rawTerrainHeight(i, t) {
   let e = (Sr(i * 0.012, t * 0.012, 4, br) - 0.5) * 5.5;
   const n = Math.max(Math.abs(i + 25) / 95, Math.abs(t - 20) / 85),
     s = 1 - Nn(0.72, 1.15, n);
-  e = zn(e, 0, s * 0.92);
+  e = lerp(e, 0, s * 0.92);
   const r = Nn(-43, -56, t);
   e += Dr * r;
   const o = Math.max(Math.abs(i + 30) / 85, Math.abs(t + 95) / 48),
     a = (1 - Nn(0.7, 1.1, o)) * r;
-  e = zn(e, Dr, a * 0.85);
+  e = lerp(e, Dr, a * 0.85);
   const c = Nn(84, 102, i);
   ((e += Lr * c), (e += 9 * Nn(128, 160, i)));
   const l = Math.hypot((i - 126) / 34, (t + 6) / 30);
-  e = zn(e, Lr + 3.5, (1 - Nn(0.7, 1.05, l)) * c * 0.9);
+  e = lerp(e, Lr + 3.5, (1 - Nn(0.7, 1.05, l)) * c * 0.9);
   const h = c_(t),
     u = Math.abs(i - h),
     d = a_ + Sr(t * 0.03, 7.7, 3, br + 5) * 6,
     f = 1 - Nn(d * 0.45, d, u),
     m = Ca + (Sr(t * 0.02, 3.3, 3, br + 9) - 0.5) * 4 + t * 0.012;
-  return ((e = zn(e, m, Math.pow(f, 1.25))), e);
+  return ((e = lerp(e, m, Math.pow(f, 1.25))), e);
 }
-function qt(i, t) {
-  const e = l_(i, t),
+function terrainHeightAt(i, t) {
+  const e = rawTerrainHeight(i, t),
     n = 2.3,
     s = e / n,
     r = Math.floor(s),
     o = s - r,
     a = Nn(0.47, 0.53, o),
     c = (r + a) * n;
-  return zn(e, c, 0.88);
+  return lerp(e, c, 0.88);
 }
-function h_(i, t, e = 0.9) {
-  const n = qt(i - e, t),
-    s = qt(i + e, t),
-    r = qt(i, t - e),
-    o = qt(i, t + e);
+function terrainNormalAt(i, t, e = 0.9) {
+  const n = terrainHeightAt(i - e, t),
+    s = terrainHeightAt(i + e, t),
+    r = terrainHeightAt(i, t - e),
+    o = terrainHeightAt(i, t + e);
   return new P(n - s, 2 * e, r - o).normalize();
 }
-function u_(i, t) {
-  return 1 - h_(i, t).y;
+function terrainSlopeAt(i, t) {
+  return 1 - terrainNormalAt(i, t).y;
 }
-function Ir(i, t) {
-  return u_(i, t) < 0.22;
+function isFlatGround(i, t) {
+  return terrainSlopeAt(i, t) < 0.22;
 }
 const d_ = 300;
 function f_() {
@@ -271,7 +271,7 @@ function f_() {
   for (let r = 0; r < n.count; r++) {
     const o = n.getX(r),
       a = n.getZ(r);
-    n.setY(r, qt(o, a));
+    n.setY(r, terrainHeightAt(o, a));
   }
   e.computeVertexNormals();
   const s = new Float32Array(n.count * 2);
@@ -280,7 +280,7 @@ function f_() {
       a = n.getZ(r),
       c = n.getY(r);
     let l = 1;
-    (c < -4 && (l = Xe(1 + (c + 4) * 0.012, 0.72, 1)),
+    (c < -4 && (l = clamp(1 + (c + 4) * 0.012, 0.72, 1)),
       (s[r * 2] = l),
       (s[r * 2 + 1] = 0.35 + Sr(o * 0.05, a * 0.05, 2, br + 21) * 0.3));
   }

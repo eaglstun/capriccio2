@@ -69,8 +69,8 @@ const ov = P_(Kt),
 window.addEventListener("pointerdown", () => Lh.start(), { once: !0 });
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
 function os(i) {
-  const t = Xe((i - 5.5) / 15, 0, 1),
-    e = zn(2.05, -2.05, t),
+  const t = clamp((i - 5.5) / 15, 0, 1),
+    e = lerp(2.05, -2.05, t),
     n = 0.09 + Math.sin(Math.PI * t) * 0.43,
     s = new P(
       Math.sin(e) * Math.cos(n),
@@ -81,8 +81,8 @@ function os(i) {
   const r = 1 - Math.sin(Math.PI * t),
     o = Nn(0.45, 0.95, r);
   (Pe.color.setStyle(o > 0.4 ? "#ffdba6" : "#fff4e0"),
-    (Pe.intensity = zn(3.5, 2.55, o)),
-    (Nr.intensity = zn(0.6, 0.42, o)),
+    (Pe.intensity = lerp(3.5, 2.55, o)),
+    (Nr.intensity = lerp(0.6, 0.42, o)),
     ke.setDusk(o),
     ke.setSunDir(Pe.position.clone().normalize()),
     syncLightUniforms(Pe, Nr));
@@ -327,7 +327,7 @@ function updateQualityMeters() {
     e = i.length ? i.reduce((a, c) => a + c.shelter, 0) / i.length : 0.3,
     n = i.length ? i.reduce((a, c) => a + c.light, 0) / i.length : 0.5,
     s = Kt.actions.filter((a) => a.t === "emb" && a.kind === "lantern").length,
-    r = Xe(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
+    r = clamp(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
   let o = 0;
   for (const [, a] of Kt.structures) {
     const c = a.action;
@@ -341,7 +341,7 @@ function updateQualityMeters() {
     SHELTER: e,
     LIGHT: n,
     BELONGING: r,
-    GRANDEUR: Xe(o, 0, 1),
+    GRANDEUR: clamp(o, 0, 1),
   });
 }
 let oc = !1;

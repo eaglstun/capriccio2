@@ -51,7 +51,7 @@ class BuildOverlays {
           for (let u = 2; u <= s - 2; u += 5) {
             const d = n.ax + r * u + a * l * (n.th / 2 + 0.3),
               f = n.az + o * u + c * l * (n.th / 2 + 0.3);
-            h.push(new P(d, qt(d, f) + 1.35, f));
+            h.push(new P(d, terrainHeightAt(d, f) + 1.35, f));
           }
           h.length > 1 && this.marks.add(this.dashedLine(h));
         }
@@ -70,7 +70,7 @@ class BuildOverlays {
           [-s, s],
           [-s, -s],
         ])
-          r.push(new P(n.x + o, qt(n.x + o, n.z + a) + 1.35, n.z + a));
+          r.push(new P(n.x + o, terrainHeightAt(n.x + o, n.z + a) + 1.35, n.z + a));
         this.marks.add(this.dashedLine(r));
       }
   }
@@ -121,12 +121,12 @@ class BuildOverlays {
       d = [];
     for (let m = 0; m <= 4; m++) {
       const [_, g] = u[m % 4];
-      d.push(new P(_, qt(_, g) + 0.45, g));
+      d.push(new P(_, terrainHeightAt(_, g) + 0.45, g));
     }
     this.live.add(this.dashedLine(d));
     const f = new ve().setFromPoints([
-      new P(t, qt(t, e) + 0.5, e),
-      new P(n, qt(n, s) + 0.5, s),
+      new P(t, terrainHeightAt(t, e) + 0.5, e),
+      new P(n, terrainHeightAt(n, s) + 0.5, s),
     ]);
     this.live.add(new yr(f, this.stringMat));
   }

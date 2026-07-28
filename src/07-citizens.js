@@ -75,7 +75,7 @@ class Citizens {
     this.population = Math.min(Co, 14 + this.infill.capacity);
     const t = this.spawnPoints(),
       e = this.workPoints(),
-      n = Je(777);
+      n = seededRng(777);
     for (let s = 0; s < this.agents.length; s++) {
       const r = this.agents[s],
         o = s < this.population;
@@ -295,7 +295,7 @@ function Rh(i, t) {
         R.kind === "lantern" &&
         Math.hypot(R.x - l, R.z - u) < 24 &&
         f++;
-    const p = Je(Ra(`d${Math.round(l)}:${Math.round(u)}`)),
+    const p = seededRng(hashString(`d${Math.round(l)}:${Math.round(u)}`)),
       A = [...d.entries()].sort((R, E) => E[1] - R[1])[0][0];
     let b = "Quarter";
     A === "under_arch"

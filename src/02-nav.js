@@ -87,9 +87,9 @@ class NavGraph {
     for (const n of t)
       for (let s = n.x0; s <= n.x1; s += $n)
         for (let r = n.z0; r <= n.z1; r += $n) {
-          if (!Ir(s, r)) continue;
+          if (!isFlatGround(s, r)) continue;
           const o = `${s},${r}`;
-          e.has(o) || e.set(o, this.add(new P(s, qt(s, r), r), -1, !0));
+          e.has(o) || e.set(o, this.add(new P(s, terrainHeightAt(s, r), r), -1, !0));
         }
     for (const [n, s] of e) {
       const [r, o] = n.split(",").map(Number);
@@ -107,7 +107,7 @@ class NavGraph {
         if (Math.abs(u.y - d.y) > 2.4) continue;
         const f = (u.x + d.x) / 2,
           m = (u.z + d.z) / 2;
-        Ir(f, m) && this.link(s, h);
+        isFlatGround(f, m) && this.link(s, h);
       }
     }
   }

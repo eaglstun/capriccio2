@@ -274,10 +274,10 @@ class PlacementTool {
       (u.translate(l, -(t.h - l) / 2, 0),
         u.rotateY(c + Math.PI / 2),
         (e = zl([e, h, u])),
-        e.translate(o, qt(o, a) + t.h - l, a));
+        e.translate(o, terrainHeightAt(o, a) + t.h - l, a));
     } else if (t.t === "designate")
       ((e = new Fe(t.r, t.r, 0.4, 28)),
-        e.translate(t.x, qt(t.x, t.z) + 0.3, t.z));
+        e.translate(t.x, terrainHeightAt(t.x, t.z) + 0.3, t.z));
     else {
       const r = buildStructureMesh({ ...t, id: 999999 }),
         o = [];
@@ -286,7 +286,7 @@ class PlacementTool {
       o.length && (e = zl(o));
     }
     if (!e) return !0;
-    Ue(e);
+    setToneAttribute(e);
     const n = this.costOf(t),
       s = this.validate(t) && Fl(n);
     return (

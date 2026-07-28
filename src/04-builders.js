@@ -6,8 +6,8 @@
 // Regenerate with: python3 tools/split_bundle.py --write
 
 function buildSpan(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 23),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 23),
     n = i.age ?? 0.07,
     s = dn(i.ax, i.ay, i.az),
     r = dn(i.bx, i.by, i.bz),
@@ -17,20 +17,20 @@ function buildSpan(i) {
   const c = o.clone().multiplyScalar(1 / a),
     l = Math.atan2(c.x, c.z),
     h = i.width,
-    u = (w) => zn(s.y, r.y, w / a),
+    u = (w) => lerp(s.y, r.y, w / a),
     d = (w) => {
       const I = s.x + c.x * w,
         F = s.z + c.z * w;
-      return qt(I, F);
+      return terrainHeightAt(I, F);
     };
   let f = 1 / 0;
   for (let w = 0; w <= a; w += 3) f = Math.min(f, d(w));
   const m = Math.min(s.y, r.y),
     _ = m - f,
-    g = Xe(_ * 0.62, 7, 15),
+    g = clamp(_ * 0.62, 7, 15),
     p = Math.max(1, Math.round(a / g)),
     A = a / p,
-    b = Xe(A * 0.24, 1.5, 4.5),
+    b = clamp(A * 0.24, 1.5, 4.5),
     v = (A - b) / 2;
   for (let w = 0; w < p; w++) {
     const I = A * w,
@@ -66,7 +66,7 @@ function buildSpan(i) {
     }
   }
   const R = Math.max(2, Math.round(a / 7)),
-    E = new oe(n);
+    E = new MeshBuilder(n);
   for (let w = 0; w < R; w++) {
     const I = (a * w) / R,
       F = (a * (w + 1)) / R,
@@ -107,7 +107,7 @@ function buildSpan(i) {
       I.translate((s.x + r.x) / 2 - B * F, m, (s.z + r.z) / 2 - k * F),
       Yt(t, "stone", w),
       Yt(t, "stone", I));
-    const G = new oe(n);
+    const G = new MeshBuilder(n);
     G.box(a, 0.7, h, [0, 6.5, 0]);
     const Y = G.merge();
     (Y.rotateY(l - Math.PI / 2),
@@ -119,9 +119,9 @@ function buildSpan(i) {
       t.waterSources.push([r.x, r.y, r.z]),
       t.waterSources.push([s.x, s.y, s.z]));
     const w = s.y <= r.y ? s : r,
-      I = qt(w.x, w.z);
+      I = terrainHeightAt(w.x, w.z);
     if (w.y - I < 4) {
-      const F = new oe(n);
+      const F = new MeshBuilder(n);
       F.box(5.4, 1.1, 5.4, [0, 0, 0]);
       const B = F.merge();
       (be(B, w.x, I, w.z, 0), Yt(t, "stone", B));
@@ -153,7 +153,7 @@ function buildSpan(i) {
     const I = A * (w + 0.5),
       F = s.x + c.x * I,
       B = s.z + c.z * I,
-      k = qt(F, B),
+      k = terrainHeightAt(F, B),
       G = u(I) - 1.15 - k;
     G > 3.2 &&
       G < 60 &&
@@ -186,8 +186,8 @@ function buildSpan(i) {
   return ((t.cost.stone = Math.round(a * Math.max(4, _) * 0.09)), t);
 }
 function buildRise(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 37),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 37),
     n = i.age ?? 0.07;
   let s = dn(i.ax, i.ay, i.az),
     r = dn(i.bx, i.by, i.bz);
@@ -205,14 +205,14 @@ function buildRise(i) {
     d = i.style === "ceremonial" ? 1.9 : 1.5,
     f = o * d,
     m = i.style === "switchback" || c < f * 0.72,
-    _ = new oe(n),
+    _ = new MeshBuilder(n),
     g = [],
     p = [];
   if (m) {
     const A = dn(l.z, 0, -l.x),
       v = Math.max(2, Math.ceil(o / 5)),
       R = o / v,
-      E = Xe(R * 1.55, 6, 14),
+      E = clamp(R * 1.55, 6, 14),
       C = c / v;
     let L = s.y,
       y = dn(s.x, 0, s.z),
@@ -225,9 +225,9 @@ function buildRise(i) {
         k = Ll(5.2, R, E);
       (k.rotateY(F - Math.PI / 2),
         k.translate(B.x, L, B.z),
-        Ue(k, 1, n),
+        setToneAttribute(k, 1, n),
         Yt(t, "stone", k));
-      const G = Math.min(qt(B.x, B.z), qt(y.x, y.z)) - 1,
+      const G = Math.min(terrainHeightAt(B.x, B.z), terrainHeightAt(y.x, y.z)) - 1,
         Y = L - G;
       if (Y > 0.4) {
         let gt;
@@ -240,12 +240,12 @@ function buildRise(i) {
             { rng: e },
           );
         else {
-          const Lt = new oe(n);
+          const Lt = new MeshBuilder(n);
           (Lt.box(E, Y + 0.2, 4.6, [0, 0, 0]), (gt = Lt.merge()));
         }
         (gt.rotateY(F - Math.PI / 2),
           gt.translate(y.x, G, y.z),
-          Ue(gt, 1, n),
+          setToneAttribute(gt, 1, n),
           Yt(t, "stone", gt),
           Y > 6.5 &&
             t.pockets.push({
@@ -260,10 +260,10 @@ function buildRise(i) {
             }));
       }
       const H = y.clone().add(I.clone().multiplyScalar(E / 2)),
-        ct = new oe(n);
-      ct.box(4.4, L + R - qt(H.x, H.z) + 1, 4.6, [0, 0, 0]);
+        ct = new MeshBuilder(n);
+      ct.box(4.4, L + R - terrainHeightAt(H.x, H.z) + 1, 4.6, [0, 0, 0]);
       const pt = ct.merge();
-      (pt.translate(H.x, qt(H.x, H.z) - 1, H.z),
+      (pt.translate(H.x, terrainHeightAt(H.x, H.z) - 1, H.z),
         Yt(t, "stone", pt),
         (L += R),
         t.navPts.push({
@@ -369,15 +369,15 @@ function buildRise(i) {
   return ((t.cost.stone = Math.round(o * u * 0.9)), t);
 }
 function buildVault(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 53),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 53),
     n = i.age ?? 0.07,
     s = i.ruin ?? 0,
-    r = qt(i.x, i.z),
+    r = terrainHeightAt(i.x, i.z),
     { w: o, l: a, h: c } = i,
     l = Math.max(2, Math.round(a / 6.2)),
     h = i.rotY - Math.PI / 2,
-    u = s > 0.15 ? a * Xe(0.72 - s * 0.35, 0.3, 0.8) : a + 1;
+    u = s > 0.15 ? a * clamp(0.72 - s * 0.35, 0.3, 0.8) : a + 1;
   for (const v of [-1, 1]) {
     const R = Math.sin(i.rotY + Math.PI / 2) * (o / 2) * v,
       E = Math.cos(i.rotY + Math.PI / 2) * (o / 2) * v;
@@ -398,7 +398,7 @@ function buildVault(i) {
         I = Math.max(1, l - L),
         F = Ji(w, c, 1.5, I, {
           rng: e,
-          ruin: Xe(s * 1.35, 0, 0.95),
+          ruin: clamp(s * 1.35, 0, 0.95),
           springFrac: 0.52,
         }),
         B = C / 2;
@@ -439,7 +439,7 @@ function buildVault(i) {
     ),
       Yt(t, "stone", R));
   }
-  const d = s > 0.15 ? a * Xe(0.72 - s * 0.35, 0.3, 0.8) : a + 1,
+  const d = s > 0.15 ? a * clamp(0.72 - s * 0.35, 0.3, 0.8) : a + 1,
     f = v_(o / 2 + 0.9, 1, d);
   (f.translate(-d / 2, 0, 0),
     be(
@@ -450,7 +450,7 @@ function buildVault(i) {
       h,
     ),
     Yt(t, "stone", f));
-  const m = new oe(n);
+  const m = new MeshBuilder(n);
   m.box(a + 3, 0.9, o + 3, [0, -0.9, 0]);
   const _ = m.merge();
   if ((be(_, i.x, r, i.z, h), Yt(t, "stone", _), s > 0.2))
@@ -497,8 +497,8 @@ function buildVault(i) {
   return ((t.cost.stone = Math.round(o * a * 0.32 + c * (o + a) * 0.22)), t);
 }
 function buildWall(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 71),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 71),
     n = i.age ?? 0.3,
     s = dn(i.ax, 0, i.az),
     r = dn(i.bx, 0, i.bz),
@@ -506,7 +506,7 @@ function buildWall(i) {
     a = Math.hypot(o.x, o.z),
     c = o.multiplyScalar(1 / a),
     l = Math.atan2(c.x, c.z),
-    h = Math.min(qt(s.x, s.z), qt(r.x, r.z)) - 1.5,
+    h = Math.min(terrainHeightAt(s.x, s.z), terrainHeightAt(r.x, r.z)) - 1.5,
     u = [];
   for (const m of i.openings ?? [])
     u.push({ cx: m.s - a / 2, r: m.w / 2, springY: m.h - m.w / 2 });
@@ -523,7 +523,7 @@ function buildWall(i) {
       continue;
     const p = s.x + c.x * _,
       A = s.z + c.z * _,
-      b = new oe(n);
+      b = new MeshBuilder(n);
     (b.box(2.2, i.h * 0.75, 1.9, [0, 0, 0]),
       b.box(1.8, i.h * 0.22, 1.4, [0, i.h * 0.75, 0.2]));
     const v = b.merge(),
@@ -532,7 +532,7 @@ function buildWall(i) {
     (be(
       v,
       p + R * (i.th / 2 + 0.8),
-      qt(p, A) - 0.5,
+      terrainHeightAt(p, A) - 0.5,
       A + E * (i.th / 2 + 0.8),
       l,
     ),
@@ -544,8 +544,8 @@ function buildWall(i) {
       p = s.z + c.z * _,
       A = Math.cos(l),
       b = -Math.sin(l),
-      v = qt(g + A * (i.th / 2 + 2), p + b * (i.th / 2 + 2)),
-      R = qt(g - A * (i.th / 2 + 2), p - b * (i.th / 2 + 2)),
+      v = terrainHeightAt(g + A * (i.th / 2 + 2), p + b * (i.th / 2 + 2)),
+      R = terrainHeightAt(g - A * (i.th / 2 + 2), p - b * (i.th / 2 + 2)),
       E = t.navPts.length;
     (t.navPts.push({
       pos: [g + A * (i.th / 2 + 2), v, p + b * (i.th / 2 + 2)],
@@ -571,18 +571,18 @@ function buildWall(i) {
   return ((t.cost.stone = Math.round(a * i.h * 0.11)), t);
 }
 function buildOrnament(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 87),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 87),
     n = i.y;
   if (i.kind === "cypress") {
-    const s = nc(5.5 + e() * 4, e);
+    const s = buildTree(5.5 + e() * 4, e);
     (be(s, i.x, n, i.z, i.rotY), Yt(t, "green", s));
   } else if (i.kind === "statue") {
-    const s = new oe(0.1);
+    const s = new MeshBuilder(0.1);
     (s.box(1.6, 1.9, 1.6, [0, 0, 0]), s.box(1.25, 0.32, 1.25, [0, 1.9, 0]));
     const r = s.merge();
     (be(r, i.x, n, i.z, i.rotY), Yt(t, "stone", r));
-    const o = new oe(0);
+    const o = new MeshBuilder(0);
     (o.box(0.55, 1.5, 0.42, [0, 0, 0]),
       o.cylinder(0.2, 0.34, [0, 1.55, 0], 8),
       o.box(0.85, 0.2, 0.3, [0, 1.1, 0]));
@@ -600,7 +600,7 @@ function buildOrnament(i) {
         scenic: 0.9,
       }));
   } else if (i.kind === "fountain") {
-    const s = new oe(0.05);
+    const s = new MeshBuilder(0.05);
     (s.cylinder(2.3, 0.9, [0, 0, 0], 14),
       s.cylinder(0.4, 1.7, [0, 0.4, 0], 8),
       s.cylinder(1.1, 0.25, [0, 1.7, 0], 10));
@@ -611,14 +611,14 @@ function buildOrnament(i) {
       Yt(t, "water", o),
       t.waterSources.push([i.x, n, i.z]));
   } else if (i.kind === "lantern") {
-    const s = new oe(0);
+    const s = new MeshBuilder(0);
     (s.cylinder(0.09, 3.4, [0, 0, 0], 6), s.box(0.5, 0.08, 0.5, [0, 3.4, 0]));
     const r = s.merge();
     (be(r, i.x, n, i.z, 0), Yt(t, "timber", r));
     const o = new le(0.34, 0.4, 0.34);
     (o.translate(i.x, n + 3.15, i.z), Yt(t, "glow", o));
   } else if (i.kind === "obelisk") {
-    const s = new oe(0.1);
+    const s = new MeshBuilder(0.1);
     (s.box(2.4, 1.1, 2.4, [0, 0, 0]),
       s.cylinder(0.85, 9, [0, 1.1, 0], 4, 1, 0.5));
     const r = s.merge();
@@ -643,6 +643,6 @@ function buildStructureMesh(i) {
     case "emb":
       return buildOrnament(i);
     default:
-      return Ci();
+      return newStructureParts();
   }
 }

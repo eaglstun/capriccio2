@@ -191,7 +191,7 @@ function Cl(i) {
 const Pl = new se(),
   Dl = new ri(),
   m_ = new P(1, 1, 1);
-class oe {
+class MeshBuilder {
   constructor(t = 0) {
     K(this, "geoms", []);
     K(this, "age");
@@ -204,10 +204,10 @@ class oe {
         Pl.compose(o, Dl, m_),
         t.applyMatrix4(Pl));
     }
-    return (Ue(t, s, r), this.geoms.push(t), this);
+    return (setToneAttribute(t, s, r), this.geoms.push(t), this);
   }
   addRaw(t, e = 1, n = this.age) {
-    return (Ue(t, e, n), this.geoms.push(t), this);
+    return (setToneAttribute(t, e, n), this.geoms.push(t), this);
   }
   box(t, e, n, s, r = 0, o = 1) {
     const a = new le(t, e, n);
@@ -224,7 +224,7 @@ class oe {
     return (t.forEach((n) => n.dispose()), e);
   }
 }
-function Ue(i, t = 1, e = 0) {
+function setToneAttribute(i, t = 1, e = 0) {
   const n = i.attributes.position.count;
   if (!i.attributes.aTone || i.attributes.aTone.count !== n) {
     const s = new Float32Array(n * 2);
@@ -246,7 +246,7 @@ function Ri(i, t, e, n, s, r = 0) {
 }
 function Hn(i, t, e, n, s = {}) {
   const r = s.ruin ?? 0,
-    o = s.rng ?? Je(1234),
+    o = s.rng ?? seededRng(1234),
     a = s.rings !== !1,
     c = new ss(),
     l = i / 2,
@@ -323,7 +323,7 @@ function Ji(i, t, e, n, s = {}) {
   return Hn(i, t, e, c, s);
 }
 function g_(i, t, e, n = {}) {
-  const s = new oe(),
+  const s = new MeshBuilder(),
     r = Math.min(1.2, e * 0.08),
     o = Math.min(0.9, e * 0.06);
   (n.base !== !1 && s.box(i * 1.18, r, t * 1.18, [0, 0, 0]),
@@ -336,7 +336,7 @@ function Ll(i, t, e, n = {}) {
   const r = Math.max(2, Math.round(t / 0.32)),
     o = t / r,
     a = e / r,
-    c = new oe();
+    c = new MeshBuilder();
   for (let l = 0; l < r; l++) {
     const h = n.solid === !1 ? o : o * (l + 1);
     c.box(a + 0.02, h, i, [a * (l + 0.5), n.solid === !1 ? o * l : 0, 0]);
@@ -344,7 +344,7 @@ function Ll(i, t, e, n = {}) {
   return c.merge();
 }
 function __(i, t = 1.05, e = 0.28) {
-  const n = new oe();
+  const n = new MeshBuilder();
   return (
     n.box(i, t - 0.12, e * 0.82, [i / 2, 0, 0]),
     n.box(i, 0.12, e, [i / 2, t - 0.12, 0]),
@@ -391,8 +391,8 @@ function Il(i, t, e, n = 0.25) {
   const a = new Si(o, { depth: s, bevelEnabled: !1 });
   return (a.rotateY(Math.PI / 2), a.translate(-s / 2, 0, 0), a);
 }
-function nc(i, t) {
-  const e = new oe(),
+function buildTree(i, t) {
+  const e = new MeshBuilder(),
     n = i * 0.14 * (0.85 + t() * 0.3);
   e.cylinder(n * 0.24, i * 0.1, [0, 0, 0], 6);
   const s = new ls(n, i * 0.92, 7);
@@ -417,7 +417,7 @@ function x_(i, t, e) {
   if (o - a < 3) return null;
   const c = [...r.values()].filter((u) => u[1] > a + (o - a) * 0.45);
   if (!c.length) return null;
-  const l = new oe(),
+  const l = new MeshBuilder(),
     h = Math.min(e, c.length);
   for (let u = 0; u < h; u++) {
     const d = c[Math.floor(t() * c.length)],
@@ -446,7 +446,7 @@ function x_(i, t, e) {
   return l.merge();
 }
 function Pa(i) {
-  const t = new oe(),
+  const t = new MeshBuilder(),
     e = i();
   if (e < 0.45) {
     const s = 0.35 + i() * 0.5,
@@ -466,7 +466,7 @@ function Pa(i) {
   const n = t.merge();
   return (Ri(n, 0, 1.2, 0.86, 1), n);
 }
-function Ci() {
+function newStructureParts() {
   return {
     pieces: {},
     navPts: [],
@@ -478,7 +478,7 @@ function Ci() {
 }
 function Yt(i, t, e) {
   var n;
-  (Ue(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
+  (setToneAttribute(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
 }
 function Ur(i, t, e, n, s) {
   if (!n) return;
@@ -490,14 +490,14 @@ function be(i, t, e, n, s = 0) {
 }
 const dn = (i, t, e) => new P(i, t, e);
 function buildAnchor(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 11),
-    n = qt(i.x, i.z),
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 11),
+    n = terrainHeightAt(i.x, i.z),
     s = i.topY - n,
     r = i.age ?? 0.15;
   if (i.style === "column") {
-    const o = new oe(r),
-      a = Xe(s * 0.075, 1.1, 2);
+    const o = new MeshBuilder(r),
+      a = clamp(s * 0.075, 1.1, 2);
     (o.box(a * 3.2, 1.2, a * 3.2, [0, 0, 0]),
       o.box(a * 2.7, 1, a * 2.7, [0, 1.2, 0]),
       o.cylinder(a, s - 4.4, [0, 2.2, 0], 18, 1, a * 0.88),
@@ -511,12 +511,12 @@ function buildAnchor(i) {
     const o = i.style === "giant" ? 9 : 4.6;
     if (i.style === "giant" && i.carveAxis) {
       const a = i.carveAxis === "x" ? Math.PI / 2 : 0,
-        c = new oe(r);
+        c = new MeshBuilder(r);
       (c.box(o * 1.18, 1.2, o * 1.18, [0, -0.5, 0]),
         Yt(t, "stone", be(c.merge(), i.x, n, i.z, 0)));
       const l = Hn(o, s + 1, o, [{ cx: 0, r: 2.1, springY: 3.1 }], { rng: e });
       (be(l, i.x, n + 0.4, i.z, a), Yt(t, "stone", l));
-      const h = new oe(r);
+      const h = new MeshBuilder(r);
       (h.box(o * 1.14, 0.9, o * 1.14, [0, 0, 0]),
         Yt(t, "stone", be(h.merge(), i.x, i.topY - 0.9, i.z, 0)));
       for (const _ of i.carveAxis === "x" ? [0, 2] : [1, 3]) {
@@ -541,12 +541,12 @@ function buildAnchor(i) {
         d = i.carveAxis === "x" ? 0 : 1,
         f = [
           i.x + u * (o / 2 + 2.5),
-          qt(i.x + u * (o / 2 + 2.5), i.z + d * (o / 2 + 2.5)),
+          terrainHeightAt(i.x + u * (o / 2 + 2.5), i.z + d * (o / 2 + 2.5)),
           i.z + d * (o / 2 + 2.5),
         ],
         m = [
           i.x - u * (o / 2 + 2.5),
-          qt(i.x - u * (o / 2 + 2.5), i.z - d * (o / 2 + 2.5)),
+          terrainHeightAt(i.x - u * (o / 2 + 2.5), i.z - d * (o / 2 + 2.5)),
           i.z - d * (o / 2 + 2.5),
         ];
       (t.navPts.push({ pos: f, links: [], splice: !0 }),

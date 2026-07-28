@@ -149,7 +149,7 @@ class World {
     });
   }
   emitGroundPockets(t) {
-    const e = Je((t.id ?? 1) * 331 + 7),
+    const e = seededRng((t.id ?? 1) * 331 + 7),
       n = t.x ?? (t.ax + t.bx) / 2,
       s = t.z ?? (t.az + t.bz) / 2,
       r = 4 + Math.floor(e() * 3);
@@ -158,8 +158,8 @@ class World {
         c = 10 + e() * 14,
         l = n + Math.sin(a) * c,
         h = s + Math.cos(a) * c;
-      if (!Ir(l, h)) continue;
-      const u = qt(l, h);
+      if (!isFlatGround(l, h)) continue;
+      const u = terrainHeightAt(l, h);
       this.pockets.some(
         (d) =>
           Math.hypot(d.pos[0] - l, d.pos[2] - h) < 7 &&
@@ -196,11 +196,11 @@ class World {
       const h = (l / 40) * Math.PI * 2,
         u = t.x + Math.cos(h) * t.r * 0.85,
         d = t.z + Math.sin(h) * t.r * 0.85;
-      r.push(new P(u, qt(u, d) + 0.35, d));
+      r.push(new P(u, terrainHeightAt(u, d) + 0.35, d));
     }
     const o = new yr(new ve().setFromPoints(r), s);
     (o.computeLineDistances(), n.add(o));
-    const a = qt(t.x + 1.5, t.z + 1.5),
+    const a = terrainHeightAt(t.x + 1.5, t.z + 1.5),
       c = new he(
         Ul([
           (() => {
@@ -228,14 +228,14 @@ class World {
     this.desigMarks.clear();
   }
   seedGroundPockets(t, e, n, s, r, o = 55) {
-    const a = Je(o);
+    const a = seededRng(o);
     for (let c = 0; c < n; c++) {
       const l = (c / n) * Math.PI * 2 + a() * 0.7,
         h = s + a() * (r - s),
         u = t + Math.sin(l) * h,
         d = e + Math.cos(l) * h;
-      if (!Ir(u, d)) continue;
-      const f = qt(u, d);
+      if (!isFlatGround(u, d)) continue;
+      const f = terrainHeightAt(u, d);
       this.pockets.some(
         (m) =>
           Math.hypot(m.pos[0] - u, m.pos[2] - d) < 6.5 &&
@@ -303,7 +303,7 @@ function Ul(i) {
     r = new Float32Array(t.pos * 2);
   let o = 0;
   for (const c of e) {
-    Ue(c);
+    setToneAttribute(c);
     const l = c.attributes.position.count;
     (n.set(c.attributes.position.array, o * 3),
       s.set(c.attributes.normal.array, o * 3),
@@ -328,7 +328,7 @@ function A_(i, t, e) {
   const a = s.clone().sub(n),
     c = Math.atan2(a.x, a.z) - Math.PI / 2,
     l = Math.atan2(a.y, Math.hypot(a.x, a.z));
-  return (o.rotateZ(l), o.rotateY(c), o.translate(n.x, n.y, n.z), Ue(o), o);
+  return (o.rotateZ(l), o.rotateY(c), o.translate(n.x, n.y, n.z), setToneAttribute(o), o);
 }
 const Th = 12,
   R_ = 31;
@@ -428,7 +428,7 @@ function Ah() {
         id: 40 + r,
         kind: "cypress",
         x: n,
-        y: qt(n, s),
+        y: terrainHeightAt(n, s),
         z: s,
         rotY: r,
       });
@@ -444,7 +444,7 @@ function Ah() {
         id: 60 + r,
         kind: "lantern",
         x: n,
-        y: qt(n, s),
+        y: terrainHeightAt(n, s),
         z: s,
         rotY: 0,
       });
@@ -453,27 +453,27 @@ function Ah() {
   );
 }
 function C_(i) {
-  const t = Je(991),
+  const t = seededRng(991),
     e = Vr.springPool,
     n = new Fe(7.5, 7.5, 0.3, 22);
   (n.translate(e.x, e.y + 0.18, e.z),
-    Ue(n),
+    setToneAttribute(n),
     i.waterGroup.add(new he(n, i.mats.water)));
   const s = new Hr(7.8, 0.55, 6, 22);
-  (s.rotateX(Math.PI / 2), s.translate(e.x, e.y + 0.35, e.z), Ue(s));
+  (s.rotateX(Math.PI / 2), s.translate(e.x, e.y + 0.35, e.z), setToneAttribute(s));
   const r = new he(s, i.mats.stoneOld);
   ((r.castShadow = !0), i.structGroup.add(r));
   const o = new le(26, 0.14, 1.6);
   (o.rotateY(Math.atan2(118 - e.x, -6 - e.z) - Math.PI / 2),
     o.translate((e.x + 118) / 2, e.y + 0.42, (e.z + -6) / 2),
-    Ue(o),
+    setToneAttribute(o),
     i.waterGroup.add(new he(o, i.mats.water)));
   const a = new P(93, 30.2, -8),
     c = new P(80, Ca + 1, -9),
     l = new Ai(2.4, a.y - c.y);
   (l.rotateY(Math.PI / 2 + 0.35),
     l.translate((a.x + c.x) / 2 - 3, (a.y + c.y) / 2, (a.z + c.z) / 2),
-    Ue(l));
+    setToneAttribute(l));
   const h = new he(l, i.mats.water);
   i.waterGroup.add(h);
   const u = [];
@@ -485,7 +485,7 @@ function C_(i) {
     f = new $a(d, 48, 2.4, 5);
   (f.scale(1, 0.08, 1), f.dispose());
   const m = D_(u, 4.2);
-  (Ue(m), i.waterGroup.add(new he(m, i.mats.water)));
+  (setToneAttribute(m), i.waterGroup.add(new he(m, i.mats.water)));
   const _ = [];
   for (let E = 0; E < 26; E++) _.push([-90 + t() * 130, -38 + t() * 130]);
   for (let E = 0; E < 8; E++) _.push([48 + t() * 26, -80 + t() * 160]);
@@ -493,8 +493,8 @@ function C_(i) {
   for (const [E, C] of _) {
     const L = Pa(t);
     (L.rotateY(t() * Math.PI * 2),
-      L.translate(E, qt(E, C) - 0.15, C),
-      Ue(L, 1, 0.5),
+      L.translate(E, terrainHeightAt(E, C) - 0.15, C),
+      setToneAttribute(L, 1, 0.5),
       g.push(L));
   }
   for (let E = 0; E < 14; E++) {
@@ -505,8 +505,8 @@ function C_(i) {
     if (y > 40 && y < 110) continue;
     const w = Pa(t);
     (w.scale(3 + t() * 4, 3.5 + t() * 5, 3 + t() * 4),
-      w.translate(y, qt(y, M) - 1, M),
-      Ue(w, 1, 0.6),
+      w.translate(y, terrainHeightAt(y, M) - 1, M),
+      setToneAttribute(w, 1, 0.6),
       g.push(w));
   }
   const p = Nl(g),
@@ -523,17 +523,17 @@ function C_(i) {
       ruin: 0.55,
     });
     w.rotateY(L);
-    const I = qt(E, C);
+    const I = terrainHeightAt(E, C);
     (w.translate(E, I - 3, C), Ri(w, I - 3, I + 3, 0.9, 1, 0.6));
     const F = new he(w, i.mats.distant);
     ((F.castShadow = !1), (F.receiveShadow = !1), i.structGroup.add(F));
   }
   const v = [];
   for (let E = 0; E < 4; E++) {
-    const C = nc(5 + t() * 3.5, t),
+    const C = buildTree(5 + t() * 3.5, t),
       L = e.x - 6 + t() * 12,
       y = e.z + 8 + t() * 6;
-    (C.translate(L, qt(L, y), y), Ue(C), v.push(C));
+    (C.translate(L, terrainHeightAt(L, y), y), setToneAttribute(C), v.push(C));
   }
   const R = new he(Nl(v), i.mats.green);
   ((R.castShadow = !0), i.structGroup.add(R));
@@ -582,7 +582,7 @@ function Nl(i) {
     r = new Float32Array(t * 2);
   let o = 0;
   for (const c of e)
-    (Ue(c),
+    (setToneAttribute(c),
       n.set(c.attributes.position.array, o * 3),
       s.set(c.attributes.normal.array, o * 3),
       r.set(c.attributes.aTone.array, o * 2),
