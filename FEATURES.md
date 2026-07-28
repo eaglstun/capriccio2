@@ -58,6 +58,99 @@ Two things I would keep frozen regardless:
 
 ---
 
+---
+
+## A0. The named citizens do not exist — and the tutorial sends you to find them ⭐ do first
+
+**This is a bug, found in play.** In tutorial beat 6 the card says *"Marcus is
+asking for a way up to the high terrace."* The player goes looking for Marcus.
+
+There is no Marcus. He is a string in `12-requests.js` and a string in
+`19-tutorial.js`. Agents carry no name, no identity field of any kind, and
+nothing links a request to a citizen. The same is true of Tullia and Livia.
+
+It is a UX failure *caused by* the writing being good: the prose is specific
+enough ("Marcus, lattice technician", "Livia sits in it at noon") that it
+implies a findable person, and then the tutorial explicitly points at him.
+
+### Everything needed already exists
+
+| what | where | status |
+|---|---|---|
+| per-agent colour | `this.look[]` -> `setColorAt` / `instanceColor` | built, in use |
+| world-space labels | `labelsEl`, projects world -> screen | built, draws district names |
+| the request panel | `requestEl` in `16-hud.js` | built, currently inert |
+
+No new systems. Three existing ones wired together.
+
+### Design — one marked citizen at a time
+
+**DECIDED: only whoever is currently asking is marked.** Not all four named
+characters. One speaker, one marker, tied to `requests.active`.
+
+That keeps the marking purposeful — it means "this person is talking to you"
+rather than "this person has a name" — and avoids turning the plaza into a
+nametag convention.
+
+Three layers, in order of how much they fix:
+
+**1. Click the request to find who asked.** The request panel becomes the
+affordance: click it and the camera eases to the citizen who spoke. This is the
+actual answer to "I could not find Marcus" and it should be built first, because
+the other layers are useless without it — a distinctly coloured citizen is no
+easier to find in a crowd of 132 if you do not know where to look.
+
+**2. Give the current speaker a visible identity.** A distinct colour via
+`look[]`, plus a small marker so they read as *someone* rather than as a
+differently-dressed extra. Findable once framed; not lit up like a quest marker
+from across the map.
+
+**3. Their name in world space.** Reuse the district-label system for a quiet
+name above them. One label, because there is only ever one speaker.
+
+### The handover
+
+When a request completes, the marker leaves that citizen and appears on
+whoever asks next, after the existing 9s delay. The previous speaker returns to
+being an ordinary citizen — same colour rules as everyone else, no label, still
+walking their route.
+
+**When all five requests are done, nobody is marked at all.** That falls out of
+the design rather than being special-cased, and it is thematically exact: the
+citizens stop asking, and the last named person goes back into the crowd. Do not
+add a fallback marker to fill the gap.
+
+### Which agent is speaking?
+
+**Must be derived, not stored — the save format is frozen** and cannot gain a
+field. Derive from the active request's `id` (hash it to an agent index), so the
+same request always maps to the same citizen across reloads.
+
+Deriving from the request rather than from a fixed roster also means a
+procedurally-generated request (A2) gets a speaker for free.
+
+Do NOT reuse `agent.kind`. It is vestigial sim state, null on every agent, and
+it should stay that way.
+
+### They should keep walking
+
+The speaker is still an ordinary agent: home, work, gather, home. Marcus having
+a job and a route is what makes him a person rather than a signpost. That is
+also why layer 1 matters — he is a moving target, and the camera has to do the
+finding.
+
+### The tutorial
+
+Beat 6 should either move the camera to Marcus as it names him, or stop naming
+him. Naming a person the player cannot locate is the specific failure being
+fixed; do not leave it in place alongside the fix.
+
+### Not frozen, but adjacent
+
+`07-citizens.js` is not on the frozen list. The constraints that still apply:
+the save format gains nothing, `applyAction` and the pocket model are untouched,
+and identity must be deterministic so a reloaded city has the same Marcus.
+
 ## Tier A — additive, nothing needs unfreezing
 
 ### A1. The Chronicle — replay the city's growth ⭐ recommended
@@ -150,11 +243,12 @@ envelopes for existing types do not change. New keys, new geometry, new hints.
 
 ## Suggested sequence
 
-1. **A1 Chronicle** — highest payoff per unit of risk, needs no permission
-2. **B1 Night** — one narrow, well-understood unfreeze, large visual payoff
-3. **A2 Procedural requests** — fixes the real design flaw
-4. **A3 Folio** — cheap, makes the goal legible
-5. Then reconsider B2 with the game in a better state
+1. **A0 Named citizens** — a real bug, found in play, and everything it needs exists
+2. **A1 Chronicle** — highest payoff per unit of risk, needs no permission
+3. **B1 Night** — one narrow, well-understood unfreeze, large visual payoff
+4. **A2 Procedural requests** — fixes the real design flaw
+5. **A3 Folio** — cheap, makes the goal legible
+6. Then reconsider B2 with the game in a better state
 
 ---
 
