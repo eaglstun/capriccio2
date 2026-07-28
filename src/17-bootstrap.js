@@ -406,7 +406,10 @@ function ac() {
   oc || saveGame({ day: te.day, hour: te.hour, infill: Ne.serialize() });
 }
 new URLSearchParams(location.search).has("fresh") &&
-  localStorage.removeItem("capriccio-save-v1");
+  (localStorage.removeItem("capriccio-save-v1"),
+  // ?fresh also re-arms the first-run walkthrough (brief 8) — the one
+  // sanctioned point of contact between the two keys
+  localStorage.removeItem("capriccio-tutorial-v1"));
 const hn = loadGame();
 if (hn) {
   ((gameState.playerActions = hn.actions), (gameState.nextId = 1e3 + hn.actions.length + 5));

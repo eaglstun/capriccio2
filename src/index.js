@@ -25,3 +25,4 @@ import "./14-plates.js";
 import "./15-audio.js";
 import "./16-hud.js";
 import "./17-bootstrap.js";
+import "./19-tutorial.js"; // first-run walkthrough (brief 8); hand-written, not from the bundle
