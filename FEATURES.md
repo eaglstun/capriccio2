@@ -380,6 +380,72 @@ intermediate piers**, and nothing in the game says so.
 Keep the discovery. The hint should make the player think "oh — I could put a
 pier *in* the canyon", not hand them a recipe.
 
+### A9. Stone is invisible, not scarce
+
+**Found in play: "I couldn't figure out how to get more stone."**
+
+There is nothing to find. Stone accrues automatically at **18 per game-hour**,
+timber at 6, and both are **capped** — 2600 stone, 900 timber. No building
+produces it, no citizen mines it, and no amount of play changes the rate.
+
+That is a defensible design, but the UI never says it, so a player watching the
+number fall reasonably assumes there is a source somewhere and goes looking for
+a mechanic that does not exist.
+
+**Make the rate and the cap legible.** Options, cheapest first:
+
+- Show it as a rate — `700 STONE` becomes something that also conveys "+18/hr"
+- Show the cap when near it, so stockpiling reads as pointless rather than
+  broken
+- A quiet line on first low-stone moment, in the citizens' register
+
+Do **not** add a stone-producing building. The scarcity is a pacing device that
+works; only its legibility is broken.
+
+### A10. Gamepad support
+
+Add Web Gamepad API support for the main view.
+
+- Left stick: orbit. Right stick or triggers: zoom.
+- Face buttons: cycle tool, confirm a placement, cancel.
+- Shoulder buttons: cycle mode (BUILD / SECTION / WANDER / PLATE).
+- **WANDER especially wants a stick** — first-person walking on a keyboard is
+  the weakest input in the game.
+
+Poll `navigator.getGamepads()` in the existing frame loop; do not add a second
+loop. Detect on `gamepadconnected` and stay entirely dormant otherwise — no
+prompts, no UI, nothing that appears for players without a pad.
+
+Mouse and keyboard must keep working identically at all times; a connected pad
+adds a path, it never takes one away.
+
+### A11. The world reads as floating
+
+Two related complaints, one cause.
+
+**Measured:** the terrain plane is 600x600, so ground ends at **radius 300**.
+The megastructure skyline sits at **radius 352-545**. There is a gap between
+where the ground stops and where the backdrop begins, and at low camera angles
+you can see the edge of the world.
+
+**a) Extend the horizon.** Either grow the terrain plane, or add low hills
+around the perimeter to close the gap between ground and skyline. Hills are
+cheaper — they need no extra resolution in the playable area and can be a
+coarse merged mesh, scene-only and never in `structGroup`.
+
+Keep it *low*. The city should still feel like it sits on a plain; the point is
+that the plain has an edge you cannot see over, not that it is ringed by
+mountains.
+
+**b) Clamp the camera above ground.** Nice-to-have, explicitly optional per the
+user. The orbit camera can currently go below the terrain, which shows the
+underside of the world. A simple clamp against `terrainHeightAt` plus a small
+margin would fix it.
+
+Do this one **after** the horizon — the horizon is the thing that actually
+bothers the eye, and clamping the camera without extending the ground would
+just hide one symptom of the same gap.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone
