@@ -1,9 +1,16 @@
 // HUD: stylesheet and the UI class
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29891–30392.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29891–30392. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Vector3 } from "three";
+import { gameState } from "./07-citizens.js";
+import { BUILD_CATALOGUE } from "./09-catalogue.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 const nv = `
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10;
@@ -128,26 +135,26 @@ const nv = `
   };
 class Hud {
   constructor(t) {
-    K(this, "cb");
-    K(this, "root");
-    K(this, "toolBtns", new Map());
-    K(this, "modeBtns", new Map());
-    K(this, "varRow");
-    K(this, "toastEl");
-    K(this, "requestEl");
-    K(this, "labelsEl");
-    K(this, "sectionCtl");
-    K(this, "plateCtl");
-    K(this, "wanderHint");
-    K(this, "frameEl");
-    K(this, "veil");
-    K(this, "resStone");
-    K(this, "resTimber");
-    K(this, "resFavor");
-    K(this, "resPop");
-    K(this, "dayEl");
-    K(this, "qualBars", new Map());
-    K(this, "toastTimer", 0);
+    defineField(this, "cb");
+    defineField(this, "root");
+    defineField(this, "toolBtns", new Map());
+    defineField(this, "modeBtns", new Map());
+    defineField(this, "varRow");
+    defineField(this, "toastEl");
+    defineField(this, "requestEl");
+    defineField(this, "labelsEl");
+    defineField(this, "sectionCtl");
+    defineField(this, "plateCtl");
+    defineField(this, "wanderHint");
+    defineField(this, "frameEl");
+    defineField(this, "veil");
+    defineField(this, "resStone");
+    defineField(this, "resTimber");
+    defineField(this, "resFavor");
+    defineField(this, "resPop");
+    defineField(this, "dayEl");
+    defineField(this, "qualBars", new Map());
+    defineField(this, "toastTimer", 0);
     this.cb = t;
     const e = document.createElement("style");
     ((e.textContent = nv),
@@ -489,7 +496,7 @@ class Hud {
   }
   updateLabels(t, e, n) {
     if (((this.labelsEl.innerHTML = ""), !n)) return;
-    const s = new P();
+    const s = new Vector3();
     for (const r of t) {
       if (
         (s.set(r.x, r.y, r.z).project(e),
@@ -501,9 +508,12 @@ class Hud {
         (o.textContent = r.name),
         (o.style.left = `${(s.x * 0.5 + 0.5) * 100}%`),
         (o.style.top = `${(-s.y * 0.5 + 0.5) * 100}%`));
-      const a = e.position.distanceTo(new P(r.x, r.y, r.z));
+      const a = e.position.distanceTo(new Vector3(r.x, r.y, r.z));
       ((o.style.opacity = String(Math.max(0, Math.min(0.85, 1.6 - a / 220)))),
         this.labelsEl.appendChild(o));
     }
   }
 }
+
+// --- generated exports ---
+export { Hud, iv, nv };

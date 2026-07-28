@@ -1,19 +1,25 @@
 // SECTION (cut plane) and WANDER (first-person) modes
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29574–29709.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29574–29709. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Plane, Raycaster, Vector3 } from "three";
+import { engravingUniforms } from "./00-shaders.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class SectionMode {
   constructor(t, e) {
-    K(this, "world");
-    K(this, "renderer");
-    K(this, "plane", new Fn(new P(-1, 0, 0), 0));
-    K(this, "active", !1);
-    K(this, "axis", "x");
-    K(this, "offset", 0);
-    K(this, "flip", 1);
+    defineField(this, "world");
+    defineField(this, "renderer");
+    defineField(this, "plane", new Plane(new Vector3(-1, 0, 0), 0));
+    defineField(this, "active", !1);
+    defineField(this, "axis", "x");
+    defineField(this, "offset", 0);
+    defineField(this, "flip", 1);
     ((this.world = t), (this.renderer = e));
   }
   set(t) {
@@ -34,29 +40,29 @@ class SectionMode {
       return;
     }
     const t =
-      this.axis === "x" ? new P(-this.flip, 0, 0) : new P(0, 0, -this.flip);
+      this.axis === "x" ? new Vector3(-this.flip, 0, 0) : new Vector3(0, 0, -this.flip);
     (this.plane.set(t, this.flip * this.offset),
       (this.renderer.clippingPlanes = [this.plane]));
   }
 }
 class WanderMode {
   constructor(t, e, n) {
-    K(this, "world");
-    K(this, "camera");
-    K(this, "dom");
-    K(this, "active", !1);
-    K(this, "vel", new P());
-    K(this, "pos", new P());
-    K(this, "yaw", 0);
-    K(this, "pitch", 0);
-    K(this, "keys", new Set());
-    K(this, "grounded", !1);
-    K(this, "onExit", null);
-    K(this, "ray", new vh());
-    K(this, "boundMove");
-    K(this, "boundKey");
-    K(this, "boundKeyUp");
-    K(this, "boundLockChange");
+    defineField(this, "world");
+    defineField(this, "camera");
+    defineField(this, "dom");
+    defineField(this, "active", !1);
+    defineField(this, "vel", new Vector3());
+    defineField(this, "pos", new Vector3());
+    defineField(this, "yaw", 0);
+    defineField(this, "pitch", 0);
+    defineField(this, "keys", new Set());
+    defineField(this, "grounded", !1);
+    defineField(this, "onExit", null);
+    defineField(this, "ray", new Raycaster());
+    defineField(this, "boundMove");
+    defineField(this, "boundKey");
+    defineField(this, "boundKeyUp");
+    defineField(this, "boundLockChange");
     ((this.world = t),
       (this.camera = e),
       (this.dom = n),
@@ -98,7 +104,7 @@ class WanderMode {
       (this.pitch = Math.max(-1.35, Math.min(1.35, this.pitch))));
   }
   groundAt(t, e, n) {
-    (this.ray.set(new P(t, n + 1.4, e), new P(0, -1, 0)), (this.ray.far = 60));
+    (this.ray.set(new Vector3(t, n + 1.4, e), new Vector3(0, -1, 0)), (this.ray.far = 60));
     const s = this.ray.intersectObjects(this.world.raycastTargets(), !1);
     return s.length ? s[0].point.y : -999;
   }
@@ -106,9 +112,9 @@ class WanderMode {
     if (!this.active) return;
     const e =
         this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") ? 7.2 : 3.4,
-      n = new P(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(-1),
-      s = new P(-n.z, 0, n.x),
-      r = new P();
+      n = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(-1),
+      s = new Vector3(-n.z, 0, n.x),
+      r = new Vector3();
     ((this.keys.has("KeyW") || this.keys.has("ArrowUp")) && r.add(n),
       (this.keys.has("KeyS") || this.keys.has("ArrowDown")) && r.sub(n),
       (this.keys.has("KeyD") || this.keys.has("ArrowRight")) && r.add(s),
@@ -132,7 +138,7 @@ class WanderMode {
       ? (this.pos.y = Math.max(f, this.pos.y - 9.8 * t * 1.6))
       : (this.pos.y += (f - this.pos.y) * Math.min(1, t * 14)),
       this.camera.position.copy(this.pos));
-    const m = new P(
+    const m = new Vector3(
       this.pos.x - Math.sin(this.yaw) * Math.cos(this.pitch),
       this.pos.y + Math.sin(this.pitch),
       this.pos.z - Math.cos(this.yaw) * Math.cos(this.pitch),
@@ -141,3 +147,6 @@ class WanderMode {
   }
 }
 const Ph = { "3:2": 3 / 2, "4:5": 4 / 5, "21:9": 21 / 9 };
+
+// --- generated exports ---
+export { Ph, SectionMode, WanderMode };

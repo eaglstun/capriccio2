@@ -1,9 +1,14 @@
 // Engraving GLSL — post pass, hatching, masonry, sky, ink, paper
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 25401–25917.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 25401–25917. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Color, DepthTexture, LinearFilter, Matrix4, Mesh, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 const j0 = `
 varying vec2 vUv;
@@ -157,56 +162,56 @@ void main() {
 }
 class J0 {
   constructor(t, e = {}) {
-    K(this, "renderer");
-    K(this, "target");
-    K(this, "postMat");
-    K(this, "postScene");
-    K(this, "postCam");
-    K(this, "ss");
-    K(this, "paper", new Ht("#efe8d8"));
-    K(this, "ink", new Ht("#231d13"));
-    K(this, "fogDensity", 0.0021);
-    K(this, "w", 4);
-    K(this, "h", 4);
-    K(this, "lastDraws", 0);
-    K(this, "lastTris", 0);
+    defineField(this, "renderer");
+    defineField(this, "target");
+    defineField(this, "postMat");
+    defineField(this, "postScene");
+    defineField(this, "postCam");
+    defineField(this, "ss");
+    defineField(this, "paper", new Color("#efe8d8"));
+    defineField(this, "ink", new Color("#231d13"));
+    defineField(this, "fogDensity", 0.0021);
+    defineField(this, "w", 4);
+    defineField(this, "h", 4);
+    defineField(this, "lastDraws", 0);
+    defineField(this, "lastTris", 0);
     ((this.ss = e.supersample ?? 1.4),
-      (this.renderer = new N0({
+      (this.renderer = new WebGLRenderer({
         antialias: !1,
         powerPreference: "high-performance",
         stencil: !1,
       })),
-      (this.renderer.outputColorSpace = Ve),
-      (this.renderer.toneMapping = kn),
+      (this.renderer.outputColorSpace = SRGBColorSpace),
+      (this.renderer.toneMapping = NoToneMapping),
       (this.renderer.shadowMap.enabled = !0),
-      (this.renderer.shadowMap.type = Ua),
+      (this.renderer.shadowMap.type = PCFShadowMap),
       this.renderer.setClearColor(this.paper, 1),
       (this.renderer.localClippingEnabled = !0),
       t.appendChild(this.renderer.domElement));
-    const n = new Ka(4, 4);
-    ((n.type = si),
-      (this.target = new Gn(4, 4, {
+    const n = new DepthTexture(4, 4);
+    ((n.type = UnsignedIntType),
+      (this.target = new WebGLRenderTarget(4, 4, {
         depthTexture: n,
         depthBuffer: !0,
-        minFilter: Ze,
-        magFilter: Ze,
-        colorSpace: Ve,
+        minFilter: LinearFilter,
+        magFilter: LinearFilter,
+        colorSpace: SRGBColorSpace,
       })),
-      (this.postMat = new Vn({
+      (this.postMat = new ShaderMaterial({
         vertexShader: j0,
         fragmentShader: $0(),
         uniforms: {
           tDiffuse: { value: this.target.texture },
           tDepth: { value: n },
-          uResolution: { value: new at(4, 4) },
+          uResolution: { value: new Vector2(4, 4) },
           uCameraNear: { value: 0.1 },
           uCameraFar: { value: 1e3 },
-          uInvProjection: { value: new se() },
-          uCameraWorld: { value: new se() },
-          uSunDir: { value: new P(0.5, 0.6, 0.3).normalize() },
+          uInvProjection: { value: new Matrix4() },
+          uCameraWorld: { value: new Matrix4() },
+          uSunDir: { value: new Vector3(0.5, 0.6, 0.3).normalize() },
           uFogDensity: { value: this.fogDensity },
-          uPaper: { value: new Ht(this.paper) },
-          uInk: { value: new Ht(this.ink) },
+          uPaper: { value: new Color(this.paper) },
+          uInk: { value: new Color(this.ink) },
           uDusk: { value: 0 },
           uVignette: { value: 0.42 },
           uGrain: { value: 1 },
@@ -215,9 +220,9 @@ class J0 {
         depthTest: !1,
         depthWrite: !1,
       })),
-      (this.postScene = new ih()),
-      (this.postCam = new Ja(-1, 1, 1, -1, 0, 1)));
-    const s = new he(new Ai(2, 2), this.postMat);
+      (this.postScene = new Scene()),
+      (this.postCam = new OrthographicCamera(-1, 1, 1, -1, 0, 1)));
+    const s = new Mesh(new PlaneGeometry(2, 2), this.postMat);
     ((s.frustumCulled = !1),
       this.postScene.add(s),
       this.resize(
@@ -271,7 +276,7 @@ class J0 {
       l = Math.round(s * this.ss);
     (this.target.setSize(c, l),
       this.postMat.uniforms.uResolution.value.set(c, l));
-    const h = new Gn(n, s, { colorSpace: Ve, minFilter: Ze, magFilter: Ze }),
+    const h = new WebGLRenderTarget(n, s, { colorSpace: SRGBColorSpace, minFilter: LinearFilter, magFilter: LinearFilter }),
       u = this.postMat.uniforms;
     ((u.uCameraNear.value = e.near),
       (u.uCameraFar.value = e.far),
@@ -304,10 +309,10 @@ class J0 {
 }
 const engravingUniforms = {
   uHatchFreq: { value: 3.1 },
-  uInkCol: { value: new Ht("#241d12") },
+  uInkCol: { value: new Color("#241d12") },
   uCutting: { value: 0 },
   uHatchGain: { value: 1 },
-  uSunDirW: { value: new P(0.5, 0.7, 0.3) },
+  uSunDirW: { value: new Vector3(0.5, 0.7, 0.3) },
   uSunLum: { value: 1 },
   uAmbSky: { value: 0.3 },
   uAmbGround: { value: 0.15 },
@@ -522,3 +527,6 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   gl_FragColor = vec4(engraved, diffuseColor.a);
 }
 `;
+
+// --- generated exports ---
+export { J0, Q0, e_, engravingUniforms, syncLightUniforms, t_ };

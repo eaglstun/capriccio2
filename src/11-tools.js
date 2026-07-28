@@ -1,38 +1,49 @@
 // Placement tool state machine (multi-stage picking)
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29081–29455.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29081–29455. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BufferAttribute, BufferGeometry, CylinderGeometry, Mesh, Raycaster, TorusGeometry } from "three";
+import { terrainHeightAt } from "./01-materials.js";
+import { setToneAttribute } from "./03-geometry.js";
+import { buildStructureMesh } from "./04-builders.js";
+import { Fl, W_, X_, gameState } from "./07-citizens.js";
+import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue.js";
+import { BuildOverlays } from "./10-overlays.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class PlacementTool {
   constructor(t, e, n) {
-    K(this, "world");
-    K(this, "camera");
-    K(this, "scene");
-    K(this, "tool", null);
-    K(this, "variant", "");
-    K(this, "stage", 0);
-    K(this, "firstPoint", null);
-    K(this, "firstAnchor", -1);
-    K(this, "ghost", null);
-    K(this, "ghostOk", !0);
-    K(this, "marker");
-    K(this, "ray", new vh());
-    K(this, "onCommit", null);
-    K(this, "onMessage", null);
-    K(this, "lastHover", null);
-    K(this, "lastGhostAt", 0);
-    K(this, "ghostMat");
-    K(this, "ghostBadMat");
-    K(this, "chalk");
+    defineField(this, "world");
+    defineField(this, "camera");
+    defineField(this, "scene");
+    defineField(this, "tool", null);
+    defineField(this, "variant", "");
+    defineField(this, "stage", 0);
+    defineField(this, "firstPoint", null);
+    defineField(this, "firstAnchor", -1);
+    defineField(this, "ghost", null);
+    defineField(this, "ghostOk", !0);
+    defineField(this, "marker");
+    defineField(this, "ray", new Raycaster());
+    defineField(this, "onCommit", null);
+    defineField(this, "onMessage", null);
+    defineField(this, "lastHover", null);
+    defineField(this, "lastGhostAt", 0);
+    defineField(this, "ghostMat");
+    defineField(this, "ghostBadMat");
+    defineField(this, "chalk");
     ((this.world = t),
       (this.camera = e),
       (this.scene = n),
       (this.ghostMat = t.mats.ghost),
       (this.ghostBadMat = t.mats.ghostBad));
-    const s = new Fe(0.8, 0.8, 0.35, 16);
-    ((this.marker = new he(s, this.ghostMat)),
+    const s = new CylinderGeometry(0.8, 0.8, 0.35, 16);
+    ((this.marker = new Mesh(s, this.ghostMat)),
       (this.marker.visible = !1),
       n.add(this.marker),
       (this.chalk = new BuildOverlays(n)));
@@ -267,16 +278,16 @@ class PlacementTool {
         ((o = d.x), (a = d.z), (c = t.s < 0.5 ? Math.PI / 2 : 0));
       }
       const l = t.w / 2 + 0.35;
-      ((e = new Hr(l, 0.3, 8, 22, Math.PI)), e.rotateY(c + Math.PI / 2));
-      const h = new Fe(0.28, 0.28, t.h - l, 8);
+      ((e = new TorusGeometry(l, 0.3, 8, 22, Math.PI)), e.rotateY(c + Math.PI / 2));
+      const h = new CylinderGeometry(0.28, 0.28, t.h - l, 8);
       (h.translate(-l, -(t.h - l) / 2, 0), h.rotateY(c + Math.PI / 2));
-      const u = new Fe(0.28, 0.28, t.h - l, 8);
+      const u = new CylinderGeometry(0.28, 0.28, t.h - l, 8);
       (u.translate(l, -(t.h - l) / 2, 0),
         u.rotateY(c + Math.PI / 2),
         (e = zl([e, h, u])),
         e.translate(o, terrainHeightAt(o, a) + t.h - l, a));
     } else if (t.t === "designate")
-      ((e = new Fe(t.r, t.r, 0.4, 28)),
+      ((e = new CylinderGeometry(t.r, t.r, 0.4, 28)),
         e.translate(t.x, terrainHeightAt(t.x, t.z) + 0.3, t.z));
     else {
       const r = buildStructureMesh({ ...t, id: 999999 }),
@@ -290,7 +301,7 @@ class PlacementTool {
     const n = this.costOf(t),
       s = this.validate(t) && Fl(n);
     return (
-      (this.ghost = new he(e, s ? this.ghostMat : this.ghostBadMat)),
+      (this.ghost = new Mesh(e, s ? this.ghostMat : this.ghostBadMat)),
       this.scene.add(this.ghost),
       s
     );
@@ -373,10 +384,13 @@ function zl(i) {
     (n.set(o.attributes.position.array, s * 3),
       (s += o.attributes.position.count),
       o.dispose());
-  const r = new ve();
+  const r = new BufferGeometry();
   return (
-    r.setAttribute("position", new pe(n, 3)),
+    r.setAttribute("position", new BufferAttribute(n, 3)),
     r.computeVertexNormals(),
     r
   );
 }
+
+// --- generated exports ---
+export { PlacementTool };

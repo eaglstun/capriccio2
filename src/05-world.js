@@ -1,28 +1,37 @@
 // World: terrain, structures, pockets, water, applyAction
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 27603–28217.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 27603–28217. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BoxGeometry, BufferAttribute, BufferGeometry, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, TorusGeometry, TubeGeometry, Vector3 } from "three";
+import { Ca, Vr, f_, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials.js";
+import { NavGraph } from "./02-nav.js";
+import { Ji, Pa, Ri, buildTree, setToneAttribute } from "./03-geometry.js";
+import { buildStructureMesh } from "./04-builders.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class World {
   constructor(t, e) {
-    K(this, "scene");
-    K(this, "mats");
-    K(this, "glowMat");
-    K(this, "terrainMesh");
-    K(this, "structGroup", new rn());
-    K(this, "waterGroup", new rn());
-    K(this, "infillGroup", new rn());
-    K(this, "nav", new NavGraph());
-    K(this, "pockets", []);
-    K(this, "structures", new Map());
-    K(this, "anchors", new Map());
-    K(this, "waterSources", []);
-    K(this, "designations", []);
-    K(this, "actions", []);
-    K(this, "onStructureBuilt", null);
-    K(this, "desigMarks", new Map());
+    defineField(this, "scene");
+    defineField(this, "mats");
+    defineField(this, "glowMat");
+    defineField(this, "terrainMesh");
+    defineField(this, "structGroup", new Group());
+    defineField(this, "waterGroup", new Group());
+    defineField(this, "infillGroup", new Group());
+    defineField(this, "nav", new NavGraph());
+    defineField(this, "pockets", []);
+    defineField(this, "structures", new Map());
+    defineField(this, "anchors", new Map());
+    defineField(this, "waterSources", []);
+    defineField(this, "designations", []);
+    defineField(this, "actions", []);
+    defineField(this, "onStructureBuilt", null);
+    defineField(this, "desigMarks", new Map());
     ((this.scene = t),
       (this.mats = e),
       (this.glowMat = i_()),
@@ -30,7 +39,7 @@ class World {
   }
   buildTerrain() {
     const t = f_();
-    ((this.terrainMesh = new he(t, this.mats.rock)),
+    ((this.terrainMesh = new Mesh(t, this.mats.rock)),
       (this.terrainMesh.receiveShadow = !0),
       (this.terrainMesh.castShadow = !0),
       this.scene.add(this.terrainMesh));
@@ -89,7 +98,7 @@ class World {
       if (!c.length) continue;
       const l = Ul(c),
         h = a === "glow" ? this.glowMat : this.mats[a],
-        u = new he(l, h);
+        u = new Mesh(l, h);
       ((u.castShadow = a !== "water" && a !== "glow"),
         (u.receiveShadow = a !== "glow" && a !== "water"),
         (u.userData.structId = t.id),
@@ -99,19 +108,19 @@ class World {
     }
     for (const a of n.water) {
       const c = A_(a.a, a.b, 1.7),
-        l = new he(c, this.mats.water);
+        l = new Mesh(c, this.mats.water);
       ((l.userData.structId = t.id), this.waterGroup.add(l), s.push(l));
     }
-    for (const a of n.waterSources) this.waterSources.push(new P(...a));
+    for (const a of n.waterSources) this.waterSources.push(new Vector3(...a));
     const r = [];
     for (let a = 0; a < n.navPts.length; a++) {
       const c = n.navPts[a];
-      r.push(this.nav.add(new P(...c.pos), t.id, !1));
+      r.push(this.nav.add(new Vector3(...c.pos), t.id, !1));
     }
     for (let a = 0; a < n.navPts.length; a++) {
       for (const c of n.navPts[a].links) this.nav.link(r[a], r[c]);
       if (e && n.navPts[a].splice) {
-        const c = new P(...n.navPts[a].pos),
+        const c = new Vector3(...n.navPts[a].pos),
           l = new Set(r);
         for (let h = 0; h < 2; h++) {
           const u = this.nav.nearest(c, 10, (d, f) => !l.has(f));
@@ -126,12 +135,12 @@ class World {
       t.t === "rise" ||
       t.t === "anchor") &&
       this.emitGroundPockets(t),
-      n.anchorTop && this.anchors.set(t.id, { top: new P(...n.anchorTop) }));
+      n.anchorTop && this.anchors.set(t.id, { top: new Vector3(...n.anchorTop) }));
     const o = { action: t, result: n, meshes: s, navIds: r };
     return (this.structures.set(t.id, o), this.onStructureBuilt?.(t.id), o);
   }
   registerPocket(t, e) {
-    const n = new P(...t.pos),
+    const n = new Vector3(...t.pos),
       s = this.nav.nearest(n, 14);
     let r = 1e9;
     for (const a of this.waterSources) r = Math.min(r, a.distanceTo(n));
@@ -183,8 +192,8 @@ class World {
   addDesignationMark(t) {
     const e = t.id ?? -1;
     if (this.desigMarks.has(e)) return;
-    const n = new rn(),
-      s = new gh({
+    const n = new Group(),
+      s = new LineDashedMaterial({
         color: "#8f4a34",
         transparent: !0,
         opacity: 0.32,
@@ -196,19 +205,19 @@ class World {
       const h = (l / 40) * Math.PI * 2,
         u = t.x + Math.cos(h) * t.r * 0.85,
         d = t.z + Math.sin(h) * t.r * 0.85;
-      r.push(new P(u, terrainHeightAt(u, d) + 0.35, d));
+      r.push(new Vector3(u, terrainHeightAt(u, d) + 0.35, d));
     }
-    const o = new yr(new ve().setFromPoints(r), s);
+    const o = new Line(new BufferGeometry().setFromPoints(r), s);
     (o.computeLineDistances(), n.add(o));
     const a = terrainHeightAt(t.x + 1.5, t.z + 1.5),
-      c = new he(
+      c = new Mesh(
         Ul([
           (() => {
-            const l = new le(0.14, 2.1, 0.14);
+            const l = new BoxGeometry(0.14, 2.1, 0.14);
             return (l.translate(t.x + 1.5, a + 1.05, t.z + 1.5), l);
           })(),
           (() => {
-            const l = new le(0.85, 0.6, 0.07);
+            const l = new BoxGeometry(0.85, 0.6, 0.07);
             return (l.translate(t.x + 1.5, a + 1.75, t.z + 1.55), l);
           })(),
         ]),
@@ -311,19 +320,19 @@ function Ul(i) {
       (o += l),
       c.dispose());
   }
-  const a = new ve();
+  const a = new BufferGeometry();
   return (
-    a.setAttribute("position", new pe(n, 3)),
-    a.setAttribute("normal", new pe(s, 3)),
-    a.setAttribute("aTone", new pe(r, 2)),
+    a.setAttribute("position", new BufferAttribute(n, 3)),
+    a.setAttribute("normal", new BufferAttribute(s, 3)),
+    a.setAttribute("aTone", new BufferAttribute(r, 2)),
     a
   );
 }
 function A_(i, t, e) {
-  const n = new P(...i),
-    s = new P(...t),
+  const n = new Vector3(...i),
+    s = new Vector3(...t),
     r = n.distanceTo(s),
-    o = new le(r, 0.12, e);
+    o = new BoxGeometry(r, 0.12, e);
   o.translate(r / 2, 0, 0);
   const a = s.clone().sub(n),
     c = Math.atan2(a.x, a.z) - Math.PI / 2,
@@ -455,37 +464,37 @@ function Ah() {
 function C_(i) {
   const t = seededRng(991),
     e = Vr.springPool,
-    n = new Fe(7.5, 7.5, 0.3, 22);
+    n = new CylinderGeometry(7.5, 7.5, 0.3, 22);
   (n.translate(e.x, e.y + 0.18, e.z),
     setToneAttribute(n),
-    i.waterGroup.add(new he(n, i.mats.water)));
-  const s = new Hr(7.8, 0.55, 6, 22);
+    i.waterGroup.add(new Mesh(n, i.mats.water)));
+  const s = new TorusGeometry(7.8, 0.55, 6, 22);
   (s.rotateX(Math.PI / 2), s.translate(e.x, e.y + 0.35, e.z), setToneAttribute(s));
-  const r = new he(s, i.mats.stoneOld);
+  const r = new Mesh(s, i.mats.stoneOld);
   ((r.castShadow = !0), i.structGroup.add(r));
-  const o = new le(26, 0.14, 1.6);
+  const o = new BoxGeometry(26, 0.14, 1.6);
   (o.rotateY(Math.atan2(118 - e.x, -6 - e.z) - Math.PI / 2),
     o.translate((e.x + 118) / 2, e.y + 0.42, (e.z + -6) / 2),
     setToneAttribute(o),
-    i.waterGroup.add(new he(o, i.mats.water)));
-  const a = new P(93, 30.2, -8),
-    c = new P(80, Ca + 1, -9),
-    l = new Ai(2.4, a.y - c.y);
+    i.waterGroup.add(new Mesh(o, i.mats.water)));
+  const a = new Vector3(93, 30.2, -8),
+    c = new Vector3(80, Ca + 1, -9),
+    l = new PlaneGeometry(2.4, a.y - c.y);
   (l.rotateY(Math.PI / 2 + 0.35),
     l.translate((a.x + c.x) / 2 - 3, (a.y + c.y) / 2, (a.z + c.z) / 2),
     setToneAttribute(l));
-  const h = new he(l, i.mats.water);
+  const h = new Mesh(l, i.mats.water);
   i.waterGroup.add(h);
   const u = [];
   for (let E = -140; E <= 140; E += 10) {
     const C = 60 + Math.sin(E * 0.011) * 7;
-    u.push(new P(C, Ca + 0.8 + E * 0.012, E));
+    u.push(new Vector3(C, Ca + 0.8 + E * 0.012, E));
   }
-  const d = new oh(u),
-    f = new $a(d, 48, 2.4, 5);
+  const d = new CatmullRomCurve3(u),
+    f = new TubeGeometry(d, 48, 2.4, 5);
   (f.scale(1, 0.08, 1), f.dispose());
   const m = D_(u, 4.2);
-  (setToneAttribute(m), i.waterGroup.add(new he(m, i.mats.water)));
+  (setToneAttribute(m), i.waterGroup.add(new Mesh(m, i.mats.water)));
   const _ = [];
   for (let E = 0; E < 26; E++) _.push([-90 + t() * 130, -38 + t() * 130]);
   for (let E = 0; E < 8; E++) _.push([48 + t() * 26, -80 + t() * 160]);
@@ -510,7 +519,7 @@ function C_(i) {
       g.push(w));
   }
   const p = Nl(g),
-    A = new he(p, i.mats.stoneOld);
+    A = new Mesh(p, i.mats.stoneOld);
   ((A.castShadow = !0), (A.receiveShadow = !0), i.structGroup.add(A));
   const b = [
     [-232, 128, 0.9, 130, 44],
@@ -525,7 +534,7 @@ function C_(i) {
     w.rotateY(L);
     const I = terrainHeightAt(E, C);
     (w.translate(E, I - 3, C), Ri(w, I - 3, I + 3, 0.9, 1, 0.6));
-    const F = new he(w, i.mats.distant);
+    const F = new Mesh(w, i.mats.distant);
     ((F.castShadow = !1), (F.receiveShadow = !1), i.structGroup.add(F));
   }
   const v = [];
@@ -535,25 +544,25 @@ function C_(i) {
       y = e.z + 8 + t() * 6;
     (C.translate(L, terrainHeightAt(L, y), y), setToneAttribute(C), v.push(C));
   }
-  const R = new he(Nl(v), i.mats.green);
+  const R = new Mesh(Nl(v), i.mats.green);
   ((R.castShadow = !0), i.structGroup.add(R));
 }
 function P_(i) {
-  const t = new ve(),
+  const t = new BufferGeometry(),
     e = new Float32Array([
       -0.9, 0, 0.25, 0, 0, 0, -0.75, 0.16, -0.2, 0.9, 0, 0.25, 0.75, 0.16, -0.2,
       0, 0, 0,
     ]);
-  (t.setAttribute("position", new pe(e, 3)), t.computeVertexNormals());
-  const n = new yi({ color: "#3a3226", side: _n, fog: !0 }),
+  (t.setAttribute("position", new BufferAttribute(e, 3)), t.computeVertexNormals());
+  const n = new MeshBasicMaterial({ color: "#3a3226", side: DoubleSide, fog: !0 }),
     s = 11,
-    r = new sh(t, n, s);
+    r = new InstancedMesh(t, n, s);
   ((r.frustumCulled = !1), i.scene.add(r));
   const o = [
       { cx: -30, cz: -20, cy: 42, r: 34 },
       { cx: 55, cz: 10, cy: 26, r: 40 },
     ],
-    a = new Re(),
+    a = new Object3D(),
     c = [];
   for (let l = 0; l < s; l++) c.push(Math.random() * 100);
   return (l) => {
@@ -588,11 +597,11 @@ function Nl(i) {
       r.set(c.attributes.aTone.array, o * 2),
       (o += c.attributes.position.count),
       c.dispose());
-  const a = new ve();
+  const a = new BufferGeometry();
   return (
-    a.setAttribute("position", new pe(n, 3)),
-    a.setAttribute("normal", new pe(s, 3)),
-    a.setAttribute("aTone", new pe(r, 2)),
+    a.setAttribute("position", new BufferAttribute(n, 3)),
+    a.setAttribute("normal", new BufferAttribute(s, 3)),
+    a.setAttribute("aTone", new BufferAttribute(r, 2)),
     a
   );
 }
@@ -603,7 +612,7 @@ function D_(i, t) {
     const o = i[r],
       a = i[r + 1],
       c = a.clone().sub(o).normalize(),
-      l = new P(c.z, 0, -c.x).multiplyScalar(t / 2),
+      l = new Vector3(c.z, 0, -c.x).multiplyScalar(t / 2),
       h = o.clone().add(l),
       u = o.clone().sub(l),
       d = a.clone().add(l),
@@ -612,11 +621,14 @@ function D_(i, t) {
       e.push(u.x, u.y, u.z, d.x, d.y, d.z, f.x, f.y, f.z));
     for (let m = 0; m < 6; m++) n.push(0, 1, 0);
   }
-  const s = new ve();
+  const s = new BufferGeometry();
   return (
-    s.setAttribute("position", new pe(new Float32Array(e), 3)),
-    s.setAttribute("normal", new pe(new Float32Array(n), 3)),
+    s.setAttribute("position", new BufferAttribute(new Float32Array(e), 3)),
+    s.setAttribute("normal", new BufferAttribute(new Float32Array(n), 3)),
     s
   );
 }
 const L_ = 7;
+
+// --- generated exports ---
+export { Ah, C_, D_, L_, P_, Th, World };

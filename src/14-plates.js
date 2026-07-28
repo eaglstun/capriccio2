@@ -1,9 +1,9 @@
 // Plates: the etching capture mechanic
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29710–29756.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29710–29756. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
 function renderPlateImage(i, t, e) {
   return new Promise((n) => {
@@ -52,3 +52,6 @@ function tv(i) {
   for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
   return e || "I";
 }
+
+// --- generated exports ---
+export { renderPlateImage };

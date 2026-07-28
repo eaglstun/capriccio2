@@ -8,65 +8,365 @@
       "file": "00-shaders.js",
       "section": "shaders",
       "bundle_start_line": 25401,
-      "bytes": 18115,
+      "bytes": 18492,
       "statements": 6,
-      "header_bytes": 278
+      "header_bytes": 312,
+      "prologue_bytes": 354,
+      "epilogue_bytes": 95,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "Color",
+          "DepthTexture",
+          "LinearFilter",
+          "Matrix4",
+          "Mesh",
+          "NoToneMapping",
+          "OrthographicCamera",
+          "PCFShadowMap",
+          "PlaneGeometry",
+          "SRGBColorSpace",
+          "Scene",
+          "ShaderMaterial",
+          "UnsignedIntType",
+          "Vector2",
+          "Vector3",
+          "WebGLRenderTarget",
+          "WebGLRenderer"
+        ]
+      },
+      "exports": [
+        "J0",
+        "Q0",
+        "e_",
+        "engravingUniforms",
+        "syncLightUniforms",
+        "t_"
+      ]
     },
     {
       "file": "01-materials.js",
       "section": "materials",
       "bundle_start_line": 25918,
-      "bytes": 8616,
+      "bytes": 8819,
       "statements": 22,
-      "header_bytes": 280
+      "header_bytes": 314,
+      "prologue_bytes": 271,
+      "epilogue_bytes": 156,
+      "imports": {
+        "three": [
+          "BufferAttribute",
+          "Color",
+          "DoubleSide",
+          "MeshBasicMaterial",
+          "MeshLambertMaterial",
+          "MeshPhongMaterial",
+          "PlaneGeometry",
+          "Vector3"
+        ],
+        "./00-shaders.js": [
+          "Q0",
+          "e_",
+          "engravingUniforms",
+          "t_"
+        ]
+      },
+      "exports": [
+        "$n",
+        "Aa",
+        "Al",
+        "Ca",
+        "Dr",
+        "Nn",
+        "Vr",
+        "br",
+        "clamp",
+        "f_",
+        "fr",
+        "hashString",
+        "i_",
+        "isFlatGround",
+        "lerp",
+        "n_",
+        "seededRng",
+        "terrainHeightAt"
+      ]
     },
     {
       "file": "02-nav.js",
       "section": "nav",
       "bundle_start_line": 26208,
-      "bytes": 4320,
+      "bytes": 4366,
       "statements": 2,
-      "header_bytes": 271
+      "header_bytes": 305,
+      "prologue_bytes": 212,
+      "epilogue_bytes": 51,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "./01-materials.js": [
+          "$n",
+          "isFlatGround",
+          "terrainHeightAt"
+        ],
+        "three": [
+          "Vector3"
+        ]
+      },
+      "exports": [
+        "NavGraph"
+      ]
     },
     {
       "file": "03-geometry.js",
       "section": "geometry",
       "bundle_start_line": 26365,
-      "bytes": 18138,
+      "bytes": 18410,
       "statements": 22,
-      "header_bytes": 275
+      "header_bytes": 309,
+      "prologue_bytes": 341,
+      "epilogue_bytes": 175,
+      "imports": {
+        "three": [
+          "BoxGeometry",
+          "BufferAttribute",
+          "BufferGeometry",
+          "ConeGeometry",
+          "CylinderGeometry",
+          "ExtrudeGeometry",
+          "Matrix4",
+          "Path",
+          "Quaternion",
+          "Shape",
+          "Vector3"
+        ],
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "./01-materials.js": [
+          "clamp",
+          "seededRng",
+          "terrainHeightAt"
+        ]
+      },
+      "exports": [
+        "Cl",
+        "Hn",
+        "Il",
+        "Ji",
+        "Ll",
+        "MeshBuilder",
+        "Pa",
+        "Pl",
+        "Ri",
+        "Ur",
+        "Yt",
+        "__",
+        "be",
+        "buildAnchor",
+        "buildTree",
+        "dn",
+        "ec",
+        "newStructureParts",
+        "setToneAttribute",
+        "v_"
+      ]
     },
     {
       "file": "04-builders.js",
       "section": "builders",
       "bundle_start_line": 26962,
-      "bytes": 19055,
+      "bytes": 19102,
       "statements": 6,
-      "header_bytes": 374
+      "header_bytes": 408,
+      "prologue_bytes": 362,
+      "epilogue_bytes": 61,
+      "imports": {
+        "./03-geometry.js": [
+          "Hn",
+          "Ji",
+          "Ll",
+          "MeshBuilder",
+          "Pa",
+          "Ri",
+          "Ur",
+          "Yt",
+          "__",
+          "be",
+          "buildAnchor",
+          "buildTree",
+          "dn",
+          "newStructureParts",
+          "setToneAttribute",
+          "v_"
+        ],
+        "./01-materials.js": [
+          "clamp",
+          "lerp",
+          "seededRng",
+          "terrainHeightAt"
+        ],
+        "three": [
+          "BoxGeometry",
+          "ConeGeometry",
+          "CylinderGeometry"
+        ]
+      },
+      "exports": [
+        "buildStructureMesh"
+      ]
     },
     {
       "file": "05-world.js",
       "section": "world",
       "bundle_start_line": 27603,
-      "bytes": 17464,
+      "bytes": 18063,
       "statements": 10,
-      "header_bytes": 271
+      "header_bytes": 305,
+      "prologue_bytes": 627,
+      "epilogue_bytes": 72,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "BoxGeometry",
+          "BufferAttribute",
+          "BufferGeometry",
+          "CatmullRomCurve3",
+          "CylinderGeometry",
+          "DoubleSide",
+          "Group",
+          "InstancedMesh",
+          "Line",
+          "LineDashedMaterial",
+          "Mesh",
+          "MeshBasicMaterial",
+          "Object3D",
+          "PlaneGeometry",
+          "TorusGeometry",
+          "TubeGeometry",
+          "Vector3"
+        ],
+        "./02-nav.js": [
+          "NavGraph"
+        ],
+        "./01-materials.js": [
+          "Ca",
+          "Vr",
+          "f_",
+          "i_",
+          "isFlatGround",
+          "seededRng",
+          "terrainHeightAt"
+        ],
+        "./04-builders.js": [
+          "buildStructureMesh"
+        ],
+        "./03-geometry.js": [
+          "Ji",
+          "Pa",
+          "Ri",
+          "buildTree",
+          "setToneAttribute"
+        ]
+      },
+      "exports": [
+        "Ah",
+        "C_",
+        "D_",
+        "L_",
+        "P_",
+        "Th",
+        "World"
+      ]
     },
     {
       "file": "06-infill.js",
       "section": "infill",
       "bundle_start_line": 28218,
-      "bytes": 9104,
+      "bytes": 9303,
       "statements": 4,
-      "header_bytes": 277
+      "header_bytes": 311,
+      "prologue_bytes": 368,
+      "epilogue_bytes": 59,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "./05-world.js": [
+          "L_"
+        ],
+        "./01-materials.js": [
+          "clamp",
+          "hashString",
+          "seededRng"
+        ],
+        "three": [
+          "BoxGeometry",
+          "CylinderGeometry",
+          "Group",
+          "Mesh",
+          "Vector3"
+        ],
+        "./03-geometry.js": [
+          "Il",
+          "MeshBuilder",
+          "buildTree",
+          "setToneAttribute"
+        ]
+      },
+      "exports": [
+        "Co",
+        "InfillSystem"
+      ]
     },
     {
       "file": "07-citizens.js",
       "section": "citizens",
       "bundle_start_line": 28494,
-      "bytes": 10522,
+      "bytes": 10759,
       "statements": 11,
-      "header_bytes": 260
+      "header_bytes": 294,
+      "prologue_bytes": 367,
+      "epilogue_bytes": 90,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "BufferAttribute",
+          "BufferGeometry",
+          "ConeGeometry",
+          "CylinderGeometry",
+          "DynamicDrawUsage as Lu",
+          "InstancedMesh",
+          "Object3D",
+          "SphereGeometry",
+          "Vector3"
+        ],
+        "./06-infill.js": [
+          "Co"
+        ],
+        "./01-materials.js": [
+          "hashString",
+          "seededRng"
+        ]
+      },
+      "exports": [
+        "Ch",
+        "Citizens",
+        "Fl",
+        "Po",
+        "Rh",
+        "V_",
+        "W_",
+        "X_",
+        "gameState"
+      ]
     },
     {
       "file": "08-save.js",
@@ -74,7 +374,19 @@
       "bundle_start_line": 28849,
       "bytes": 601,
       "statements": 2,
-      "header_bytes": 258
+      "header_bytes": 292,
+      "prologue_bytes": 113,
+      "epilogue_bytes": 61,
+      "imports": {
+        "./07-citizens.js": [
+          "Ch",
+          "gameState"
+        ]
+      },
+      "exports": [
+        "loadGame",
+        "saveGame"
+      ]
     },
     {
       "file": "09-catalogue.js",
@@ -82,39 +394,150 @@
       "bundle_start_line": 28877,
       "bytes": 2286,
       "statements": 1,
-      "header_bytes": 263
+      "header_bytes": 297,
+      "prologue_bytes": 0,
+      "epilogue_bytes": 76,
+      "imports": {},
+      "exports": [
+        "BUILD_CATALOGUE",
+        "VAULT_FOOTPRINTS"
+      ]
     },
     {
       "file": "10-overlays.js",
       "section": "overlays",
       "bundle_start_line": 28952,
-      "bytes": 3532,
+      "bytes": 3711,
       "statements": 2,
-      "header_bytes": 261
+      "header_bytes": 295,
+      "prologue_bytes": 262,
+      "epilogue_bytes": 60,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "BufferGeometry",
+          "Group",
+          "Line",
+          "LineBasicMaterial",
+          "LineDashedMaterial",
+          "Vector3"
+        ],
+        "./01-materials.js": [
+          "terrainHeightAt"
+        ]
+      },
+      "exports": [
+        "BuildOverlays",
+        "Ol"
+      ]
     },
     {
       "file": "11-tools.js",
       "section": "tools",
       "bundle_start_line": 29081,
-      "bytes": 11077,
+      "bytes": 11370,
       "statements": 2,
-      "header_bytes": 266
+      "header_bytes": 300,
+      "prologue_bytes": 555,
+      "epilogue_bytes": 56,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "BufferAttribute",
+          "BufferGeometry",
+          "CylinderGeometry",
+          "Mesh",
+          "Raycaster",
+          "TorusGeometry"
+        ],
+        "./10-overlays.js": [
+          "BuildOverlays"
+        ],
+        "./09-catalogue.js": [
+          "BUILD_CATALOGUE",
+          "VAULT_FOOTPRINTS"
+        ],
+        "./01-materials.js": [
+          "terrainHeightAt"
+        ],
+        "./04-builders.js": [
+          "buildStructureMesh"
+        ],
+        "./03-geometry.js": [
+          "setToneAttribute"
+        ],
+        "./07-citizens.js": [
+          "Fl",
+          "W_",
+          "X_",
+          "gameState"
+        ]
+      },
+      "exports": [
+        "PlacementTool"
+      ]
     },
     {
       "file": "12-requests.js",
       "section": "requests",
       "bundle_start_line": 29456,
-      "bytes": 3984,
+      "bytes": 4040,
       "statements": 2,
-      "header_bytes": 256
+      "header_bytes": 290,
+      "prologue_bytes": 263,
+      "epilogue_bytes": 51,
+      "imports": {
+        "three": [
+          "Vector3"
+        ],
+        "./01-materials.js": [
+          "Vr"
+        ],
+        "./05-world.js": [
+          "Th"
+        ],
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "./07-citizens.js": [
+          "gameState"
+        ]
+      },
+      "exports": [
+        "Requests"
+      ]
     },
     {
       "file": "13-modes.js",
       "section": "modes",
       "bundle_start_line": 29574,
-      "bytes": 4679,
+      "bytes": 4985,
       "statements": 3,
-      "header_bytes": 267
+      "header_bytes": 301,
+      "prologue_bytes": 212,
+      "epilogue_bytes": 70,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "three": [
+          "Plane",
+          "Raycaster",
+          "Vector3"
+        ],
+        "./00-shaders.js": [
+          "engravingUniforms"
+        ]
+      },
+      "exports": [
+        "Ph",
+        "SectionMode",
+        "WanderMode"
+      ]
     },
     {
       "file": "14-plates.js",
@@ -122,31 +545,165 @@
       "bundle_start_line": 29710,
       "bytes": 1485,
       "statements": 2,
-      "header_bytes": 252
+      "header_bytes": 286,
+      "prologue_bytes": 0,
+      "epilogue_bytes": 59,
+      "imports": {},
+      "exports": [
+        "renderPlateImage"
+      ]
     },
     {
       "file": "15-audio.js",
       "section": "audio",
       "bundle_start_line": 29757,
-      "bytes": 4452,
+      "bytes": 4532,
       "statements": 1,
-      "header_bytes": 267
+      "header_bytes": 301,
+      "prologue_bytes": 108,
+      "epilogue_bytes": 53,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ]
+      },
+      "exports": [
+        "Soundscape"
+      ]
     },
     {
       "file": "16-hud.js",
       "section": "hud",
       "bundle_start_line": 29891,
-      "bytes": 22919,
+      "bytes": 23131,
       "statements": 2,
-      "header_bytes": 248
+      "header_bytes": 282,
+      "prologue_bytes": 240,
+      "epilogue_bytes": 54,
+      "imports": {
+        "./_runtime.js": [
+          "defineField"
+        ],
+        "./09-catalogue.js": [
+          "BUILD_CATALOGUE"
+        ],
+        "./07-citizens.js": [
+          "gameState"
+        ],
+        "three": [
+          "Vector3"
+        ]
+      },
+      "exports": [
+        "Hud",
+        "iv",
+        "nv"
+      ]
     },
     {
       "file": "17-bootstrap.js",
       "section": "bootstrap",
       "bundle_start_line": 30393,
-      "bytes": 16859,
+      "bytes": 16966,
       "statements": 86,
-      "header_bytes": 271
+      "header_bytes": 305,
+      "prologue_bytes": 884,
+      "epilogue_bytes": 149,
+      "imports": {
+        "./00-shaders.js": [
+          "J0",
+          "engravingUniforms",
+          "syncLightUniforms"
+        ],
+        "three": [
+          "DirectionalLight",
+          "FogExp2",
+          "HemisphereLight",
+          "PerspectiveCamera",
+          "Scene",
+          "Vector2",
+          "Vector3"
+        ],
+        "three/addons/controls/OrbitControls.js": [
+          "OrbitControls"
+        ],
+        "./01-materials.js": [
+          "Aa",
+          "Nn",
+          "Vr",
+          "clamp",
+          "lerp",
+          "n_"
+        ],
+        "./05-world.js": [
+          "Ah",
+          "C_",
+          "P_",
+          "World"
+        ],
+        "./06-infill.js": [
+          "InfillSystem"
+        ],
+        "./07-citizens.js": [
+          "Citizens",
+          "Rh",
+          "V_",
+          "gameState"
+        ],
+        "./12-requests.js": [
+          "Requests"
+        ],
+        "./15-audio.js": [
+          "Soundscape"
+        ],
+        "./11-tools.js": [
+          "PlacementTool"
+        ],
+        "./13-modes.js": [
+          "Ph",
+          "SectionMode",
+          "WanderMode"
+        ],
+        "./16-hud.js": [
+          "Hud"
+        ],
+        "./14-plates.js": [
+          "renderPlateImage"
+        ],
+        "./08-save.js": [
+          "loadGame",
+          "saveGame"
+        ]
+      },
+      "exports": [
+        "Do",
+        "Fr",
+        "Lo",
+        "Ne",
+        "Or",
+        "Te",
+        "Us",
+        "ac",
+        "av",
+        "bi",
+        "cc",
+        "ei",
+        "fe",
+        "ic",
+        "ie",
+        "je",
+        "ke",
+        "ni",
+        "oc",
+        "oi",
+        "os",
+        "ov",
+        "rc",
+        "rv",
+        "sc",
+        "te",
+        "us"
+      ]
     }
   ]
 }

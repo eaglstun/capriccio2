@@ -1,14 +1,20 @@
 // Navigation graph (spatial hash) and the pocket registry
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 26208–26364.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 26208–26364. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Vector3 } from "three";
+import { $n, isFlatGround, terrainHeightAt } from "./01-materials.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class NavGraph {
   constructor() {
-    K(this, "nodes", []);
-    K(this, "cell", new Map());
+    defineField(this, "nodes", []);
+    defineField(this, "cell", new Map());
   }
   key(t, e) {
     return `${Math.round(t / 10)},${Math.round(e / 10)}`;
@@ -89,7 +95,7 @@ class NavGraph {
         for (let r = n.z0; r <= n.z1; r += $n) {
           if (!isFlatGround(s, r)) continue;
           const o = `${s},${r}`;
-          e.has(o) || e.set(o, this.add(new P(s, terrainHeightAt(s, r), r), -1, !0));
+          e.has(o) || e.set(o, this.add(new Vector3(s, terrainHeightAt(s, r), r), -1, !0));
         }
     for (const [n, s] of e) {
       const [r, o] = n.split(",").map(Number);
@@ -123,8 +129,8 @@ class NavGraph {
 }
 class p_ {
   constructor() {
-    K(this, "ids", []);
-    K(this, "ks", []);
+    defineField(this, "ids", []);
+    defineField(this, "ks", []);
   }
   get size() {
     return this.ids.length;
@@ -162,3 +168,6 @@ class p_ {
       ([this.ks[t], this.ks[e]] = [this.ks[e], this.ks[t]]));
   }
 }
+
+// --- generated exports ---
+export { NavGraph };

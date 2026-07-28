@@ -1,9 +1,17 @@
 // Citizen petitions and their flavour text
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29456–29573.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29456–29573. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Vector3 } from "three";
+import { Vr } from "./01-materials.js";
+import { Th } from "./05-world.js";
+import { gameState } from "./07-citizens.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 const j_ = [
     {
@@ -13,7 +21,7 @@ const j_ = [
       thanks:
         "The way up is open. Children raced to the top before the mortar dried.",
       done: (i) => {
-        const t = i.nav.nearest(new P(-18, 0, 28), 24),
+        const t = i.nav.nearest(new Vector3(-18, 0, 28), 24),
           e = i.nav.nearest(Vr.terraceCenter, 40);
         return t < 0 || e < 0 ? !1 : i.nav.path(t, e).length > 0;
       },
@@ -89,11 +97,11 @@ const j_ = [
   ];
 class Requests {
   constructor() {
-    K(this, "active", null);
-    K(this, "queue");
-    K(this, "onDone", null);
-    K(this, "onNew", null);
-    K(this, "flavorIdx", 0);
+    defineField(this, "active", null);
+    defineField(this, "queue");
+    defineField(this, "onDone", null);
+    defineField(this, "onNew", null);
+    defineField(this, "flavorIdx", 0);
     this.resync();
   }
   resync() {
@@ -123,3 +131,6 @@ class Requests {
     );
   }
 }
+
+// --- generated exports ---
+export { Requests };

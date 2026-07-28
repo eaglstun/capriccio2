@@ -1,13 +1,18 @@
 // Material factory: the onBeforeCompile hook and the stone palette
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 25918–26207.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 25918–26207. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BufferAttribute, Color, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, PlaneGeometry, Vector3 } from "three";
+import { Q0, e_, engravingUniforms, t_ } from "./00-shaders.js";
+// --- end generated imports ---
 
 function createStoneMaterial(i = {}) {
-  const t = new Ea({ color: 16777215, side: i.side ?? _n, fog: !0 }),
-    e = new Ht(i.stone ?? "#e8e0cb");
+  const t = new MeshLambertMaterial({ color: 16777215, side: i.side ?? DoubleSide, fog: !0 }),
+    e = new Color(i.stone ?? "#e8e0cb");
   return (
     (t.onBeforeCompile = (n) => {
       ((n.uniforms.uHatchFreq = engravingUniforms.uHatchFreq),
@@ -55,30 +60,30 @@ function n_() {
     r = createStoneMaterial({ stone: "#6b7a5e", jointAlpha: 0 }),
     o = createStoneMaterial({ stone: "#a2604f", jointAlpha: 0 }),
     a = createStoneMaterial({ stone: "#e7e0cf", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
-    c = new Vd({
+    c = new MeshPhongMaterial({
       color: "#d1a63c",
       emissive: "#7a5a12",
       specular: "#fff3c0",
       shininess: 70,
       fog: !0,
     }),
-    l = new yi({ color: "#231d12", fog: !0 }),
-    h = new Ea({ color: "#332c22", fog: !0 }),
-    u = new yi({
+    l = new MeshBasicMaterial({ color: "#231d12", fog: !0 }),
+    h = new MeshLambertMaterial({ color: "#332c22", fog: !0 }),
+    u = new MeshBasicMaterial({
       color: "#5d6c7b",
       transparent: !0,
       opacity: 0.42,
       depthWrite: !1,
       fog: !1,
     }),
-    d = new yi({
+    d = new MeshBasicMaterial({
       color: "#8a4a3a",
       transparent: !0,
       opacity: 0.4,
       depthWrite: !1,
       fog: !1,
     }),
-    f = new Ea({
+    f = new MeshLambertMaterial({
       color: "#9fb6b4",
       fog: !0,
       polygonOffset: !0,
@@ -141,7 +146,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
 }
 const Aa = { value: 0 };
 function i_() {
-  const i = new yi({ color: "#ffcf7a", fog: !1 });
+  const i = new MeshBasicMaterial({ color: "#ffcf7a", fog: !1 });
   return ((i.toneMapped = !1), i);
 }
 function seededRng(i) {
@@ -254,7 +259,7 @@ function terrainNormalAt(i, t, e = 0.9) {
     s = terrainHeightAt(i + e, t),
     r = terrainHeightAt(i, t - e),
     o = terrainHeightAt(i, t + e);
-  return new P(n - s, 2 * e, r - o).normalize();
+  return new Vector3(n - s, 2 * e, r - o).normalize();
 }
 function terrainSlopeAt(i, t) {
   return 1 - terrainNormalAt(i, t).y;
@@ -265,7 +270,7 @@ function isFlatGround(i, t) {
 const d_ = 300;
 function f_() {
   const t = d_ * 2,
-    e = new Ai(t, t, 520, 520);
+    e = new PlaneGeometry(t, t, 520, 520);
   e.rotateX(-Math.PI / 2);
   const n = e.attributes.position;
   for (let r = 0; r < n.count; r++) {
@@ -284,14 +289,17 @@ function f_() {
       (s[r * 2] = l),
       (s[r * 2 + 1] = 0.35 + Sr(o * 0.05, a * 0.05, 2, br + 21) * 0.3));
   }
-  return (e.setAttribute("aTone", new pe(s, 2)), e);
+  return (e.setAttribute("aTone", new BufferAttribute(s, 2)), e);
 }
 const Vr = {
-    townPlaza: new P(-18, 0, 26),
-    hallSite: new P(-34, 0, -16),
-    terraceCenter: new P(-28, Dr, -86),
-    terraceEdge: new P(-6, Dr, -62),
-    springPool: new P(126, Lr + 3.5, -6),
-    massifRim: new P(92, Lr, -10),
+    townPlaza: new Vector3(-18, 0, 26),
+    hallSite: new Vector3(-34, 0, -16),
+    terraceCenter: new Vector3(-28, Dr, -86),
+    terraceEdge: new Vector3(-6, Dr, -62),
+    springPool: new Vector3(126, Lr + 3.5, -6),
+    massifRim: new Vector3(92, Lr, -10),
   },
   $n = 7;
+
+// --- generated exports ---
+export { $n, Aa, Al, Ca, Dr, Nn, Vr, br, clamp, f_, fr, hashString, i_, isFlatGround, lerp, n_, seededRng, terrainHeightAt };

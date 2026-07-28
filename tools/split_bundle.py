@@ -22,6 +22,7 @@ Usage:
 """
 
 import argparse
+from collections import defaultdict
 import json
 import pathlib
 import re
@@ -33,6 +34,58 @@ from jsmask import mask  # noqa: E402
 BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
 OUT = pathlib.Path("src")
 RENAMES = OUT / "renames.json"
+VENDOR_IMPORTS = OUT / "vendor-imports.json"
+
+# Generated blocks are delimited so the integrity check can strip them exactly
+# and still prove byte-identity with the original.
+GEN_OPEN = "// --- generated imports ---\n"
+GEN_CLOSE = "// --- end generated imports ---\n\n"
+EXP_OPEN = "\n// --- generated exports ---\n"
+
+DECL_RX = re.compile(
+    r"^(?:async\s+)?(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)", re.M)
+CONT_RX = re.compile(r"^\s{2}([A-Za-z_$][\w$]*)\s*=\s*[^=]", re.M)
+
+
+def declared_names(stmt, masked):
+    """Names a single top-level statement introduces.
+
+    A `const a = 1,\\n  b = 2;` statement declares both. But a 2-space-indented
+    `x = ...` inside a function body is a LOCAL, not a declaration — prettier
+    indents both identically. So continuation declarators are only accepted
+    when the statement is a const/let/var AND the line sits at bracket depth 0
+    within that statement.
+    """
+    out = []
+    mo = DECL_RX.match(masked)
+    if mo:
+        out.append(mo.group(1))
+    if not re.match(r"^(?:const|let|var)\b", masked):
+        return out
+    for cm in CONT_RX.finditer(masked):
+        depth = (masked[:cm.start()].count("(") - masked[:cm.start()].count(")")
+                 + masked[:cm.start()].count("[") - masked[:cm.start()].count("]")
+                 + masked[:cm.start()].count("{") - masked[:cm.start()].count("}"))
+        if depth == 0 and cm.group(1) not in out:
+            out.append(cm.group(1))
+    return out
+
+JS_KEYWORDS = {
+    "if", "else", "for", "while", "do", "return", "break", "continue", "new",
+    "typeof", "instanceof", "in", "of", "let", "const", "var", "function",
+    "class", "extends", "static", "get", "set", "async", "await", "yield",
+    "throw", "try", "catch", "finally", "switch", "case", "default", "delete",
+    "void", "this", "super", "arguments", "true", "false", "null", "undefined",
+    "export", "import", "from", "as", "Math", "JSON", "Object", "Array", "Map",
+    "Set", "Promise", "Number", "String", "Boolean", "Date", "RegExp", "Error",
+    "Symbol", "Infinity", "NaN", "window", "document", "console", "localStorage",
+    "location", "navigator", "performance", "requestAnimationFrame", "setTimeout",
+    "setInterval", "clearTimeout", "clearInterval", "fetch", "URL", "Image",
+    "URLSearchParams", "AudioContext", "Float32Array", "Uint8Array", "Blob",
+    "Uint16Array", "Uint32Array", "Int32Array", "ArrayBuffer", "structuredClone",
+    "isNaN", "isFinite", "parseInt", "parseFloat", "devicePixelRatio",
+    "encodeURIComponent", "decodeURIComponent", "getComputedStyle", "WeakMap",
+}
 
 # Names that are ALSO declared in an inner scope somewhere (from
 # scope_graph.py --shadows). A blind global rename on these would corrupt the
@@ -293,13 +346,14 @@ def main():
         kind = anchor_of(app[a:b])
         if kind:
             seen.append(kind)
-            cur = {"kind": kind, "start": a, "end": b, "n": 1}
+            cur = {"kind": kind, "start": a, "end": b, "n": 1, "spans": [(a, b)]}
             sections.append(cur)
         elif cur is None:
             sys.exit("first statement is not an anchor — seam is wrong")
         else:
             cur["end"] = b
             cur["n"] += 1
+            cur["spans"].append((a, b))
 
     missing = [n for _, n in ANCHORS if n not in seen]
     if missing:
@@ -319,34 +373,93 @@ def main():
     renames = load_renames(args.force_shadowed)
     if renames:
         print(f"\napplying {len(renames)} rename(s) from {RENAMES}")
-    manifest = []
-    counters = {}
     shorthand_hits = []
-    for s in sections:
+
+    # ---- pass 1: rename each section, record its declarations ----
+    parts = []
+    counters = {}
+    for i, s in enumerate(sections):
         k = s["kind"]
         counters[k] = counters.get(k, 0) + 1
         seq = counters[k]
-        stem = f"{len(manifest):02d}-{k}" + (f"-{seq}" if seq > 1 else "")
-        path = OUT / f"{stem}.js"
+        stem = f"{i:02d}-{k}" + (f"-{seq}" if seq > 1 else "")
         body = app[s["start"]:s["end"]]
-        start_line = seam_line + app[:s["start"]].count("\n") + 1
-        header = (
-            f"// {SECTION_TITLES.get(k, k)}\n"
-            f"//\n"
-            f"// Extracted verbatim from public/assets/index-DCXbw2vV.js,\n"
-            f"// lines {start_line}–{start_line + body.count(chr(10)) - 1}.\n"
-            f"// Identifiers are minifier-mangled; nothing here has been renamed.\n"
-            f"// Regenerate with: python3 tools/split_bundle.py --write\n\n"
-        )
         renamed, shorthand = substitute(body, renames)
         if shorthand:
-            shorthand_hits.extend((path.name, n) for n in set(shorthand))
-        path.write_text(header + renamed, encoding="utf8")
+            shorthand_hits.extend((stem, n) for n in set(shorthand))
+        m = mask(renamed)
+        names = []
+        for (a, b) in s["spans"]:
+            st, _ = substitute(app[a:b], renames)
+            for nm in declared_names(st, mask(st)):
+                if nm not in names:
+                    names.append(nm)
+        parts.append({
+            "stem": stem, "kind": k, "body": renamed, "masked": m,
+            "decls": names, "stmts": s["n"],
+            "start_line": seam_line + app[:s["start"]].count("\n") + 1,
+        })
+
+    owner = {}
+    for p in parts:
+        for nm in p["decls"]:
+            owner.setdefault(nm, p["stem"])
+
+    vspec = json.loads(VENDOR_IMPORTS.read_text()) if VENDOR_IMPORTS.exists() else {}
+    vmodule = {n: mod for mod, ns in vspec.get("modules", {}).items() for n in ns}
+    valias = vspec.get("aliases", {})
+
+    # ---- pass 2: resolve references, emit imports/exports ----
+    manifest = []
+    for p in parts:
+        needs = defaultdict(set)     # module or file -> names
+        for mo in IDENT_RX.finditer(p["masked"]):
+            nm = mo.group(1)
+            if nm in p["decls"] or nm in JS_KEYWORDS:
+                continue
+            prov = owner.get(nm)
+            if prov:
+                needs[f"./{prov}.js"].add(nm)
+            elif nm in vmodule:
+                needs[vmodule[nm]].add(nm)
+            elif nm in valias:
+                needs[valias[nm]["module"]].add(
+                    f'{valias[nm]["name"]} as {nm}')
+
+        imports = ""
+        if needs:
+            lines = []
+            for mod in sorted(needs, key=lambda x: (not x.startswith("three"), x)):
+                ns = ", ".join(sorted(needs[mod]))
+                lines.append(f'import {{ {ns} }} from "{mod}";')
+            imports = GEN_OPEN + "\n".join(lines) + "\n" + GEN_CLOSE
+
+        exported = sorted(n for n in p["decls"]
+                          if any(n in q["masked"] for q in parts if q is not p))
+        exports = ""
+        if exported:
+            exports = EXP_OPEN + f"export {{ {', '.join(exported)} }};\n"
+
+        header = (
+            f"// {SECTION_TITLES.get(p['kind'], p['kind'])}\n"
+            f"//\n"
+            f"// Extracted from public/assets/index-DCXbw2vV.js, bundle lines\n"
+            f"// {p['start_line']}–{p['start_line'] + p['body'].count(chr(10)) - 1}. "
+            f"Statements are verbatim; identifiers are\n"
+            f"// renamed via src/renames.json. Imports and exports are generated.\n"
+            f"// Regenerate: python3 tools/split_bundle.py --write\n\n"
+        )
+        path = OUT / f"{p['stem']}.js"
+        path.write_text(header + imports + p["body"] + exports, encoding="utf8")
         manifest.append({
-            "file": path.name, "section": k,
-            "bundle_start_line": start_line,
-            "bytes": len(renamed), "statements": s["n"],
+            "file": path.name, "section": p["kind"],
+            "bundle_start_line": p["start_line"],
+            "bytes": len(p["body"]), "statements": p["stmts"],
             "header_bytes": len(header),
+            "prologue_bytes": len(imports),
+            "epilogue_bytes": len(exports),
+            "imports": {m: sorted(v) for m, v in needs.items()},
+            "exports": exported,
         })
 
     (OUT / "manifest.json").write_text(json.dumps({
@@ -363,7 +476,9 @@ def main():
     rebuilt = []
     for m in manifest:
         raw = (OUT / m["file"]).read_text(encoding="utf8")
-        body = raw[m["header_bytes"]:]
+        start = m["header_bytes"] + m.get("prologue_bytes", 0)
+        end = len(raw) - m.get("epilogue_bytes", 0)
+        body = raw[start:end]
         if inverse:
             body, _ = substitute(body, inverse)
         rebuilt.append(body)

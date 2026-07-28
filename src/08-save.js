@@ -1,9 +1,13 @@
 // Save / load — the event-sourced action log
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 28849–28876.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 28849–28876. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Ch, gameState } from "./07-citizens.js";
+// --- end generated imports ---
 
 function saveGame(i) {
   const t = {
@@ -33,3 +37,6 @@ function loadGame() {
     return null;
   }
 }
+
+// --- generated exports ---
+export { loadGame, saveGame };

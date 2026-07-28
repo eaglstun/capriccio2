@@ -1,9 +1,26 @@
 // Boot sequence, input wiring, quality meters, window.CAP
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 30393–30967.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 30393–30967. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { J0, engravingUniforms, syncLightUniforms } from "./00-shaders.js";
+import { Aa, Nn, Vr, clamp, lerp, n_ } from "./01-materials.js";
+import { Ah, C_, P_, World } from "./05-world.js";
+import { InfillSystem } from "./06-infill.js";
+import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
+import { loadGame, saveGame } from "./08-save.js";
+import { PlacementTool } from "./11-tools.js";
+import { Requests } from "./12-requests.js";
+import { Ph, SectionMode, WanderMode } from "./13-modes.js";
+import { renderPlateImage } from "./14-plates.js";
+import { Soundscape } from "./15-audio.js";
+import { Hud } from "./16-hud.js";
+// --- end generated imports ---
 
 function rv(i) {
   const t = [
@@ -25,11 +42,11 @@ const Qe = document.getElementById("app"),
   Is = window.matchMedia?.("(pointer: coarse)").matches ?? !1,
   ke = new J0(Qe, { supersample: Is ? 1.05 : 1.4 }),
   us = ke.renderer,
-  je = new ih();
-je.fog = new Xa(ke.paper.getHex(), ke.fogDensity);
-const ie = new un(46, 2, 0.4, 1200);
+  je = new Scene();
+je.fog = new FogExp2(ke.paper.getHex(), ke.fogDensity);
+const ie = new PerspectiveCamera(46, 2, 0.4, 1200);
 ie.position.set(46, 33, 88);
-const Te = new O0(ie, us.domElement);
+const Te = new OrbitControls(ie, us.domElement);
 Te.target.set(-24, 7, -8);
 Te.enableDamping = !0;
 Te.dampingFactor = 0.09;
@@ -37,7 +54,7 @@ Te.maxPolarAngle = Math.PI * 0.49;
 Te.minDistance = 5;
 Te.maxDistance = 520;
 Te.update();
-const Pe = new Zd("#fff4e0", 3.5);
+const Pe = new DirectionalLight("#fff4e0", 3.5);
 Pe.castShadow = !0;
 Pe.shadow.mapSize.set(Is ? 2048 : 4096, Is ? 2048 : 4096);
 Pe.shadow.camera.left = -240;
@@ -50,7 +67,7 @@ Pe.shadow.bias = -3e-4;
 Pe.shadow.normalBias = 0.35;
 je.add(Pe);
 je.add(Pe.target);
-const Nr = new qd("#dfe3dd", "#8d8064", 0.6);
+const Nr = new HemisphereLight("#dfe3dd", "#8d8064", 0.6);
 je.add(Nr);
 const ic = n_();
 for (const i of Object.values(ic)) i.clipShadows = !0;
@@ -72,7 +89,7 @@ function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
     e = lerp(2.05, -2.05, t),
     n = 0.09 + Math.sin(Math.PI * t) * 0.43,
-    s = new P(
+    s = new Vector3(
       Math.sin(e) * Math.cos(n),
       Math.sin(n),
       Math.cos(e) * Math.cos(n),
@@ -93,7 +110,7 @@ function os(i) {
 os(te.hour);
 let fn = "build",
   Fr = !1;
-const Or = { pos: new P(), target: new P() },
+const Or = { pos: new Vector3(), target: new Vector3() },
   Mn = new PlacementTool(Kt, ie, je),
   Qn = new SectionMode(Kt, us),
   ni = new WanderMode(Kt, ie, us.domElement),
@@ -212,7 +229,7 @@ us.domElement.addEventListener("pointerup", (i) => {
   const t = Math.hypot(i.clientX - On.x, i.clientY - On.y),
     e = performance.now() - On.t;
   if (t > 7 || e > 450) return;
-  const n = new at(
+  const n = new Vector2(
     (i.clientX / Qe.clientWidth) * 2 - 1,
     -(i.clientY / Qe.clientHeight) * 2 + 1,
   );
@@ -224,7 +241,7 @@ us.domElement.addEventListener("pointerup", (i) => {
         (Te.enabled = !1),
         (Fr = !1),
         fe.setWanderHint(!0));
-      const r = new P(-18, s.p.y, 28).sub(s.p);
+      const r = new Vector3(-18, s.p.y, 28).sub(s.p);
       ni.enter(s.p, Math.atan2(r.x, r.z));
     }
     return;
@@ -233,7 +250,7 @@ us.domElement.addEventListener("pointerup", (i) => {
 });
 us.domElement.addEventListener("pointermove", (i) => {
   if (fn !== "build" && fn !== "section") return;
-  const t = new at(
+  const t = new Vector2(
     (i.clientX / Qe.clientWidth) * 2 - 1,
     -(i.clientY / Qe.clientHeight) * 2 + 1,
   );
@@ -558,8 +575,8 @@ window.CAP = {
     os(te.hour);
   },
   pathTest(i, t, e, n) {
-    const s = Kt.nav.nearest(new P(i, 0, t), 40),
-      r = Kt.nav.nearest(new P(e, 0, n), 40);
+    const s = Kt.nav.nearest(new Vector3(i, 0, t), 40),
+      r = Kt.nav.nearest(new Vector3(e, 0, n), 40);
     return s < 0 || r < 0
       ? { a: s, b: r, len: -1 }
       : { a: s, b: r, len: Kt.nav.path(s, r).length };
@@ -580,3 +597,6 @@ window.CAP = {
     };
   },
 };
+
+// --- generated exports ---
+export { Do, Fr, Lo, Ne, Or, Te, Us, ac, av, bi, cc, ei, fe, ic, ie, je, ke, ni, oc, oi, os, ov, rc, rv, sc, te, us };

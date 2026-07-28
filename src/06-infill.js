@@ -1,16 +1,24 @@
 // Infill: vernacular buildings and the pickPocket growth engine
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 28218–28493.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 28218–28493. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BoxGeometry, CylinderGeometry, Group, Mesh, Vector3 } from "three";
+import { clamp, hashString, seededRng } from "./01-materials.js";
+import { Il, MeshBuilder, buildTree, setToneAttribute } from "./03-geometry.js";
+import { L_ } from "./05-world.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class InfillSystem {
   constructor(t) {
-    K(this, "world");
-    K(this, "items", []);
-    K(this, "counters", new Map());
-    K(this, "capacity", 0);
+    defineField(this, "world");
+    defineField(this, "items", []);
+    defineField(this, "counters", new Map());
+    defineField(this, "capacity", 0);
     this.world = t;
   }
   grow(t, e) {
@@ -89,8 +97,8 @@ class InfillSystem {
     this.counters.set(s, r);
     const o = `${s}:${r}`,
       a = seededRng(hashString(o)),
-      c = new rn(),
-      l = new rn();
+      c = new Group(),
+      l = new Group();
     c.add(l);
     const h = [];
     (N_(this.world, l, h, t, e, a),
@@ -130,7 +138,7 @@ class InfillSystem {
       8),
       e &&
         t.kind === "garden" &&
-        this.world.waterSources.push(new P(...e.pos)));
+        this.world.waterSources.push(new Vector3(...e.pos)));
   }
   serialize() {
     return this.items.map((t) => ({
@@ -159,7 +167,7 @@ class InfillSystem {
   }
 }
 function U_(i, t, e) {
-  const n = new rn(),
+  const n = new Group(),
     s = t === "house" || t === "workshop" ? 5.4 : 3.6,
     r = t === "house" || t === "workshop" ? 4.6 : 3,
     o = t === "garden" ? 1.6 : 3.6 + e() * 1.2,
@@ -170,19 +178,19 @@ function U_(i, t, e) {
   (a.box(s, 0.09, 0.09, [0, o * 0.55, -r / 2]),
     a.box(s, 0.09, 0.09, [0, o * 0.55, r / 2]),
     a.box(0.09, 0.09, r, [-s / 2, o * 0.55, 0]));
-  const c = new le(Math.hypot(s, o * 0.55) * 0.96, 0.08, 0.08);
+  const c = new BoxGeometry(Math.hypot(s, o * 0.55) * 0.96, 0.08, 0.08);
   (c.rotateZ(Math.atan2(o * 0.55, s)),
     c.translate(0, o * 0.28, r / 2 + 0.02),
     a.addRaw(c),
     a.box(s * 0.9, 0.07, 0.8, [0, o * 0.56, r / 2 - 0.5]));
-  const l = new he(a.merge(), i.mats.timber);
+  const l = new Mesh(a.merge(), i.mats.timber);
   return ((l.castShadow = !0), n.add(l), n);
 }
 function N_(i, t, e, n, s, r) {
   const o = i.mats,
     a = (l, h, u = !0) => {
       setToneAttribute(l);
-      const d = new he(l, h);
+      const d = new Mesh(l, h);
       return ((d.castShadow = u), (d.receiveShadow = !0), t.add(d), d);
     },
     c = i.glowMat;
@@ -197,11 +205,11 @@ function N_(i, t, e, n, s, r) {
       a(f.merge(), r() < 0.4 ? o.plaster : o.timber));
     const m = Il(l * (d ? 0.9 : 1), h * (d ? 0.9 : 1), 1.1 + r() * 0.4);
     (m.translate(0.05, d ? u * 1.85 : u, 0), a(m, o.timber));
-    const _ = new le(0.9, 1.8, 0.12);
+    const _ = new BoxGeometry(0.9, 1.8, 0.12);
     (_.translate(l * 0.15, 0.9, h / 2 + 0.03), a(_, o.fabric, !1));
     const g = d ? 3 : 2;
     for (let p = 0; p < g; p++) {
-      const A = new le(0.55, 0.7, 0.1);
+      const A = new BoxGeometry(0.55, 0.7, 0.1);
       (A.translate(
         -l / 2 + 0.8 + (p * (l - 1.4)) / Math.max(1, g - 1),
         p < 2 ? 1.6 : u + 1.4,
@@ -210,10 +218,10 @@ function N_(i, t, e, n, s, r) {
         e.push(a(A, c, !1)));
     }
     if (r() < 0.4) {
-      const p = new le(2.4, 0.03, 0.03);
+      const p = new BoxGeometry(2.4, 0.03, 0.03);
       (p.translate(l / 2 + 1.1, u * 0.8, 0), a(p, o.timber, !1));
       for (let A = 0; A < 3; A++) {
-        const b = new le(0.3, 0.4, 0.02);
+        const b = new BoxGeometry(0.3, 0.4, 0.02);
         (b.translate(l / 2 + 0.5 + A * 0.7, u * 0.8 - 0.22, 0),
           a(b, A === 1 ? o.fabric : o.plaster, !1));
       }
@@ -225,26 +233,26 @@ function N_(i, t, e, n, s, r) {
       for (const m of [-1, 1])
         h.box(0.14, 2.3, 0.14, [f * l * 0.45, 0, m * 0.9]);
     (h.box(l, 0.75, 1.7, [0, 0.05, 0]), a(h.merge(), o.timber));
-    const u = new le(l + 0.5, 0.08, 2.3);
+    const u = new BoxGeometry(l + 0.5, 0.08, 2.3);
     (u.rotateZ((r() - 0.5) * 0.06),
       u.rotateX(-0.18),
       u.translate(0, 2.35, 0.25),
       a(u, o.fabric, !0));
     for (let f = 0; f < 3; f++) {
-      const m = new le(0.4 + r() * 0.3, 0.3 + r() * 0.25, 0.35);
+      const m = new BoxGeometry(0.4 + r() * 0.3, 0.3 + r() * 0.25, 0.35);
       (m.translate(-l * 0.3 + f * l * 0.3, 0.95, 0.2 - r() * 0.4),
         a(m, f === 1 ? o.green : o.plaster, !1));
     }
-    const d = new le(0.24, 0.3, 0.24);
+    const d = new BoxGeometry(0.24, 0.3, 0.24);
     (d.translate(l * 0.4, 2.1, 0.8), e.push(a(d, c, !1)));
   } else if (s === "garden") {
     const l = new MeshBuilder(0.1);
     (l.box(3.4, 0.35, 2.4, [0, 0, 0]),
       l.box(2.8, 0.3, 2, [0.4, 0, 2.9]),
       a(l.merge(), o.stoneOld));
-    const h = new le(3, 0.5, 2);
+    const h = new BoxGeometry(3, 0.5, 2);
     (h.translate(0, 0.4, 0), a(h, o.green, !1));
-    const u = new le(2.4, 0.45, 1.6);
+    const u = new BoxGeometry(2.4, 0.45, 1.6);
     (u.translate(0.4, 0.35, 2.9), a(u, o.green, !1));
     const d = buildTree(2.8 + r() * 1.8, r);
     (d.translate(-1.8, 0, 1.4), a(d, o.green));
@@ -262,9 +270,9 @@ function N_(i, t, e, n, s, r) {
       l.box(0.24, 2, 0.24, [0.6, 0.5, 0.45]),
       l.box(1.8, 0.4, 1.5, [0, 2.5, 0]),
       a(l.merge(), o.stone));
-    const h = new Fe(0.16, 0.22, 1.1, 7);
+    const h = new CylinderGeometry(0.16, 0.22, 1.1, 7);
     (h.translate(0, 1.1, 0), a(h, o.gold, !1));
-    const u = new le(0.2, 0.26, 0.2);
+    const u = new BoxGeometry(0.2, 0.26, 0.2);
     (u.translate(0.55, 0.65, 0.3), e.push(a(u, c, !1)));
   } else {
     const l = 3.8 + r() * 1.4,
@@ -272,12 +280,15 @@ function N_(i, t, e, n, s, r) {
     (h.box(l, 3, 3.4, [0, 0, 0]), a(h.merge(), o.stoneOld));
     const u = Il(l, 3.4, 0.9);
     (u.translate(0, 3, 0), a(u, o.timber));
-    const d = new le(0.5, 1.8, 0.5);
+    const d = new BoxGeometry(0.5, 1.8, 0.5);
     (d.translate(l * 0.3, 3.4, -0.8), a(d, o.stoneOld));
-    const f = new le(2.2, 0.08, 1.8);
+    const f = new BoxGeometry(2.2, 0.08, 1.8);
     (f.rotateX(-0.15), f.translate(-l / 2 - 1, 2.3, 0.4), a(f, o.fabric));
-    const m = new le(0.7, 0.6, 0.1);
+    const m = new BoxGeometry(0.7, 0.6, 0.1);
     (m.translate(0, 1.7, 1.75), e.push(a(m, c, !1)));
   }
 }
 const Co = 132;
+
+// --- generated exports ---
+export { Co, InfillSystem };

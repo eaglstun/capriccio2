@@ -1,9 +1,15 @@
 // Structure mesh builders — span, rise, vault, wall, ornament. Each seeds its PRNG from the action id (Je(id*7919+k)), which is what makes replay deterministic.
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 26962–27602.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 26962–27602. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BoxGeometry, ConeGeometry, CylinderGeometry } from "three";
+import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials.js";
+import { Hn, Ji, Ll, MeshBuilder, Pa, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, newStructureParts, setToneAttribute, v_ } from "./03-geometry.js";
+// --- end generated imports ---
 
 function buildSpan(i) {
   const t = newStructureParts(),
@@ -125,7 +131,7 @@ function buildSpan(i) {
       F.box(5.4, 1.1, 5.4, [0, 0, 0]);
       const B = F.merge();
       (be(B, w.x, I, w.z, 0), Yt(t, "stone", B));
-      const k = new Fe(1.9, 1.9, 0.16, 14);
+      const k = new CylinderGeometry(1.9, 1.9, 0.16, 14);
       (k.translate(w.x, I + 1.02, w.z),
         Yt(t, "water", k),
         t.pockets.push({
@@ -606,7 +612,7 @@ function buildOrnament(i) {
       s.cylinder(1.1, 0.25, [0, 1.7, 0], 10));
     const r = s.merge();
     (be(r, i.x, n, i.z, 0), Yt(t, "stone", r));
-    const o = new Fe(2.05, 2.05, 0.12, 16);
+    const o = new CylinderGeometry(2.05, 2.05, 0.12, 16);
     (o.translate(i.x, n + 0.82, i.z),
       Yt(t, "water", o),
       t.waterSources.push([i.x, n, i.z]));
@@ -615,7 +621,7 @@ function buildOrnament(i) {
     (s.cylinder(0.09, 3.4, [0, 0, 0], 6), s.box(0.5, 0.08, 0.5, [0, 3.4, 0]));
     const r = s.merge();
     (be(r, i.x, n, i.z, 0), Yt(t, "timber", r));
-    const o = new le(0.34, 0.4, 0.34);
+    const o = new BoxGeometry(0.34, 0.4, 0.34);
     (o.translate(i.x, n + 3.15, i.z), Yt(t, "glow", o));
   } else if (i.kind === "obelisk") {
     const s = new MeshBuilder(0.1);
@@ -623,7 +629,7 @@ function buildOrnament(i) {
       s.cylinder(0.85, 9, [0, 1.1, 0], 4, 1, 0.5));
     const r = s.merge();
     (be(r, i.x, n, i.z, Math.PI / 4), Yt(t, "stone", r));
-    const o = new ls(0.52, 1, 4);
+    const o = new ConeGeometry(0.52, 1, 4);
     (o.translate(i.x, n + 10.4, i.z), Yt(t, "gold", o));
   }
   return ((t.cost.stone = 4), t);
@@ -646,3 +652,6 @@ function buildStructureMesh(i) {
       return newStructureParts();
   }
 }
+
+// --- generated exports ---
+export { buildStructureMesh };

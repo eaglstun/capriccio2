@@ -1,22 +1,29 @@
 // Citizens: agent pool, daily routine, pathing
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 28494–28848.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 28494–28848. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Object3D, SphereGeometry, Vector3 } from "three";
+import { hashString, seededRng } from "./01-materials.js";
+import { Co } from "./06-infill.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 class Citizens {
   constructor(t, e, n) {
-    K(this, "world");
-    K(this, "infill");
-    K(this, "meshes");
-    K(this, "agents", []);
-    K(this, "population", 16);
-    K(this, "dummy", new Re());
+    defineField(this, "world");
+    defineField(this, "infill");
+    defineField(this, "meshes");
+    defineField(this, "agents", []);
+    defineField(this, "population", 16);
+    defineField(this, "dummy", new Object3D());
     ((this.world = t), (this.infill = e));
     const s = t.mats.figure;
     this.meshes = [Po(0), Po(1), Po(2)].map((r) => {
-      const o = new sh(r, s, Co);
+      const o = new InstancedMesh(r, s, Co);
       return (
         o.instanceMatrix.setUsage(Lu),
         (o.castShadow = !0),
@@ -29,7 +36,7 @@ class Citizens {
     for (let r = 0; r < Co; r++)
       this.agents.push({
         active: !1,
-        pos: new P(),
+        pos: new Vector3(),
         path: [],
         seg: 0,
         segT: 0,
@@ -64,7 +71,7 @@ class Citizens {
   }
   gatherPoints() {
     const t = [],
-      e = this.world.nav.nearest(new P(-18, 0, 28), 20);
+      e = this.world.nav.nearest(new Vector3(-18, 0, 28), 20);
     e >= 0 && t.push(e);
     for (const n of this.world.pockets)
       (n.scenic > 0.7 && n.navNode >= 0 && t.push(n.navNode),
@@ -84,7 +91,7 @@ class Citizens {
         const a = t.length
           ? t[s % t.length]
           : this.world.nav.nearest(
-              new P(-18 + n() * 24 - 12, 0, 28 + n() * 20 - 10),
+              new Vector3(-18 + n() * 24 - 12, 0, 28 + n() * 20 - 10),
               30,
             );
         ((r.homeNode = a),
@@ -193,27 +200,27 @@ class Citizens {
 }
 function Po(i) {
   const t = [],
-    e = new Fe(0.14, 0.26, 1.32, 7);
+    e = new CylinderGeometry(0.14, 0.26, 1.32, 7);
   e.translate(0, 0.66, 0);
-  const n = new Pr(0.13, 7, 6);
+  const n = new SphereGeometry(0.13, 7, 6);
   n.translate(0, 1.46, 0);
-  const s = new Fe(0.19, 0.14, 0.3, 7);
+  const s = new CylinderGeometry(0.19, 0.14, 0.3, 7);
   if ((s.translate(0, 1.25, 0), t.push(e, s, n), i === 1)) {
-    const r = new Fe(0.025, 0.03, 1.8, 5);
+    const r = new CylinderGeometry(0.025, 0.03, 1.8, 5);
     (r.rotateX(0.12), r.translate(0.24, 0.9, 0.1), t.push(r));
-    const o = new Fe(0.05, 0.06, 0.45, 5);
+    const o = new CylinderGeometry(0.05, 0.06, 0.45, 5);
     (o.rotateZ(-1.1), o.translate(0.16, 1.18, 0.06), t.push(o));
   } else if (i === 2) {
-    const r = new Fe(0.045, 0.06, 0.62, 5);
+    const r = new CylinderGeometry(0.045, 0.06, 0.62, 5);
     (r.rotateZ(-1.35),
       r.rotateY(0.2),
       r.translate(0.3, 1.32, 0.05),
       t.push(r),
       e.rotateZ(-0.06));
-    const o = new Pr(0.14, 6, 5);
+    const o = new SphereGeometry(0.14, 6, 5);
     (o.scale(1, 0.75, 1), o.translate(-0.2, 0.82, 0), t.push(o));
   } else {
-    const r = new ls(0.17, 0.34, 7);
+    const r = new ConeGeometry(0.17, 0.34, 7);
     (r.translate(0, 1.52, -0.02), t.push(r));
   }
   return O_(t);
@@ -230,10 +237,10 @@ function O_(i) {
       s.set(a.attributes.normal.array, r * 3),
       (r += a.attributes.position.count),
       a.dispose());
-  const o = new ve();
+  const o = new BufferGeometry();
   return (
-    o.setAttribute("position", new pe(n, 3)),
-    o.setAttribute("normal", new pe(s, 3)),
+    o.setAttribute("position", new BufferAttribute(n, 3)),
+    o.setAttribute("normal", new BufferAttribute(s, 3)),
     o
   );
 }
@@ -360,3 +367,6 @@ function X_() {
         : 55;
 }
 const Ch = "capriccio-save-v1";
+
+// --- generated exports ---
+export { Ch, Citizens, Fl, Po, Rh, V_, W_, X_, gameState };
