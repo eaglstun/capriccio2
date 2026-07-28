@@ -6,8 +6,8 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, SRGBColorSpace, TorusGeometry, TubeGeometry, Vector3 } from "three";
-import { Ca, Vr, f_, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials.js";
+import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, RingGeometry, SRGBColorSpace, TorusGeometry, TubeGeometry, Vector3 } from "three";
+import { Ca, Vr, f_, fr, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials.js";
 import { NavGraph } from "./02-nav.js";
 import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry.js";
 import { buildStructureMesh } from "./04-builders.js";
@@ -1043,6 +1043,56 @@ function C_(i) {
       new MeshBasicMaterial({ color: "#4d2c1d", fog: !0 }),
     );
     ((mg2.castShadow = !1), i.scene.add(mg2));
+  }
+  // ---- the perimeter apron: the plain does not end at the plane edge ----
+  // The terrain mesh is 600x600, so ground stops at radius 300 while the
+  // megastructure line starts at 352 — from a low camera the world visibly
+  // floats. This ring continues `terrainHeightAt` outward (the plateau, the
+  // mesa and the canyon all run off the edge naturally) and lifts into LOW
+  // rolling hills toward the rim, just high enough that the plain has an
+  // edge you cannot see over. Coarse, one merged mesh, one draw call,
+  // scene-only — never in structGroup, so it can never be built on.
+  {
+    const vn2 = (x2, z2, s2) => {
+        const xi = Math.floor(x2),
+          zi = Math.floor(z2),
+          fx2 = x2 - xi,
+          fz2 = z2 - zi,
+          u2 = fx2 * fx2 * (3 - 2 * fx2),
+          v2 = fz2 * fz2 * (3 - 2 * fz2),
+          a2 = fr(xi, zi, s2),
+          b2 = fr(xi + 1, zi, s2),
+          c2 = fr(xi, zi + 1, s2),
+          d2 = fr(xi + 1, zi + 1, s2);
+        return a2 + (b2 - a2) * u2 + (c2 - a2) * v2 + (a2 - b2 - c2 + d2) * u2 * v2;
+      },
+      ring = new RingGeometry(284, 610, 112, 12);
+    ring.rotateX(-Math.PI / 2);
+    const rp = ring.attributes.position;
+    for (let k = 0; k < rp.count; k++) {
+      const x2 = rp.getX(k),
+        z2 = rp.getZ(k),
+        r2 = Math.hypot(x2, z2),
+        // hills fade in past the plane edge and stay low: mounds top out
+        // around 15-18 units, on the scale of the terraces, not mountains
+        lift = Nn(305, 400, r2),
+        mound =
+          2.5 +
+          10.5 * vn2(x2 * 0.011 + 31.7, z2 * 0.011 + 12.3, 4441) +
+          4 * vn2(x2 * 0.033 + 7.1, z2 * 0.033 + 2.9, 4442),
+        // and the far rim rises a touch more, closing the sightline
+        rim = Nn(430, 600, r2) * 5;
+      rp.setY(k, terrainHeightAt(x2, z2) - 0.9 + lift * mound + rim);
+    }
+    ring.computeVertexNormals();
+    const rt = new Float32Array(rp.count * 2);
+    for (let k = 0; k < rp.count; k++) {
+      ((rt[k * 2] = 1),
+        (rt[k * 2 + 1] = 0.35 + vn2(rp.getX(k) * 0.05, rp.getZ(k) * 0.05, 4443) * 0.3));
+    }
+    ring.setAttribute("aTone", new BufferAttribute(rt, 2));
+    const mApron = new Mesh(ring, i.mats.rock);
+    ((mApron.castShadow = !1), (mApron.receiveShadow = !0), i.scene.add(mApron));
   }
   // ---- crumbling overpasses: the road network, going nowhere ----
   // elevated decks on piers, collapsed in sections. Decks end in mid-air

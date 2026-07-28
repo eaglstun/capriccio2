@@ -9,7 +9,7 @@
 import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders.js";
-import { Aa, Nn, Vr, clamp, hashString, lerp, n_ } from "./01-materials.js";
+import { Aa, Nn, Vr, clamp, hashString, lerp, n_, terrainHeightAt } from "./01-materials.js";
 import { Ah, C_, P_, World } from "./05-world.js";
 import { InfillSystem } from "./06-infill.js";
 import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
@@ -714,8 +714,15 @@ function Nh(i) {
       Rv && Uv
         ? [...bi, { x: Rv.pos.x, y: Rv.pos.y + 3.1, z: Rv.pos.z, name: Uv }]
         : bi;
-  (ni.active || Te.update(),
-    fe.updateResources(ei.population),
+  // keep the eye above the ground: the orbit can otherwise dip below the
+  // plateau or the mesa and show the underside of the world. Clamp after
+  // damping so OrbitControls never fights the correction.
+  if (!ni.active) {
+    Te.update();
+    const Wv = terrainHeightAt(ie.position.x, ie.position.z) + 1.7;
+    ie.position.y < Wv && ((ie.position.y = Wv), ie.lookAt(Te.target));
+  }
+  (fe.updateResources(ei.population),
     fe.updateClock(te.day, te.hour % 24),
     fe.updateLabels(Ev, ie, (fn === "build" || fn === "section") && !Mn.tool));
 }
