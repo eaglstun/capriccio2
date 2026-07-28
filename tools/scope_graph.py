@@ -31,7 +31,13 @@ import sys
 from collections import defaultdict
 
 SRC = pathlib.Path("src")
+BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
+SEAM_LINE = 25400          # vendor is lines 1..SEAM_LINE
 IDENT = re.compile(r"(?<![.\w$])([A-Za-z_$][\w$]*)")
+# Column-0 declarations in the vendor half — the authoritative list of names
+# the app can legitimately be importing from three.js.
+VENDOR_DECL = re.compile(
+    r"^(?:async\s+)?(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)", re.M)
 DECL = re.compile(r"^(?:async\s+)?(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)", re.M)
 # additional declarators in `const a = 1, b = 2;`
 EXTRA_DECL = re.compile(r"^\s{2,}([A-Za-z_$][\w$]*)\s*=", re.M)
@@ -140,22 +146,54 @@ def main():
                     decls[fn].append(name)
     print(f"top-level names: {len(owner)} across {len(files)} files\n")
 
+    # Names actually declared at column 0 in the vendor half. Checking against
+    # this — rather than assuming "2 chars and not ours" — is what keeps
+    # object-literal keys and inner locals out of the vendor list.
+    vendor_decls = set()
+    if BUNDLE.exists():
+        vtext = mask("\n".join(
+            BUNDLE.read_text(encoding="utf8").split("\n")[:SEAM_LINE]))
+        vendor_decls = set(VENDOR_DECL.findall(vtext))
+        # continuation declarators: `const a = 1,\n  Ua = 2,` — three.js
+        # declares many of its enum constants this way and a column-0 scan
+        # alone misses them.
+        vendor_decls |= set(re.findall(r"^\s{2}([A-Za-z_$][\w$]{1,3})\s*=\s*[^=]",
+                                       vtext, re.M))
+
+    def is_object_key(m, a, b):
+        """True if this identifier sits in `{ key: ...}` or `, key: ...` position.
+
+        Object keys are not preceded by '.', so they slip past the lookbehind.
+        Ternaries (`x ? y : z`) are excluded because `y` is preceded by '?'.
+        """
+        after = m[b:]
+        if not re.match(r"\s*:", after):
+            return False
+        before = m[:a].rstrip()
+        return before[-1:] in "{,"
+
     # 2. references per file
     edges = defaultdict(lambda: defaultdict(set))   # consumer -> provider -> names
     vendor_refs = defaultdict(int)
+    dropped_keys = defaultdict(int)
     for fn, f in files.items():
         m = mask(f["body"])
         for mo in IDENT.finditer(m):
             name = mo.group(1)
-            if name in JS_GLOBALS or len(name) > 2:
+            if name in JS_GLOBALS:
                 continue
+            a, b = mo.span(1)
             prov = owner.get(name)
-            if prov is None:
-                if len(name) == 2:
-                    vendor_refs[name] += 1     # declared in the vendor half
+            if prov is not None:
+                if prov != fn and not is_object_key(m, a, b):
+                    edges[fn][prov].add(name)
                 continue
-            if prov != fn:
-                edges[fn][prov].add(name)
+            # not ours — is it genuinely declared in the vendor half?
+            if name in vendor_decls:
+                if is_object_key(m, a, b):
+                    dropped_keys[name] += 1
+                else:
+                    vendor_refs[name] += 1
 
     print("=== cross-file dependencies ===")
     order = [m["file"] for m in man["files"]]
@@ -188,6 +226,10 @@ def main():
     top = sorted(vendor_refs.items(), key=lambda kv: -kv[1])
     print(f"  {len(top)} distinct symbols, {sum(vendor_refs.values())} references")
     print("  most used:", ", ".join(f"{n}({c})" for n, c in top[:18]))
+    if dropped_keys:
+        dk = sorted(dropped_keys.items(), key=lambda kv: -kv[1])
+        print(f"  ({len(dk)} name(s) excluded as object-literal keys: "
+              + ", ".join(f"{n}x{c}" for n, c in dk[:10]) + ")")
 
     # 5. shadow audit
     if args.shadows:
