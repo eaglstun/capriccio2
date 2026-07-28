@@ -1,11 +1,11 @@
 // Building catalogue (La) and footprint constants
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 28877–28951.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 28877–28951. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
-const La = {
+const BUILD_CATALOGUE = {
     anchor: [
       { key: "pier", label: "Pier", hint: "a stout foundation for spans" },
       {
@@ -75,8 +75,11 @@ const La = {
       { key: "gathering", label: "Gathering", hint: "invite idle evenings" },
     ],
   },
-  pr = {
+  VAULT_FOOTPRINTS = {
     court: { w: 13, h: 9 },
     market: { w: 17, h: 12 },
     basilica: { w: 22, h: 17 },
   };
+
+// --- generated exports ---
+export { BUILD_CATALOGUE, VAULT_FOOTPRINTS };

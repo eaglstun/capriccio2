@@ -1,29 +1,33 @@
 // Save / load — the event-sourced action log
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 28849–28876.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 28849–28876. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
-function q_(i) {
+// --- generated imports ---
+import { Ch, gameState } from "./07-citizens.js";
+// --- end generated imports ---
+
+function saveGame(i) {
   const t = {
     v: 1,
-    actions: yt.playerActions,
+    actions: gameState.playerActions,
     day: i.day,
     hour: i.hour,
-    res: yt.res,
+    res: gameState.res,
     infill: i.infill,
-    plates: yt.plates.slice(-16),
-    cityName: yt.cityName,
-    doneRequests: [...yt.doneRequests],
-    folio: yt.folio,
+    plates: gameState.plates.slice(-16),
+    cityName: gameState.cityName,
+    doneRequests: [...gameState.doneRequests],
+    folio: gameState.folio,
   };
   try {
     localStorage.setItem(Ch, JSON.stringify(t));
   } catch {}
-  yt.dirty = !1;
+  gameState.dirty = !1;
 }
-function Y_() {
+function loadGame() {
   try {
     const i = localStorage.getItem(Ch);
     if (!i) return null;
@@ -33,3 +37,6 @@ function Y_() {
     return null;
   }
 }
+
+// --- generated exports ---
+export { loadGame, saveGame };

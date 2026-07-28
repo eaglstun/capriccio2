@@ -1,20 +1,24 @@
 // Procedural soundscape (Web Audio) — no samples ship
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29757–29890.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29757–29890. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
-class ev {
+// --- generated imports ---
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
+
+class Soundscape {
   constructor() {
-    K(this, "ctx", null);
-    K(this, "master");
-    K(this, "windGain");
-    K(this, "waterGain");
-    K(this, "birdTimer", 0);
-    K(this, "chiselTimer", 0);
-    K(this, "lastBellHour", -1);
-    K(this, "t", 0);
+    defineField(this, "ctx", null);
+    defineField(this, "master");
+    defineField(this, "windGain");
+    defineField(this, "waterGain");
+    defineField(this, "birdTimer", 0);
+    defineField(this, "chiselTimer", 0);
+    defineField(this, "lastBellHour", -1);
+    defineField(this, "t", 0);
   }
   start() {
     if (this.ctx) return;
@@ -139,3 +143,6 @@ class ev {
       ((this.lastBellHour = s), this.bell());
   }
 }
+
+// --- generated exports ---
+export { Soundscape };

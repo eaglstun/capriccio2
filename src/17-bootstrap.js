@@ -1,35 +1,36 @@
 // Boot sequence, input wiring, quality meters, window.CAP
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 30393–30967.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 30393–30951. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
-function rv(i) {
-  const t = [
-    [100, "C"],
-    [90, "XC"],
-    [50, "L"],
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"],
-  ];
-  let e = "";
-  for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
-  return e || "I";
-}
+// --- generated imports ---
+import { DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { J0, engravingUniforms, syncLightUniforms } from "./00-shaders.js";
+import { Aa, Nn, Vr, clamp, lerp, n_ } from "./01-materials.js";
+import { Ah, C_, P_, World } from "./05-world.js";
+import { InfillSystem } from "./06-infill.js";
+import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
+import { loadGame, saveGame } from "./08-save.js";
+import { PlacementTool } from "./11-tools.js";
+import { Requests } from "./12-requests.js";
+import { Ph, SectionMode, WanderMode } from "./13-modes.js";
+import { renderPlateImage } from "./14-plates.js";
+import { Soundscape } from "./15-audio.js";
+import { Hud } from "./16-hud.js";
+// --- end generated imports ---
+
 const Qe = document.getElementById("app"),
   Is = window.matchMedia?.("(pointer: coarse)").matches ?? !1,
   ke = new J0(Qe, { supersample: Is ? 1.05 : 1.4 }),
   us = ke.renderer,
-  je = new ih();
-je.fog = new Xa(ke.paper.getHex(), ke.fogDensity);
-const ie = new un(46, 2, 0.4, 1200);
+  je = new Scene();
+je.fog = new FogExp2(ke.paper.getHex(), ke.fogDensity);
+const ie = new PerspectiveCamera(46, 2, 0.4, 1200);
 ie.position.set(46, 33, 88);
-const Te = new O0(ie, us.domElement);
+const Te = new OrbitControls(ie, us.domElement);
 Te.target.set(-24, 7, -8);
 Te.enableDamping = !0;
 Te.dampingFactor = 0.09;
@@ -37,7 +38,7 @@ Te.maxPolarAngle = Math.PI * 0.49;
 Te.minDistance = 5;
 Te.maxDistance = 520;
 Te.update();
-const Pe = new Zd("#fff4e0", 3.5);
+const Pe = new DirectionalLight("#fff4e0", 3.5);
 Pe.castShadow = !0;
 Pe.shadow.mapSize.set(Is ? 2048 : 4096, Is ? 2048 : 4096);
 Pe.shadow.camera.left = -240;
@@ -50,11 +51,11 @@ Pe.shadow.bias = -3e-4;
 Pe.shadow.normalBias = 0.35;
 je.add(Pe);
 je.add(Pe.target);
-const Nr = new qd("#dfe3dd", "#8d8064", 0.6);
+const Nr = new HemisphereLight("#dfe3dd", "#8d8064", 0.6);
 je.add(Nr);
 const ic = n_();
 for (const i of Object.values(ic)) i.clipShadows = !0;
-const Kt = new T_(je, ic);
+const Kt = new World(je, ic);
 Kt.buildTerrain();
 Kt.seedNav();
 for (const i of Ah()) Kt.applyAction(i);
@@ -62,17 +63,17 @@ Kt.seedGroundPockets(-18, 30, 14, 12, 34);
 Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77);
 C_(Kt);
 const ov = P_(Kt),
-  Ne = new I_(Kt),
-  ei = new F_(Kt, Ne, je),
-  oi = new $_(),
-  Lh = new ev();
+  Ne = new InfillSystem(Kt),
+  ei = new Citizens(Kt, Ne, je),
+  oi = new Requests(),
+  Lh = new Soundscape();
 window.addEventListener("pointerdown", () => Lh.start(), { once: !0 });
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
 function os(i) {
-  const t = Xe((i - 5.5) / 15, 0, 1),
-    e = zn(2.05, -2.05, t),
+  const t = clamp((i - 5.5) / 15, 0, 1),
+    e = lerp(2.05, -2.05, t),
     n = 0.09 + Math.sin(Math.PI * t) * 0.43,
-    s = new P(
+    s = new Vector3(
       Math.sin(e) * Math.cos(n),
       Math.sin(n),
       Math.cos(e) * Math.cos(n),
@@ -81,11 +82,11 @@ function os(i) {
   const r = 1 - Math.sin(Math.PI * t),
     o = Nn(0.45, 0.95, r);
   (Pe.color.setStyle(o > 0.4 ? "#ffdba6" : "#fff4e0"),
-    (Pe.intensity = zn(3.5, 2.55, o)),
-    (Nr.intensity = zn(0.6, 0.42, o)),
+    (Pe.intensity = lerp(3.5, 2.55, o)),
+    (Nr.intensity = lerp(0.6, 0.42, o)),
     ke.setDusk(o),
     ke.setSunDir(Pe.position.clone().normalize()),
-    wh(Pe, Nr));
+    syncLightUniforms(Pe, Nr));
   const a = Kt.glowMat,
     c = 0.3 + o * 1.25;
   a.color.setRGB(1.05 * c + 0.1, 0.74 * c + 0.08, 0.36 * c + 0.04);
@@ -93,12 +94,12 @@ function os(i) {
 os(te.hour);
 let fn = "build",
   Fr = !1;
-const Or = { pos: new P(), target: new P() },
-  Mn = new Z_(Kt, ie, je),
-  Qn = new J_(Kt, us),
-  ni = new Q_(Kt, ie, us.domElement),
+const Or = { pos: new Vector3(), target: new Vector3() },
+  Mn = new PlacementTool(Kt, ie, je),
+  Qn = new SectionMode(Kt, us),
+  ni = new WanderMode(Kt, ie, us.domElement),
   Us = { aspect: "3:2", fov: 42 },
-  fe = new sv({
+  fe = new Hud({
     onTool: (i, t) => {
       (Mn.setTool(i, t),
         Is && (Te.enableRotate = i === null),
@@ -122,10 +123,10 @@ const Or = { pos: new P(), target: new P() },
       te.paused = !1;
     },
     onFolio: () => {
-      ((yt.folio = !yt.folio),
-        (yt.dirty = !0),
+      ((gameState.folio = !gameState.folio),
+        (gameState.dirty = !0),
         fe.toast(
-          yt.folio
+          gameState.folio
             ? "Resources are off — build freely."
             : "Resources restored — stone must be won again.",
         ));
@@ -212,7 +213,7 @@ us.domElement.addEventListener("pointerup", (i) => {
   const t = Math.hypot(i.clientX - On.x, i.clientY - On.y),
     e = performance.now() - On.t;
   if (t > 7 || e > 450) return;
-  const n = new at(
+  const n = new Vector2(
     (i.clientX / Qe.clientWidth) * 2 - 1,
     -(i.clientY / Qe.clientHeight) * 2 + 1,
   );
@@ -224,7 +225,7 @@ us.domElement.addEventListener("pointerup", (i) => {
         (Te.enabled = !1),
         (Fr = !1),
         fe.setWanderHint(!0));
-      const r = new P(-18, s.p.y, 28).sub(s.p);
+      const r = new Vector3(-18, s.p.y, 28).sub(s.p);
       ni.enter(s.p, Math.atan2(r.x, r.z));
     }
     return;
@@ -233,7 +234,7 @@ us.domElement.addEventListener("pointerup", (i) => {
 });
 us.domElement.addEventListener("pointermove", (i) => {
   if (fn !== "build" && fn !== "section") return;
-  const t = new at(
+  const t = new Vector2(
     (i.clientX / Qe.clientWidth) * 2 - 1,
     -(i.clientY / Qe.clientHeight) * 2 + 1,
   );
@@ -253,7 +254,7 @@ window.addEventListener("keydown", (i) => {
 });
 Mn.onMessage = (i) => fe.toast(i);
 Mn.onCommit = (i) => {
-  yt.dirty = !0;
+  gameState.dirty = !0;
   const t = {
     anchor: "The pier is founded.",
     span: "The span leaps.",
@@ -266,16 +267,16 @@ Mn.onCommit = (i) => {
   fe.toast(t[i.t] ?? "Built.");
 };
 function rc() {
-  const i = yt.playerActions.pop();
+  const i = gameState.playerActions.pop();
   if (!i) {
     fe.toast("Nothing to undo.");
     return;
   }
   const t = Mn.costOf(i);
-  ((yt.res.stone += t.stone), (yt.res.timber += t.timber));
+  ((gameState.res.stone += t.stone), (gameState.res.timber += t.timber));
   const e = Ne.serialize();
   (Ne.clear(),
-    Kt.rebuildAll([...Ah(), ...yt.playerActions]),
+    Kt.rebuildAll([...Ah(), ...gameState.playerActions]),
     Kt.seedGroundPockets(-18, 30, 14, 12, 34),
     Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77),
     Ih(e),
@@ -307,27 +308,27 @@ async function Uh(i = !1) {
   (fe.toast("The burin bites the copper…", 2500),
     await new Promise((l) => setTimeout(l, 30)));
   const s = ke.snap(je, ie, e, n),
-    r = yt.plates.length + 1,
-    a = `${bi.length ? bi[0].name : yt.cityName} · day ${te.day}`,
-    c = await Dh(s, a, r);
-  (yt.plates.push({
+    r = gameState.plates.length + 1,
+    a = `${bi.length ? bi[0].name : gameState.cityName} · day ${te.day}`,
+    c = await renderPlateImage(s, a, r);
+  (gameState.plates.push({
     cam: [...ie.position.toArray(), ...Te.target.toArray()],
     hour: te.hour,
     caption: a,
     n: r,
   }),
     fe.showPlate(c, `capriccio-plate-${String(r).padStart(2, "0")}.png`),
-    (yt.res.favor += 6),
-    (yt.dirty = !0));
+    (gameState.res.favor += 6),
+    (gameState.dirty = !0));
 }
 let bi = [];
-function lv() {
+function updateQualityMeters() {
   const i = Kt.pockets.filter((a) => a.occupiedBy >= 0),
     t = i.length ? i.filter((a) => a.navNode >= 0).length / i.length : 0.3,
     e = i.length ? i.reduce((a, c) => a + c.shelter, 0) / i.length : 0.3,
     n = i.length ? i.reduce((a, c) => a + c.light, 0) / i.length : 0.5,
     s = Kt.actions.filter((a) => a.t === "emb" && a.kind === "lantern").length,
-    r = Xe(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
+    r = clamp(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
   let o = 0;
   for (const [, a] of Kt.structures) {
     const c = a.action;
@@ -341,26 +342,26 @@ function lv() {
     SHELTER: e,
     LIGHT: n,
     BELONGING: r,
-    GRANDEUR: Xe(o, 0, 1),
+    GRANDEUR: clamp(o, 0, 1),
   });
 }
 let oc = !1;
 function ac() {
-  oc || q_({ day: te.day, hour: te.hour, infill: Ne.serialize() });
+  oc || saveGame({ day: te.day, hour: te.hour, infill: Ne.serialize() });
 }
 new URLSearchParams(location.search).has("fresh") &&
   localStorage.removeItem("capriccio-save-v1");
-const hn = Y_();
+const hn = loadGame();
 if (hn) {
-  ((yt.playerActions = hn.actions), (yt.nextId = 1e3 + hn.actions.length + 5));
+  ((gameState.playerActions = hn.actions), (gameState.nextId = 1e3 + hn.actions.length + 5));
   for (const t of hn.actions)
-    ((t.id = t.id ?? yt.nextId++),
+    ((t.id = t.id ?? gameState.nextId++),
       Kt.applyAction(structuredClone(t)),
-      (yt.nextId = Math.max(yt.nextId, (t.id ?? 0) + 1)));
-  ((yt.res = hn.res),
-    (yt.plates = hn.plates ?? []),
-    (yt.doneRequests = new Set(hn.doneRequests ?? [])),
-    (yt.folio = hn.folio ?? !1),
+      (gameState.nextId = Math.max(gameState.nextId, (t.id ?? 0) + 1)));
+  ((gameState.res = hn.res),
+    (gameState.plates = hn.plates ?? []),
+    (gameState.doneRequests = new Set(hn.doneRequests ?? [])),
+    (gameState.folio = hn.folio ?? !1),
     (te.day = hn.day),
     (te.hour = hn.hour),
     Ih(hn.infill ?? []),
@@ -389,14 +390,14 @@ ei.sync();
 {
   const i = document.querySelector("#veil"),
     t = document.createElement("div");
-  ((t.textContent = yt.folio
+  ((t.textContent = gameState.folio
     ? "(playing without resources)"
     : "or play without resources"),
     (t.style.cssText =
       "margin-top:14px;font-size:11px;letter-spacing:0.12em;opacity:0.6;cursor:pointer;font-style:italic"),
     (t.onclick = () => {
-      ((yt.folio = !0),
-        (yt.dirty = !0),
+      ((gameState.folio = !0),
+        (gameState.dirty = !0),
         (t.textContent = "(playing without resources)"),
         document.querySelector("#veil .begin")?.click());
     }),
@@ -426,7 +427,7 @@ function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
   if (((Aa.value += t), ov(Aa.value), !te.paused)) {
     ((te.hour += t * te.speed),
-      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (yt.dirty = !0)),
+      te.hour > 20.5 && ((te.hour = 5.6), te.day++, (gameState.dirty = !0)),
       os(te.hour),
       V_(t * te.speed),
       ei.update(t, te.hour),
@@ -437,13 +438,13 @@ function Nh(i) {
         Ne.grow(
           te.hour,
           10 +
-            yt.res.favor * 0.28 +
+            gameState.res.favor * 0.28 +
             Kt.pockets.filter((n) => n.kind !== "terrace_p").length * 0.12,
         ),
         oi.check(Kt, Ne),
         ei.sync()),
       (Do += t),
-      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), lv(), yt.dirty && ac()));
+      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), updateQualityMeters(), gameState.dirty && ac()));
     const e = ie.position;
     Lh.update(t, {
       dusk: ke.postMat.uniforms.uDusk.value,
@@ -496,26 +497,26 @@ window.CAP = {
   controls: Te,
   engraving: ke,
   mats: ic,
-  shared: Ge,
+  shared: engravingUniforms,
   world: Kt,
   time: te,
   SPOTS: Vr,
   hemi: Nr,
   sunLight: Pe,
-  syncLightModel: wh,
+  syncLightModel: syncLightUniforms,
   tools: Mn,
   hud: fe,
   infill: Ne,
   citizens: ei,
   requests: oi,
-  state: yt,
+  state: gameState,
   wander: ni,
   section: Qn,
   undo: rc,
   doSave: ac,
   async plateTest() {
     const i = ke.snap(je, ie, 800, 533);
-    return (await Dh(i, "test plate · day 1", 1)).length;
+    return (await renderPlateImage(i, "test plate · day 1", 1)).length;
   },
   snap(i = 1100, t = 660) {
     return ke.snap(je, ie, i, t);
@@ -541,8 +542,8 @@ window.CAP = {
   },
   act(i) {
     return (
-      (i.id = i.id ?? yt.nextId++),
-      yt.playerActions.push(structuredClone(i)),
+      (i.id = i.id ?? gameState.nextId++),
+      gameState.playerActions.push(structuredClone(i)),
       Kt.applyAction(i)
     );
   },
@@ -558,8 +559,8 @@ window.CAP = {
     os(te.hour);
   },
   pathTest(i, t, e, n) {
-    const s = Kt.nav.nearest(new P(i, 0, t), 40),
-      r = Kt.nav.nearest(new P(e, 0, n), 40);
+    const s = Kt.nav.nearest(new Vector3(i, 0, t), 40),
+      r = Kt.nav.nearest(new Vector3(e, 0, n), 40);
     return s < 0 || r < 0
       ? { a: s, b: r, len: -1 }
       : { a: s, b: r, len: Kt.nav.path(s, r).length };
@@ -572,7 +573,7 @@ window.CAP = {
       infill: Ne.items.length,
       navNodes: Kt.nav.nodes.length,
       pop: ei.population,
-      res: { ...yt.res },
+      res: { ...gameState.res },
       request: oi.active?.id ?? null,
       districts: bi.map((i) => i.name),
       draws: ke.lastDraws,
@@ -580,3 +581,6 @@ window.CAP = {
     };
   },
 };
+
+// --- generated exports ---
+export { Do, Fr, Lo, Ne, Or, Te, Us, ac, av, bi, cc, ei, fe, ic, ie, je, ke, ni, oc, oi, os, ov, rc, sc, te, us };

@@ -1,45 +1,56 @@
 // Placement tool state machine (multi-stage picking)
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29081–29455.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29081–29455. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
 
-class Z_ {
+// --- generated imports ---
+import { BufferAttribute, BufferGeometry, CylinderGeometry, Mesh, Raycaster, TorusGeometry } from "three";
+import { terrainHeightAt } from "./01-materials.js";
+import { setToneAttribute } from "./03-geometry.js";
+import { buildStructureMesh } from "./04-builders.js";
+import { Fl, W_, X_, gameState } from "./07-citizens.js";
+import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue.js";
+import { BuildOverlays } from "./10-overlays.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
+
+class PlacementTool {
   constructor(t, e, n) {
-    K(this, "world");
-    K(this, "camera");
-    K(this, "scene");
-    K(this, "tool", null);
-    K(this, "variant", "");
-    K(this, "stage", 0);
-    K(this, "firstPoint", null);
-    K(this, "firstAnchor", -1);
-    K(this, "ghost", null);
-    K(this, "ghostOk", !0);
-    K(this, "marker");
-    K(this, "ray", new vh());
-    K(this, "onCommit", null);
-    K(this, "onMessage", null);
-    K(this, "lastHover", null);
-    K(this, "lastGhostAt", 0);
-    K(this, "ghostMat");
-    K(this, "ghostBadMat");
-    K(this, "chalk");
+    defineField(this, "world");
+    defineField(this, "camera");
+    defineField(this, "scene");
+    defineField(this, "tool", null);
+    defineField(this, "variant", "");
+    defineField(this, "stage", 0);
+    defineField(this, "firstPoint", null);
+    defineField(this, "firstAnchor", -1);
+    defineField(this, "ghost", null);
+    defineField(this, "ghostOk", !0);
+    defineField(this, "marker");
+    defineField(this, "ray", new Raycaster());
+    defineField(this, "onCommit", null);
+    defineField(this, "onMessage", null);
+    defineField(this, "lastHover", null);
+    defineField(this, "lastGhostAt", 0);
+    defineField(this, "ghostMat");
+    defineField(this, "ghostBadMat");
+    defineField(this, "chalk");
     ((this.world = t),
       (this.camera = e),
       (this.scene = n),
       (this.ghostMat = t.mats.ghost),
       (this.ghostBadMat = t.mats.ghostBad));
-    const s = new Fe(0.8, 0.8, 0.35, 16);
-    ((this.marker = new he(s, this.ghostMat)),
+    const s = new CylinderGeometry(0.8, 0.8, 0.35, 16);
+    ((this.marker = new Mesh(s, this.ghostMat)),
       (this.marker.visible = !1),
       n.add(this.marker),
-      (this.chalk = new K_(n)));
+      (this.chalk = new BuildOverlays(n)));
   }
   setTool(t, e) {
     ((this.tool = t),
-      (this.variant = e ?? (t ? La[t][0].key : "")),
+      (this.variant = e ?? (t ? BUILD_CATALOGUE[t][0].key : "")),
       this.reset(),
       this.chalk.clearMarks(),
       t === "carve" && this.chalk.markCarvables(this.world),
@@ -110,7 +121,7 @@ class Z_ {
       this.stage === 1 && this.firstPoint)
     )
       if (this.tool === "vault") {
-        const a = pr[this.variant] ?? pr.market;
+        const a = VAULT_FOOTPRINTS[this.variant] ?? VAULT_FOOTPRINTS.market;
         this.chalk.footprint(
           this.firstPoint.x,
           this.firstPoint.z,
@@ -179,7 +190,7 @@ class Z_ {
             };
       case "vault": {
         if (this.stage === 0 || !this.firstPoint) return null;
-        const s = pr[this.variant] ?? pr.market,
+        const s = VAULT_FOOTPRINTS[this.variant] ?? VAULT_FOOTPRINTS.market,
           r = t.x - this.firstPoint.x,
           o = t.z - this.firstPoint.z,
           a = Math.max(12, Math.hypot(r, o)),
@@ -267,30 +278,30 @@ class Z_ {
         ((o = d.x), (a = d.z), (c = t.s < 0.5 ? Math.PI / 2 : 0));
       }
       const l = t.w / 2 + 0.35;
-      ((e = new Hr(l, 0.3, 8, 22, Math.PI)), e.rotateY(c + Math.PI / 2));
-      const h = new Fe(0.28, 0.28, t.h - l, 8);
+      ((e = new TorusGeometry(l, 0.3, 8, 22, Math.PI)), e.rotateY(c + Math.PI / 2));
+      const h = new CylinderGeometry(0.28, 0.28, t.h - l, 8);
       (h.translate(-l, -(t.h - l) / 2, 0), h.rotateY(c + Math.PI / 2));
-      const u = new Fe(0.28, 0.28, t.h - l, 8);
+      const u = new CylinderGeometry(0.28, 0.28, t.h - l, 8);
       (u.translate(l, -(t.h - l) / 2, 0),
         u.rotateY(c + Math.PI / 2),
         (e = zl([e, h, u])),
-        e.translate(o, qt(o, a) + t.h - l, a));
+        e.translate(o, terrainHeightAt(o, a) + t.h - l, a));
     } else if (t.t === "designate")
-      ((e = new Fe(t.r, t.r, 0.4, 28)),
-        e.translate(t.x, qt(t.x, t.z) + 0.3, t.z));
+      ((e = new CylinderGeometry(t.r, t.r, 0.4, 28)),
+        e.translate(t.x, terrainHeightAt(t.x, t.z) + 0.3, t.z));
     else {
-      const r = Da({ ...t, id: 999999 }),
+      const r = buildStructureMesh({ ...t, id: 999999 }),
         o = [];
       for (const a of Object.keys(r.pieces))
         for (const c of r.pieces[a]) o.push(c);
       o.length && (e = zl(o));
     }
     if (!e) return !0;
-    Ue(e);
+    setToneAttribute(e);
     const n = this.costOf(t),
       s = this.validate(t) && Fl(n);
     return (
-      (this.ghost = new he(e, s ? this.ghostMat : this.ghostBadMat)),
+      (this.ghost = new Mesh(e, s ? this.ghostMat : this.ghostBadMat)),
       this.scene.add(this.ghost),
       s
     );
@@ -298,7 +309,7 @@ class Z_ {
   costOf(t) {
     if (t.t === "carve") return { stone: 30, timber: 10 };
     if (t.t === "designate") return { stone: 0, timber: 0 };
-    const e = Da({ ...t, id: 999998 });
+    const e = buildStructureMesh({ ...t, id: 999998 });
     return {
       stone: Math.round(e.cost.stone),
       timber: Math.round(e.cost.timber),
@@ -314,7 +325,7 @@ class Z_ {
       if (e < 2 || e > 40) return !1;
     }
     if (t.t === "vault") {
-      const e = yt.folio ? 75 : yt.res.favor >= 60 ? 60 : 40;
+      const e = gameState.folio ? 75 : gameState.res.favor >= 60 ? 60 : 40;
       if (t.l > e) return !1;
     }
     return !0;
@@ -349,10 +360,10 @@ class Z_ {
     const o = this.costOf(r);
     return this.validate(r)
       ? Fl(o)
-        ? ((r.id = yt.nextId++),
+        ? ((r.id = gameState.nextId++),
           W_(o),
-          r.t === "carve" && (yt.res.stone += 15),
-          yt.playerActions.push(structuredClone(r)),
+          r.t === "carve" && (gameState.res.stone += 15),
+          gameState.playerActions.push(structuredClone(r)),
           this.world.applyAction(r),
           this.onCommit?.(r),
           this.reset(),
@@ -373,10 +384,13 @@ function zl(i) {
     (n.set(o.attributes.position.array, s * 3),
       (s += o.attributes.position.count),
       o.dispose());
-  const r = new ve();
+  const r = new BufferGeometry();
   return (
-    r.setAttribute("position", new pe(n, 3)),
+    r.setAttribute("position", new BufferAttribute(n, 3)),
     r.computeVertexNormals(),
     r
   );
 }
+
+// --- generated exports ---
+export { PlacementTool };

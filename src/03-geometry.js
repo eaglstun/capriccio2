@@ -1,9 +1,15 @@
 // Geometry utilities: merging, primitives, weathering helpers
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 26365–26961.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 26365–26961. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
+import { clamp, seededRng, terrainHeightAt } from "./01-materials.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 function ec(i, t = !1) {
   const e = i[0].index !== null,
@@ -12,7 +18,7 @@ function ec(i, t = !1) {
     r = {},
     o = {},
     a = i[0].morphTargetsRelative,
-    c = new ve();
+    c = new BufferGeometry();
   let l = 0;
   for (let h = 0; h < i.length; ++h) {
     const u = i[h];
@@ -172,7 +178,7 @@ function Cl(i) {
     r += h.count * e;
   }
   const o = new t(r),
-    a = new pe(o, e, n);
+    a = new BufferAttribute(o, e, n);
   let c = 0;
   for (let l = 0; l < i.length; ++l) {
     const h = i[l];
@@ -188,48 +194,48 @@ function Cl(i) {
   }
   return (s !== void 0 && (a.gpuType = s), a);
 }
-const Pl = new se(),
-  Dl = new ri(),
-  m_ = new P(1, 1, 1);
-class oe {
+const Pl = new Matrix4(),
+  Dl = new Quaternion(),
+  m_ = new Vector3(1, 1, 1);
+class MeshBuilder {
   constructor(t = 0) {
-    K(this, "geoms", []);
-    K(this, "age");
+    defineField(this, "geoms", []);
+    defineField(this, "age");
     this.age = t;
   }
   add(t, e, n = 0, s = 1, r = this.age) {
     if (e) {
-      const o = Array.isArray(e) ? new P(...e) : e;
-      (Dl.setFromAxisAngle(new P(0, 1, 0), n),
+      const o = Array.isArray(e) ? new Vector3(...e) : e;
+      (Dl.setFromAxisAngle(new Vector3(0, 1, 0), n),
         Pl.compose(o, Dl, m_),
         t.applyMatrix4(Pl));
     }
-    return (Ue(t, s, r), this.geoms.push(t), this);
+    return (setToneAttribute(t, s, r), this.geoms.push(t), this);
   }
   addRaw(t, e = 1, n = this.age) {
-    return (Ue(t, e, n), this.geoms.push(t), this);
+    return (setToneAttribute(t, e, n), this.geoms.push(t), this);
   }
   box(t, e, n, s, r = 0, o = 1) {
-    const a = new le(t, e, n);
+    const a = new BoxGeometry(t, e, n);
     return (a.translate(0, e / 2, 0), this.add(a, s, r, o));
   }
   cylinder(t, e, n, s = 14, r = 1, o = t) {
-    const a = new Fe(o, t, e, s);
+    const a = new CylinderGeometry(o, t, e, s);
     return (a.translate(0, e / 2, 0), this.add(a, n, 0, r));
   }
   merge() {
-    if (this.geoms.length === 0) return new ve();
+    if (this.geoms.length === 0) return new BufferGeometry();
     const t = this.geoms.map((n) => (n.index ? n.toNonIndexed() : n)),
       e = ec(t, !1);
     return (t.forEach((n) => n.dispose()), e);
   }
 }
-function Ue(i, t = 1, e = 0) {
+function setToneAttribute(i, t = 1, e = 0) {
   const n = i.attributes.position.count;
   if (!i.attributes.aTone || i.attributes.aTone.count !== n) {
     const s = new Float32Array(n * 2);
     for (let r = 0; r < n; r++) ((s[r * 2] = t), (s[r * 2 + 1] = e));
-    i.setAttribute("aTone", new pe(s, 2));
+    i.setAttribute("aTone", new BufferAttribute(s, 2));
   }
   return i;
 }
@@ -242,13 +248,13 @@ function Ri(i, t, e, n, s, r = 0) {
       u = Math.max(0, Math.min(1, (h - t) / (e - t)));
     ((c[l * 2] = n + (s - n) * u), (c[l * 2 + 1] = r));
   }
-  return (i.setAttribute("aTone", new pe(c, 2)), i);
+  return (i.setAttribute("aTone", new BufferAttribute(c, 2)), i);
 }
 function Hn(i, t, e, n, s = {}) {
   const r = s.ruin ?? 0,
-    o = s.rng ?? Je(1234),
+    o = s.rng ?? seededRng(1234),
     a = s.rings !== !1,
-    c = new ss(),
+    c = new Shape(),
     l = i / 2,
     h = (f) => {
       let m = t * 0.1;
@@ -274,7 +280,7 @@ function Hn(i, t, e, n, s = {}) {
   } else (c.lineTo(l, t), c.lineTo(-l, t));
   c.closePath();
   for (const f of n) {
-    const m = new Ma(),
+    const m = new Path(),
       { cx: _, r: g, springY: p } = f;
     (m.moveTo(_ - g, 0.001),
       m.lineTo(_ - g, p),
@@ -283,7 +289,7 @@ function Hn(i, t, e, n, s = {}) {
       m.closePath(),
       c.holes.push(m));
   }
-  const u = new Si(c, {
+  const u = new ExtrudeGeometry(c, {
     depth: e,
     bevelEnabled: !1,
     curveSegments: s.curveSeg ?? 20,
@@ -293,19 +299,19 @@ function Hn(i, t, e, n, s = {}) {
   for (const f of n) {
     const m = Math.min(0.5, Math.max(0.24, f.r * 0.16)),
       _ = e + 0.34,
-      g = new ss();
+      g = new Shape();
     (g.moveTo(f.r + m, 0),
       g.absarc(0, 0, f.r + m, 0, Math.PI, !1),
       g.lineTo(-f.r, 0),
       g.absarc(0, 0, f.r, Math.PI, 0, !0),
       g.closePath());
-    const p = new Si(g, { depth: _, bevelEnabled: !1, curveSegments: 20 });
+    const p = new ExtrudeGeometry(g, { depth: _, bevelEnabled: !1, curveSegments: 20 });
     (p.translate(f.cx, f.springY, -_ / 2), d.push(p));
     for (const b of [-1, 1]) {
-      const v = new le(m * 2.6, 0.55, e + 0.5);
+      const v = new BoxGeometry(m * 2.6, 0.55, e + 0.5);
       (v.translate(f.cx + b * (f.r + m * 0.5), f.springY - 0.28, 0), d.push(v));
     }
-    const A = new le(Math.min(0.85, f.r * 0.3), m * 2.1, e + 0.46);
+    const A = new BoxGeometry(Math.min(0.85, f.r * 0.3), m * 2.1, e + 0.46);
     (A.translate(f.cx, f.springY + f.r + m * 0.35, 0), d.push(A));
   }
   return ec(
@@ -323,7 +329,7 @@ function Ji(i, t, e, n, s = {}) {
   return Hn(i, t, e, c, s);
 }
 function g_(i, t, e, n = {}) {
-  const s = new oe(),
+  const s = new MeshBuilder(),
     r = Math.min(1.2, e * 0.08),
     o = Math.min(0.9, e * 0.06);
   (n.base !== !1 && s.box(i * 1.18, r, t * 1.18, [0, 0, 0]),
@@ -336,7 +342,7 @@ function Ll(i, t, e, n = {}) {
   const r = Math.max(2, Math.round(t / 0.32)),
     o = t / r,
     a = e / r,
-    c = new oe();
+    c = new MeshBuilder();
   for (let l = 0; l < r; l++) {
     const h = n.solid === !1 ? o : o * (l + 1);
     c.box(a + 0.02, h, i, [a * (l + 0.5), n.solid === !1 ? o * l : 0, 0]);
@@ -344,7 +350,7 @@ function Ll(i, t, e, n = {}) {
   return c.merge();
 }
 function __(i, t = 1.05, e = 0.28) {
-  const n = new oe();
+  const n = new MeshBuilder();
   return (
     n.box(i, t - 0.12, e * 0.82, [i / 2, 0, 0]),
     n.box(i, 0.12, e, [i / 2, t - 0.12, 0]),
@@ -353,25 +359,25 @@ function __(i, t = 1.05, e = 0.28) {
 }
 function v_(i, t, e, n = {}) {
   const s = n.curveSeg ?? 22,
-    r = new ss();
+    r = new Shape();
   (r.moveTo(i, 0),
     r.absarc(0, 0, i, 0, Math.PI, !1),
     r.lineTo(-(i - t), 0),
     r.absarc(0, 0, i - t, Math.PI, 0, !0),
     r.closePath());
-  const o = new Si(r, { depth: e, bevelEnabled: !1, curveSegments: s });
+  const o = new ExtrudeGeometry(r, { depth: e, bevelEnabled: !1, curveSegments: s });
   if ((o.rotateY(Math.PI / 2), n.ribs !== !1 && e > 7)) {
     const a = [o],
       c = Math.max(2, Math.round(e / 5.5));
     for (let h = 0; h <= c; h++) {
       const u = (e * h) / c,
-        d = new ss();
+        d = new Shape();
       (d.moveTo(i + 0.22, 0),
         d.absarc(0, 0, i + 0.22, 0, Math.PI, !1),
         d.lineTo(-i + 0.1, 0),
         d.absarc(0, 0, i - 0.1, Math.PI, 0, !0),
         d.closePath());
-      const f = new Si(d, { depth: 0.55, bevelEnabled: !1, curveSegments: 18 });
+      const f = new ExtrudeGeometry(d, { depth: 0.55, bevelEnabled: !1, curveSegments: 18 });
       (f.rotateY(Math.PI / 2),
         f.translate(Math.min(u, e - 0.55), 0, 0),
         a.push(f));
@@ -386,16 +392,16 @@ function v_(i, t, e, n = {}) {
 function Il(i, t, e, n = 0.25) {
   const s = i + n * 2,
     r = t + n * 2,
-    o = new ss();
+    o = new Shape();
   (o.moveTo(-r / 2, 0), o.lineTo(r / 2, 0), o.lineTo(0, e), o.closePath());
-  const a = new Si(o, { depth: s, bevelEnabled: !1 });
+  const a = new ExtrudeGeometry(o, { depth: s, bevelEnabled: !1 });
   return (a.rotateY(Math.PI / 2), a.translate(-s / 2, 0, 0), a);
 }
-function nc(i, t) {
-  const e = new oe(),
+function buildTree(i, t) {
+  const e = new MeshBuilder(),
     n = i * 0.14 * (0.85 + t() * 0.3);
   e.cylinder(n * 0.24, i * 0.1, [0, 0, 0], 6);
-  const s = new ls(n, i * 0.92, 7);
+  const s = new ConeGeometry(n, i * 0.92, 7);
   return (s.translate(0, i * 0.1 + i * 0.46, 0), e.addRaw(s), e.merge());
 }
 function x_(i, t, e) {
@@ -417,13 +423,13 @@ function x_(i, t, e) {
   if (o - a < 3) return null;
   const c = [...r.values()].filter((u) => u[1] > a + (o - a) * 0.45);
   if (!c.length) return null;
-  const l = new oe(),
+  const l = new MeshBuilder(),
     h = Math.min(e, c.length);
   for (let u = 0; u < h; u++) {
     const d = c[Math.floor(t() * c.length)],
       f = 0.5 + t() * 0.9;
     for (let m = 0; m < 2 + Math.floor(t() * 2); m++) {
-      const _ = new ls(0.26 * f * (0.7 + t() * 0.6), (0.7 + t() * 0.9) * f, 5);
+      const _ = new ConeGeometry(0.26 * f * (0.7 + t() * 0.6), (0.7 + t() * 0.9) * f, 5);
       (_.rotateZ((t() - 0.5) * 0.9),
         _.rotateX((t() - 0.5) * 0.5),
         _.translate(
@@ -434,7 +440,7 @@ function x_(i, t, e) {
         l.addRaw(_));
     }
     if (t() < 0.55) {
-      const m = new le(0.1, 0.9 + t() * 1.6, 0.1);
+      const m = new BoxGeometry(0.1, 0.9 + t() * 1.6, 0.1);
       (m.translate(
         d[0] + (t() - 0.5) * 0.8,
         d[1] - 0.5,
@@ -446,7 +452,7 @@ function x_(i, t, e) {
   return l.merge();
 }
 function Pa(i) {
-  const t = new oe(),
+  const t = new MeshBuilder(),
     e = i();
   if (e < 0.45) {
     const s = 0.35 + i() * 0.5,
@@ -466,7 +472,7 @@ function Pa(i) {
   const n = t.merge();
   return (Ri(n, 0, 1.2, 0.86, 1), n);
 }
-function Ci() {
+function newStructureParts() {
   return {
     pieces: {},
     navPts: [],
@@ -478,7 +484,7 @@ function Ci() {
 }
 function Yt(i, t, e) {
   var n;
-  (Ue(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
+  (setToneAttribute(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
 }
 function Ur(i, t, e, n, s) {
   if (!n) return;
@@ -488,16 +494,16 @@ function Ur(i, t, e, n, s) {
 function be(i, t, e, n, s = 0) {
   return (s && i.rotateY(s), i.translate(t, e, n), i);
 }
-const dn = (i, t, e) => new P(i, t, e);
-function y_(i) {
-  const t = Ci(),
-    e = Je(i.id * 7919 + 11),
-    n = qt(i.x, i.z),
+const dn = (i, t, e) => new Vector3(i, t, e);
+function buildAnchor(i) {
+  const t = newStructureParts(),
+    e = seededRng(i.id * 7919 + 11),
+    n = terrainHeightAt(i.x, i.z),
     s = i.topY - n,
     r = i.age ?? 0.15;
   if (i.style === "column") {
-    const o = new oe(r),
-      a = Xe(s * 0.075, 1.1, 2);
+    const o = new MeshBuilder(r),
+      a = clamp(s * 0.075, 1.1, 2);
     (o.box(a * 3.2, 1.2, a * 3.2, [0, 0, 0]),
       o.box(a * 2.7, 1, a * 2.7, [0, 1.2, 0]),
       o.cylinder(a, s - 4.4, [0, 2.2, 0], 18, 1, a * 0.88),
@@ -511,12 +517,12 @@ function y_(i) {
     const o = i.style === "giant" ? 9 : 4.6;
     if (i.style === "giant" && i.carveAxis) {
       const a = i.carveAxis === "x" ? Math.PI / 2 : 0,
-        c = new oe(r);
+        c = new MeshBuilder(r);
       (c.box(o * 1.18, 1.2, o * 1.18, [0, -0.5, 0]),
         Yt(t, "stone", be(c.merge(), i.x, n, i.z, 0)));
       const l = Hn(o, s + 1, o, [{ cx: 0, r: 2.1, springY: 3.1 }], { rng: e });
       (be(l, i.x, n + 0.4, i.z, a), Yt(t, "stone", l));
-      const h = new oe(r);
+      const h = new MeshBuilder(r);
       (h.box(o * 1.14, 0.9, o * 1.14, [0, 0, 0]),
         Yt(t, "stone", be(h.merge(), i.x, i.topY - 0.9, i.z, 0)));
       for (const _ of i.carveAxis === "x" ? [0, 2] : [1, 3]) {
@@ -541,12 +547,12 @@ function y_(i) {
         d = i.carveAxis === "x" ? 0 : 1,
         f = [
           i.x + u * (o / 2 + 2.5),
-          qt(i.x + u * (o / 2 + 2.5), i.z + d * (o / 2 + 2.5)),
+          terrainHeightAt(i.x + u * (o / 2 + 2.5), i.z + d * (o / 2 + 2.5)),
           i.z + d * (o / 2 + 2.5),
         ],
         m = [
           i.x - u * (o / 2 + 2.5),
-          qt(i.x - u * (o / 2 + 2.5), i.z - d * (o / 2 + 2.5)),
+          terrainHeightAt(i.x - u * (o / 2 + 2.5), i.z - d * (o / 2 + 2.5)),
           i.z - d * (o / 2 + 2.5),
         ];
       (t.navPts.push({ pos: f, links: [], splice: !0 }),
@@ -602,3 +608,6 @@ function y_(i) {
     t
   );
 }
+
+// --- generated exports ---
+export { Cl, Hn, Il, Ji, Ll, MeshBuilder, Pa, Pl, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, ec, newStructureParts, setToneAttribute, v_ };

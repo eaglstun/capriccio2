@@ -22,13 +22,76 @@ Usage:
 """
 
 import argparse
+from collections import defaultdict
 import json
 import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from jsmask import mask  # noqa: E402
+
 BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
 OUT = pathlib.Path("src")
+RENAMES = OUT / "renames.json"
+VENDOR_IMPORTS = OUT / "vendor-imports.json"
+
+# Generated blocks are delimited so the integrity check can strip them exactly
+# and still prove byte-identity with the original.
+GEN_OPEN = "// --- generated imports ---\n"
+GEN_CLOSE = "// --- end generated imports ---\n\n"
+EXP_OPEN = "\n// --- generated exports ---\n"
+
+DECL_RX = re.compile(
+    r"^(?:async\s+)?(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)", re.M)
+CONT_RX = re.compile(r"^\s{2}([A-Za-z_$][\w$]*)\s*=\s*[^=]", re.M)
+
+
+def declared_names(stmt, masked):
+    """Names a single top-level statement introduces.
+
+    A `const a = 1,\\n  b = 2;` statement declares both. But a 2-space-indented
+    `x = ...` inside a function body is a LOCAL, not a declaration — prettier
+    indents both identically. So continuation declarators are only accepted
+    when the statement is a const/let/var AND the line sits at bracket depth 0
+    within that statement.
+    """
+    out = []
+    mo = DECL_RX.match(masked)
+    if mo:
+        out.append(mo.group(1))
+    if not re.match(r"^(?:const|let|var)\b", masked):
+        return out
+    for cm in CONT_RX.finditer(masked):
+        depth = (masked[:cm.start()].count("(") - masked[:cm.start()].count(")")
+                 + masked[:cm.start()].count("[") - masked[:cm.start()].count("]")
+                 + masked[:cm.start()].count("{") - masked[:cm.start()].count("}"))
+        if depth == 0 and cm.group(1) not in out:
+            out.append(cm.group(1))
+    return out
+
+JS_KEYWORDS = {
+    "if", "else", "for", "while", "do", "return", "break", "continue", "new",
+    "typeof", "instanceof", "in", "of", "let", "const", "var", "function",
+    "class", "extends", "static", "get", "set", "async", "await", "yield",
+    "throw", "try", "catch", "finally", "switch", "case", "default", "delete",
+    "void", "this", "super", "arguments", "true", "false", "null", "undefined",
+    "export", "import", "from", "as", "Math", "JSON", "Object", "Array", "Map",
+    "Set", "Promise", "Number", "String", "Boolean", "Date", "RegExp", "Error",
+    "Symbol", "Infinity", "NaN", "window", "document", "console", "localStorage",
+    "location", "navigator", "performance", "requestAnimationFrame", "setTimeout",
+    "setInterval", "clearTimeout", "clearInterval", "fetch", "URL", "Image",
+    "URLSearchParams", "AudioContext", "Float32Array", "Uint8Array", "Blob",
+    "Uint16Array", "Uint32Array", "Int32Array", "ArrayBuffer", "structuredClone",
+    "isNaN", "isFinite", "parseInt", "parseFloat", "devicePixelRatio",
+    "encodeURIComponent", "decodeURIComponent", "getComputedStyle", "WeakMap",
+}
+
+# Names that are ALSO declared in an inner scope somewhere (from
+# scope_graph.py --shadows). A blind global rename on these would corrupt the
+# shadowing scope, so the tool refuses to rename them without --force-shadowed.
+SHADOWED = {"Ch", "Co", "Fr", "Kt", "Pe", "Pl", "Qe", "Th", "bi",
+            "cc", "ct", "gt", "je", "lc"}
 
 # First app declaration: `const j0 = ` — the post-pass fullscreen vertex
 # shader. Everything before is three.js and OrbitControls.
@@ -186,6 +249,92 @@ def scan_top_level(text):
 
 
 ANCHORS_C = [(re.compile(p), n) for p, n in ANCHORS]
+IDENT_RX = re.compile(r"(?<![\w$])([A-Za-z_$][\w$]*)")
+
+def is_property_access(masked, start):
+    """True if the identifier at `start` is a `.prop` access.
+
+    NOT a property access when preceded by `...` — spread syntax also ends in
+    a dot, and a naive `(?<![.\w$])` lookbehind silently skips every
+    spread-referenced identifier. That bug left `...yt` unrenamed while every
+    other `yt` became `gameState`, and the rebuilt game threw
+    `ReferenceError: yt is not defined` from CAP.status().
+    """
+    before = masked[:start]
+    if not before.endswith("."):
+        return False
+    return not before.endswith("...")
+
+
+# Statements hoisted out of their section into src/_hoisted.js.
+#
+# In one flat scope a `function` declaration is hoisted, so position does not
+# matter. Splitting into ES modules turns that free hoisting into a real
+# dependency — and where the reference points FORWARD it becomes an import
+# cycle. `16-hud.js` calls `rv()` (declared later, in the bootstrap section)
+# from inside a template literal; bootstrap in turn constructs `new Hud(...)`
+# at top level. Rollup has to pick an evaluation order for the cycle, picks
+# bootstrap first, and the game dies with
+#
+#     ReferenceError: Cannot access 'Hud' before initialization
+#
+# Relocating the function reproduces the hoisting the original relied on.
+# The relocation is RECORDED in the manifest and UNDONE by the integrity
+# check, so byte-identity with the original still holds.
+RELOCATE = [re.compile(r"^function rv\(i\) \{")]
+HOISTED = "_hoisted.js"
+
+
+def substitute(text, mapping):
+    """Replace identifiers per `mapping`, never inside strings or comments.
+
+    Operates on masked text to find positions, then splices the ORIGINAL text
+    so string contents (GLSL uniforms, localStorage keys, UI copy) are
+    untouched. Skips property accesses via the lookbehind on `.`.
+    """
+    if not mapping:
+        return text, []
+    m = mask(text)
+    out, last, shorthand = [], 0, []
+    for mo in IDENT_RX.finditer(m):
+        name = mo.group(1)
+        new = mapping.get(name)
+        if new is None:
+            continue
+        a, b = mo.span(1)
+        if is_property_access(m, a):
+            continue
+        # shorthand-property detection: `{ x }` / `, x ,` — renaming these
+        # would silently change a property KEY, which the inverse check
+        # cannot catch. Report them.
+        before = m[:a].rstrip()[-1:] if m[:a].strip() else ""
+        after = m[b:].lstrip()[:1]
+        if before in "{," and after in ",}":
+            shorthand.append(name)
+        out.append(text[last:a])
+        out.append(new)
+        last = b
+    out.append(text[last:])
+    return "".join(out), shorthand
+
+
+def load_renames(force_shadowed=False):
+    if not RENAMES.exists():
+        return {}
+    raw = json.loads(RENAMES.read_text())
+    mapping = {k: v for k, v in raw.items() if not k.startswith("//")}
+    bad = sorted(set(mapping) & SHADOWED)
+    if bad and not force_shadowed:
+        sys.exit(
+            f"refusing to rename shadowed names: {bad}\n"
+            "These 2-char names are also declared in inner scopes; a global\n"
+            "rename would corrupt those scopes. Verify each occurrence by hand,\n"
+            "then re-run with --force-shadowed if you are certain."
+        )
+    dupes = [v for v in mapping.values() if list(mapping.values()).count(v) > 1]
+    if dupes:
+        sys.exit(f"duplicate target names in renames.json: {sorted(set(dupes))}")
+    return mapping
 
 
 def anchor_of(chunk):
@@ -201,6 +350,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--analyse", action="store_true")
+    ap.add_argument("--force-shadowed", action="store_true",
+                    help="allow renaming names that are shadowed in inner scopes")
     args = ap.parse_args()
     if not (args.write or args.analyse):
         args.analyse = True
@@ -230,13 +381,14 @@ def main():
         kind = anchor_of(app[a:b])
         if kind:
             seen.append(kind)
-            cur = {"kind": kind, "start": a, "end": b, "n": 1}
+            cur = {"kind": kind, "start": a, "end": b, "n": 1, "spans": [(a, b)]}
             sections.append(cur)
         elif cur is None:
             sys.exit("first statement is not an anchor — seam is wrong")
         else:
             cur["end"] = b
             cur["n"] += 1
+            cur["spans"].append((a, b))
 
     missing = [n for _, n in ANCHORS if n not in seen]
     if missing:
@@ -253,31 +405,172 @@ def main():
         return
 
     OUT.mkdir(exist_ok=True)
-    manifest = []
+    renames = load_renames(args.force_shadowed)
+    if renames:
+        print(f"\napplying {len(renames)} rename(s) from {RENAMES}")
+    shorthand_hits = []
+
+    # ---- pass 1: rename each section, record its declarations ----
+    parts = []
     counters = {}
-    for s in sections:
+    for i, s in enumerate(sections):
         k = s["kind"]
         counters[k] = counters.get(k, 0) + 1
         seq = counters[k]
-        stem = f"{len(manifest):02d}-{k}" + (f"-{seq}" if seq > 1 else "")
-        path = OUT / f"{stem}.js"
-        body = app[s["start"]:s["end"]]
-        start_line = seam_line + app[:s["start"]].count("\n") + 1
-        header = (
-            f"// {SECTION_TITLES.get(k, k)}\n"
-            f"//\n"
-            f"// Extracted verbatim from public/assets/index-DCXbw2vV.js,\n"
-            f"// lines {start_line}–{start_line + body.count(chr(10)) - 1}.\n"
-            f"// Identifiers are minifier-mangled; nothing here has been renamed.\n"
-            f"// Regenerate with: python3 tools/split_bundle.py --write\n\n"
-        )
-        path.write_text(header + body, encoding="utf8")
-        manifest.append({
-            "file": path.name, "section": k,
-            "bundle_start_line": start_line,
-            "bytes": len(body), "statements": s["n"],
-            "header_bytes": len(header),
+        stem = f"{i:02d}-{k}" + (f"-{seq}" if seq > 1 else "")
+        keep, reloc, pos = [], [], 0
+        for (sa, sb) in s["spans"]:
+            stmt = app[sa:sb]
+            if any(rx.match(stmt.lstrip()) for rx in RELOCATE):
+                reloc.append({"offset": pos, "text": stmt})
+                continue
+            keep.append(stmt)
+            pos += len(stmt)
+        body = "".join(keep)
+        renamed, shorthand = substitute(body, renames)
+        if shorthand:
+            shorthand_hits.extend((stem, n) for n in set(shorthand))
+        m = mask(renamed)
+        names = []
+        for (a, b) in s["spans"]:
+            raw_stmt = app[a:b]
+            if any(rx.match(raw_stmt.lstrip()) for rx in RELOCATE):
+                continue          # moved to _hoisted.js; it exports these
+            st, _ = substitute(raw_stmt, renames)
+            for nm in declared_names(st, mask(st)):
+                if nm not in names:
+                    names.append(nm)
+        parts.append({
+            "stem": stem, "kind": k, "body": renamed, "masked": m,
+            "decls": names, "stmts": s["n"], "reloc": reloc,
+            "start_line": seam_line + app[:s["start"]].count("\n") + 1,
         })
+
+    owner = {}
+    for p in parts:
+        for nm in p["decls"]:
+            owner.setdefault(nm, p["stem"])
+    for p in parts:
+        for r in p["reloc"]:
+            for nm in declared_names(r["text"], mask(r["text"])):
+                owner[substitute(nm, renames)[0]] = HOISTED[:-3]
+
+    vspec = json.loads(VENDOR_IMPORTS.read_text()) if VENDOR_IMPORTS.exists() else {}
+    vmodule = {n: mod for mod, ns in vspec.get("modules", {}).items() for n in ns}
+    valias = vspec.get("aliases", {})
+
+    # ---- collect relocated statements into _hoisted.js ----
+    hoisted_pieces, hoist_index = [], {}
+    for p in parts:
+        for r in p["reloc"]:
+            rtext, _ = substitute(r["text"], renames)
+            hoist_index[(p["stem"], r["offset"])] = (
+                sum(len(x) for x in hoisted_pieces), len(rtext))
+            hoisted_pieces.append(rtext)
+    hoisted_body = "".join(hoisted_pieces)
+    hoisted_names = []
+    for piece in hoisted_pieces:
+        hoisted_names += declared_names(piece, mask(piece))
+
+    # ---- pass 2: resolve references, emit imports/exports ----
+    manifest = []
+    for p in parts:
+        needs = defaultdict(set)     # module or file -> names
+        for mo in IDENT_RX.finditer(p["masked"]):
+            nm = mo.group(1)
+            if nm in p["decls"] or nm in JS_KEYWORDS:
+                continue
+            if is_property_access(p["masked"], mo.start(1)):
+                continue
+            prov = owner.get(nm)
+            if prov:
+                needs[f"./{prov}.js"].add(nm)
+            elif nm in vmodule:
+                needs[vmodule[nm]].add(nm)
+            elif nm in valias:
+                needs[valias[nm]["module"]].add(
+                    f'{valias[nm]["name"]} as {nm}')
+
+        imports = ""
+        if needs:
+            lines = []
+            for mod in sorted(needs, key=lambda x: (not x.startswith("three"), x)):
+                ns = ", ".join(sorted(needs[mod]))
+                lines.append(f'import {{ {ns} }} from "{mod}";')
+            imports = GEN_OPEN + "\n".join(lines) + "\n" + GEN_CLOSE
+
+        exported = sorted(n for n in p["decls"]
+                          if any(n in q["masked"] for q in parts if q is not p))
+        exports = ""
+        if exported:
+            exports = EXP_OPEN + f"export {{ {', '.join(exported)} }};\n"
+
+        header = (
+            f"// {SECTION_TITLES.get(p['kind'], p['kind'])}\n"
+            f"//\n"
+            f"// Extracted from public/assets/index-DCXbw2vV.js, bundle lines\n"
+            f"// {p['start_line']}–{p['start_line'] + p['body'].count(chr(10)) - 1}. "
+            f"Statements are verbatim; identifiers are\n"
+            f"// renamed via src/renames.json. Imports and exports are generated.\n"
+            f"// Regenerate: python3 tools/split_bundle.py --write\n\n"
+        )
+        path = OUT / f"{p['stem']}.js"
+        path.write_text(header + imports + p["body"] + exports, encoding="utf8")
+        manifest.append({
+            "file": path.name, "section": p["kind"],
+            "bundle_start_line": p["start_line"],
+            "bytes": len(p["body"]), "statements": p["stmts"],
+            "header_bytes": len(header),
+            "prologue_bytes": len(imports),
+            "epilogue_bytes": len(exports),
+            "imports": {m: sorted(v) for m, v in needs.items()},
+            "exports": exported,
+            "relocated": [
+                {"offset": r["offset"],
+                 "hoisted_start": hoist_index[(p["stem"], r["offset"])][0],
+                 "hoisted_len": hoist_index[(p["stem"], r["offset"])][1]}
+                for r in p["reloc"]
+            ],
+        })
+
+    # ---- emit _hoisted.js ----
+    if hoisted_body:
+        hm = mask(hoisted_body)
+        hneeds = defaultdict(set)
+        for mo in IDENT_RX.finditer(hm):
+            nm = mo.group(1)
+            if nm in hoisted_names or nm in JS_KEYWORDS:
+                continue
+            if is_property_access(hm, mo.start(1)):
+                continue
+            prov = owner.get(nm)
+            if prov and prov != HOISTED[:-3]:
+                hneeds[f"./{prov}.js"].add(nm)
+            elif nm in vmodule:
+                hneeds[vmodule[nm]].add(nm)
+        himp = ""
+        if hneeds:
+            himp = GEN_OPEN + "\n".join(
+                f'import {{ {", ".join(sorted(v))} }} from "{m}";'
+                for m in sorted(hneeds)) + "\n" + GEN_CLOSE
+        hhead = (
+            "// Hoisted declarations.\n"
+            "//\n"
+            "// These `function` declarations were hoisted in the original single\n"
+            "// scope, so callers could sit ABOVE them. Splitting into ES modules\n"
+            "// turns that into a forward import — and, where the callee imports\n"
+            "// the caller back, an evaluation cycle that Rollup resolves in the\n"
+            "// wrong order (`Cannot access 'Hud' before initialization`).\n"
+            "//\n"
+            "// Moving them here reproduces the original hoisting. The relocation\n"
+            "// is recorded in manifest.json and undone by the integrity check,\n"
+            "// so byte-identity with the original bundle still holds.\n"
+            "// Regenerate: python3 tools/split_bundle.py --write\n\n"
+        )
+        hexp = EXP_OPEN + f"export {{ {', '.join(hoisted_names)} }};\n"
+        (OUT / HOISTED).write_text(hhead + himp + hoisted_body + hexp, encoding="utf8")
+        print(f"hoisted {len(hoisted_pieces)} statement(s) -> src/{HOISTED}: "
+              + ", ".join(hoisted_names))
 
     (OUT / "manifest.json").write_text(json.dumps({
         "source": str(BUNDLE), "seam_line": seam_line + 1,
@@ -285,15 +578,39 @@ def main():
         "files": manifest,
     }, indent=2), encoding="utf8")
 
-    # ---- integrity check: reassemble and compare ----
+    # ---- integrity check ----
+    # With renames applied, byte-identity only holds after undoing them. So we
+    # apply the INVERSE map and compare. This proves every rename was a pure
+    # identifier substitution and nothing structural changed.
+    inverse = {v: k for k, v in renames.items()}
     rebuilt = []
     for m in manifest:
         raw = (OUT / m["file"]).read_text(encoding="utf8")
-        rebuilt.append(raw[m["header_bytes"]:])
+        start = m["header_bytes"] + m.get("prologue_bytes", 0)
+        end = len(raw) - m.get("epilogue_bytes", 0)
+        body = raw[start:end]
+        if m.get("relocated"):
+            hraw = (OUT / HOISTED).read_text(encoding="utf8")
+            hbody = hraw[hraw.index(EXP_OPEN) - 0:] if False else hraw
+            hstart = hraw.index(GEN_CLOSE) + len(GEN_CLOSE) if GEN_CLOSE in hraw \
+                else hraw.index("\n\n") + 2
+            hcode = hraw[hstart:hraw.index(EXP_OPEN)]
+            for r in sorted(m["relocated"], key=lambda x: -x["offset"]):
+                piece = hcode[r["hoisted_start"]:r["hoisted_start"] + r["hoisted_len"]]
+                body = body[:r["offset"]] + piece + body[r["offset"]:]
+        if inverse:
+            body, _ = substitute(body, inverse)
+        rebuilt.append(body)
     rebuilt = "".join(rebuilt)
     ok = rebuilt == app
     print(f"\nwrote {len(manifest)} files to {OUT}/")
-    print(f"REASSEMBLY CHECK: {'PASS — byte-identical to app section' if ok else 'FAIL'}")
+    if shorthand_hits:
+        print("\nWARNING — renamed in shorthand-property position (changes a KEY,")
+        print("which the inverse check cannot detect). Verify by hand:")
+        for fn, n in sorted(set(shorthand_hits)):
+            print(f"    {fn}: {n}")
+    label = "byte-identical after inverse rename" if inverse else "byte-identical to app section"
+    print(f"REASSEMBLY CHECK: {'PASS — ' + label if ok else 'FAIL'}")
     if not ok:
         a = next((i for i, (x, y) in enumerate(zip(rebuilt, app)) if x != y), min(len(rebuilt), len(app)))
         print(f"  first divergence at app offset {a}")

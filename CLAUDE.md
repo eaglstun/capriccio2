@@ -46,6 +46,16 @@ lines**. It still parses clean (`node --check` passes) and behaves identically
 byte-identical to what is deployed.** Use 662KB when citing the real artifact's
 size publicly; use the local line numbers only for navigation.
 
+## Package manager: yarn, not npm
+
+This project uses **yarn** (4.17, pinned via `packageManager` in
+`package.json`). Use `yarn install` / `yarn build` — never `npm install`, which
+would create a competing `package-lock.json`.
+
+`.yarnrc.yml` sets `nodeLinker: node-modules` rather than Yarn 4's default
+Plug'n'Play, because Vite/Rollup resolve more predictably against a real
+`node_modules` tree — particularly the `three/addons/*` subpath imports.
+
 ## Running it
 
 The bundle requests `/assets/...` by absolute path, so it must be served from
@@ -72,10 +82,13 @@ browser if served with the wrong MIME type** — it must come back as
 is a **lossless partition** — nothing renamed, nothing reordered, verified by
 byte-identical reassembly.
 
-**It is not runnable and not importable.** There are no `import`/`export`
-statements; every file references identifiers declared in the others, because
-the original was one concatenated scope with mangled names. Do not attempt to
-build or serve from `src/` until scope analysis has been done.
+It is now a real ES module tree — 18 modules, 89 identifiers renamed (all 48
+three.js symbols included), every local import verified against an actual
+export.
+
+**It has still never been run.** No bundler config, `three` is not installed,
+and the boot sequence has not been exercised. Resolving is not executing. Do
+not describe `src/` as working until something has actually run it.
 
 `public/` remains the only runnable copy. If you change how the split works,
 re-run `python3 tools/split_bundle.py --write` — it aborts rather than emit a

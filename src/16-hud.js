@@ -1,9 +1,17 @@
 // HUD: stylesheet and the UI class
 //
-// Extracted verbatim from public/assets/index-DCXbw2vV.js,
-// lines 29891–30392.
-// Identifiers are minifier-mangled; nothing here has been renamed.
-// Regenerate with: python3 tools/split_bundle.py --write
+// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// 29891–30392. Statements are verbatim; identifiers are
+// renamed via src/renames.json. Imports and exports are generated.
+// Regenerate: python3 tools/split_bundle.py --write
+
+// --- generated imports ---
+import { Vector3 } from "three";
+import { gameState } from "./07-citizens.js";
+import { BUILD_CATALOGUE } from "./09-catalogue.js";
+import { rv } from "./_hoisted.js";
+import { defineField } from "./_runtime.js";
+// --- end generated imports ---
 
 const nv = `
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10;
@@ -126,28 +134,28 @@ const nv = `
     <path d="M5 21 c4 -3 7 1 10 -1 s6 -4 10 -2 M5 21 c0 2 2 3 4 3 s16 -1 16 -4" />
     <path d="M20 4 l4 4 -10 10 -5 1 1 -5 z"/></g></svg>`,
   };
-class sv {
+class Hud {
   constructor(t) {
-    K(this, "cb");
-    K(this, "root");
-    K(this, "toolBtns", new Map());
-    K(this, "modeBtns", new Map());
-    K(this, "varRow");
-    K(this, "toastEl");
-    K(this, "requestEl");
-    K(this, "labelsEl");
-    K(this, "sectionCtl");
-    K(this, "plateCtl");
-    K(this, "wanderHint");
-    K(this, "frameEl");
-    K(this, "veil");
-    K(this, "resStone");
-    K(this, "resTimber");
-    K(this, "resFavor");
-    K(this, "resPop");
-    K(this, "dayEl");
-    K(this, "qualBars", new Map());
-    K(this, "toastTimer", 0);
+    defineField(this, "cb");
+    defineField(this, "root");
+    defineField(this, "toolBtns", new Map());
+    defineField(this, "modeBtns", new Map());
+    defineField(this, "varRow");
+    defineField(this, "toastEl");
+    defineField(this, "requestEl");
+    defineField(this, "labelsEl");
+    defineField(this, "sectionCtl");
+    defineField(this, "plateCtl");
+    defineField(this, "wanderHint");
+    defineField(this, "frameEl");
+    defineField(this, "veil");
+    defineField(this, "resStone");
+    defineField(this, "resTimber");
+    defineField(this, "resFavor");
+    defineField(this, "resPop");
+    defineField(this, "dayEl");
+    defineField(this, "qualBars", new Map());
+    defineField(this, "toastTimer", 0);
     this.cb = t;
     const e = document.createElement("style");
     ((e.textContent = nv),
@@ -327,12 +335,12 @@ class sv {
     }
     (this.toolBtns.get(t).classList.add("on"),
       this.showVariants(t),
-      this.cb.onTool(t, La[t][0].key));
+      this.cb.onTool(t, BUILD_CATALOGUE[t][0].key));
   }
   showVariants(t) {
     ((this.varRow.style.display = "block"),
       (this.varRow.innerHTML = ""),
-      La[t].forEach((e, n) => {
+      BUILD_CATALOGUE[t].forEach((e, n) => {
         const s = document.createElement("div");
         ((s.className = "var" + (n === 0 ? " on" : "")),
           (s.innerHTML = `<div class="vl">${e.label}</div><div class="vh">${e.hint}</div>`),
@@ -387,15 +395,15 @@ class sv {
     this.wanderHint.style.display = t ? "block" : "none";
   }
   updateResources(t) {
-    (yt.folio
+    (gameState.folio
       ? ((this.resStone.textContent = "∞"), (this.resTimber.textContent = "∞"))
-      : ((this.resStone.textContent = String(Math.floor(yt.res.stone))),
-        (this.resTimber.textContent = String(Math.floor(yt.res.timber)))),
-      (this.resFavor.textContent = String(Math.floor(yt.res.favor))),
+      : ((this.resStone.textContent = String(Math.floor(gameState.res.stone))),
+        (this.resTimber.textContent = String(Math.floor(gameState.res.timber)))),
+      (this.resFavor.textContent = String(Math.floor(gameState.res.favor))),
       (this.resPop.textContent = String(t)));
     const e = this.root.querySelector("#folio-line");
     e &&
-      (e.textContent = yt.folio
+      (e.textContent = gameState.folio
         ? "✦ resources are off — restore them"
         : "✦ play without resources");
   }
@@ -489,7 +497,7 @@ class sv {
   }
   updateLabels(t, e, n) {
     if (((this.labelsEl.innerHTML = ""), !n)) return;
-    const s = new P();
+    const s = new Vector3();
     for (const r of t) {
       if (
         (s.set(r.x, r.y, r.z).project(e),
@@ -501,9 +509,12 @@ class sv {
         (o.textContent = r.name),
         (o.style.left = `${(s.x * 0.5 + 0.5) * 100}%`),
         (o.style.top = `${(-s.y * 0.5 + 0.5) * 100}%`));
-      const a = e.position.distanceTo(new P(r.x, r.y, r.z));
+      const a = e.position.distanceTo(new Vector3(r.x, r.y, r.z));
       ((o.style.opacity = String(Math.max(0, Math.min(0.85, 1.6 - a / 220)))),
         this.labelsEl.appendChild(o));
     }
   }
 }
+
+// --- generated exports ---
+export { Hud, iv, nv };

@@ -60,13 +60,44 @@ fully self-contained and could be lifted out and reused as-is.
 
 ## The vendor surface is small
 
-App code references only **64 distinct symbols** from the three.js half, over
-278 references. Most-used: `id`(25), `le`(23), `he`(17), `pe`(16), `Fe`(14),
-`ve`(12), `cx`(12), `Lt`(11), `rn`(9), `Ht`(6).
+App code references **48 real three.js symbols** over 237 references, plus one
+bundler helper. All 48 are identified in `VENDOR-MAP.md` at `certain`
+confidence — none unidentified.
 
-That is the entire dependency on 751KB of vendored three.js. Identifying those
-64 and replacing them with named imports from `three@0.180` would let the
-vendor copy be dropped from source entirely.
+Most-used: `P`=`Vector3`(60), `le`=`BoxGeometry`(23), `he`=`Mesh`(17),
+`pe`=`BufferAttribute`(16), `Fe`=`CylinderGeometry`(14),
+`ve`=`BufferGeometry`(12), `rn`=`Group`(9), `Ht`=`Color`(6).
+
+`K`(124 refs) is **not three.js** — it is esbuild/Vite's `__publicField`
+helper for class-field initialisers. It vanishes when compiled from real
+source and must not become an import.
+
+That is the entire dependency on 751KB of vendored three.js: 47 named exports
+from `three@0.180` plus `OrbitControls` from `three/addons`. `VENDOR-MAP.md`
+ends with the import block ready to paste.
+
+What is **absent** is as informative: no `Texture`/`TextureLoader`, no
+`GLTFLoader`, no `AnimationMixer`, no `Points`/`Sprite`, no `Box3`/`Frustum`,
+no `MeshStandardMaterial`. All geometry is generated in-process, all lighting
+is Lambert plus the engraving `onBeforeCompile` hook, and **nothing ships as
+an asset**. For a 5,500-line 3D game that is remarkable, and it is the other
+half of why this fits on a floppy disk.
+
+### These numbers were wrong until they were checked
+
+This section previously claimed **64 symbols over 278 references**. Both
+figures were artefacts of the 2-char heuristic:
+
+- **False negatives.** Only 2-char names were counted, so `P` = `Vector3` —
+  the single largest dependency at 60 references — was invisible.
+- **False positives.** 17 of the 64 were app-local: 14 object-literal keys
+  (`id`, `ax`, `ay`, `az`, `bx`, `by`, `bz`, `cx`, `x0`, `z0`…) which are not
+  preceded by `.` and so slipped past the lookbehind, and 3 indented locals.
+
+`scope_graph.py` now checks candidates against the names actually declared at
+top level **in the vendor half** (including continuation declarators, which
+three.js uses for its enum constants) and excludes object-key positions. It
+independently reproduces 48/237 exactly.
 
 ## Method, and where to distrust it
 

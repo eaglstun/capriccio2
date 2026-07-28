@@ -1,0 +1,65 @@
+{
+  "modules": {
+    "three": [
+      "BoxGeometry",
+      "BufferAttribute",
+      "BufferGeometry",
+      "CatmullRomCurve3",
+      "Color",
+      "ConeGeometry",
+      "CylinderGeometry",
+      "DepthTexture",
+      "DirectionalLight",
+      "DoubleSide",
+      "ExtrudeGeometry",
+      "FogExp2",
+      "Group",
+      "HemisphereLight",
+      "InstancedMesh",
+      "Line",
+      "LineBasicMaterial",
+      "LineDashedMaterial",
+      "LinearFilter",
+      "Matrix4",
+      "Mesh",
+      "MeshBasicMaterial",
+      "MeshLambertMaterial",
+      "MeshPhongMaterial",
+      "NoToneMapping",
+      "Object3D",
+      "OrthographicCamera",
+      "PCFShadowMap",
+      "Path",
+      "PerspectiveCamera",
+      "Plane",
+      "PlaneGeometry",
+      "Quaternion",
+      "Raycaster",
+      "SRGBColorSpace",
+      "Scene",
+      "ShaderMaterial",
+      "Shape",
+      "SphereGeometry",
+      "TorusGeometry",
+      "TubeGeometry",
+      "UnsignedIntType",
+      "Vector2",
+      "Vector3",
+      "WebGLRenderTarget",
+      "WebGLRenderer"
+    ],
+    "three/addons/controls/OrbitControls.js": [
+      "OrbitControls"
+    ],
+    "./_runtime.js": [
+      "defineField"
+    ]
+  },
+  "aliases": {
+    "Lu": {
+      "module": "three",
+      "name": "DynamicDrawUsage",
+      "why": "shadowed by a local in 07-citizens.js, so imported under its mangled name"
+    }
+  }
+}

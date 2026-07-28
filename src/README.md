@@ -2,9 +2,17 @@
 
 ## What this is
 
-A **lossless partition** of the game code extracted from
-`public/assets/index-DCXbw2vV.js`. Nothing has been renamed, reordered, or
-rewritten. Every byte is where it was; only the file boundaries are new.
+A **reversible reconstruction** of the game code from
+`public/assets/index-DCXbw2vV.js`. Statements are verbatim and in original
+order. What IS applied, all of it mechanically and all of it undoable:
+
+- identifier renames from `renames.json` (89 so far)
+- generated `import`/`export` blocks
+- one relocation to `_hoisted.js` (see below)
+
+`split_bundle.py` verifies by undoing all three and requiring the result to be
+**byte-identical** to the original app section. That is what makes editing
+code nobody can read safe: "looks right" becomes "provably the same program".
 
 Regenerate at any time:
 
@@ -16,15 +24,67 @@ The tool fails loudly rather than silently producing garbage: it verifies that
 concatenating these files in `manifest.json` order reproduces the original app
 section **byte for byte**, and it aborts if any anchor stops matching.
 
-## What this is NOT
+## It builds, and it runs
 
-**These are not yet working ES modules.** They cannot be imported or built.
-Every file references identifiers declared in other files, and there is not a
-single `import` or `export` among them — because the original was one
-concatenated scope and the identifiers are all mangled to one or two
-characters. Wiring them up requires scope analysis that has not been done yet.
+```sh
+yarn install
+yarn build        # -> dist/
+```
 
-`public/` remains the only runnable copy of the game. Serve from there.
+**662,197 bytes** against the original deployed **662,267** — a 0.01%
+difference. Loaded in a browser it renders the city, boots the simulation, and
+logs **zero console errors**.
+
+Fresh-state equivalence, rebuilt vs original, measured field by field on
+separate origins so neither could see the other's save:
+
+| | original | rebuilt |
+|---|---|---|
+| structures / pockets | 24 / 48 | 24 / 48 |
+| occupied / infill | 9 / 9 | 9 / 9 |
+| nav nodes | 1331 | 1331 |
+| population | 46 | 46 |
+| agent pool | 132 (46 active) | 132 (46 active) |
+| stone / timber / favor | 700 / 160 / 12 | 700 / 160 / 12 |
+| pocket kinds | 12/34/1/1 | 12/34/1/1 |
+| draw calls / triangles | 96 / 561,016 | 96 / 561,016 |
+| opening request | reach-terrace | reach-terrace |
+
+18 modules + `_hoisted.js` + `_runtime.js`, 89 identifiers renamed including
+all 48 three.js symbols.
+
+`public/` is still the reference copy — the artifact as Mollick deployed it.
+`dist/` is the reconstruction.
+
+### Three bugs that only running it could find
+
+Static analysis said this was correct. It was not.
+
+**1. `${}` interpolations were being masked.** `mask()` blanked entire template
+literals, but interpolations are live code. `16-hud.js` calls `rv(t)` only from
+inside `` `day ${rv(t)} · ${n[s]}` ``, so the reference was invisible, no import
+was generated, and the game threw `ReferenceError: rv is not defined`.
+
+**2. `scope_graph.py` had its own stale copy of `mask()`.** Fixing the shared
+`jsmask.py` changed nothing there for an embarrassing while.
+
+**3. `...spread` was read as property access.** The identifier regex used a
+`(?<![.\w$])` lookbehind to skip `.prop` — but `...name` also ends in a dot.
+Every spread-referenced identifier was invisible to both the renamer and the
+graph, so `...yt` survived while every other `yt` became `gameState`, and
+`CAP.status()` threw `ReferenceError: yt is not defined`.
+
+### The cycle, and `_hoisted.js`
+
+In one flat scope a `function` declaration is hoisted, so a caller can sit
+above it. Split into modules that becomes a forward import — and because
+bootstrap constructs `new Hud(...)`, hud importing `rv` from bootstrap made a
+real cycle. Rollup evaluated bootstrap first and the game died with
+`Cannot access 'Hud' before initialization`.
+
+`rv` is therefore relocated to `_hoisted.js`, reproducing the hoisting the
+original relied on. **The relocation is recorded in `manifest.json` and undone
+by the integrity check**, so byte-identity with the original still holds.
 
 ## The split
 
@@ -79,25 +139,20 @@ comments survived minification (see `../COMMENTS.md`).
 
 ## Next steps
 
-**Scope analysis is done** — see `../DEPENDENCIES.md`. The headline: **there
-are no dependency cycles.** Every cross-file reference points backwards, so
-this file order is already a valid topological order and `import`/`export` can
-be added without any circular-import handling.
+Steps 1–4 are done: vendor mapped, symbols renamed, modules emitted, build
+green and behaviourally identical. What remains is quality, not correctness:
 
-Remaining, in order:
-
-1. **Map the vendor surface.** App code touches only **64 distinct three.js
-   symbols**. Identify them and the vendored 751KB can be replaced with named
-   imports from `three@0.180`. → agent `capriccio-vendor-mapper`
-2. **Progressive renaming**, one subsystem at a time, preserving reversibility
-   via `renames.json`. → agent `capriccio-renamer`
-3. **Emit `import`/`export`.** Cheap once 1 and 2 are done, because the graph
-   is acyclic and the dependency lists are small (most files need fewer than
-   ten names).
-4. **A build** that produces a bundle behaving identically to `public/`.
-
-Until step 4 lands, `public/` is the source of truth and this directory is for
-reading.
+1. **Rename locals.** The top-level surface is named but method bodies are
+   still `t`/`e`/`n`. This needs real per-function scope analysis — a parser,
+   not a regex. Biggest readability win left by far.
+2. **Rewrite class fields.** Replace the 124 `defineField(this, ...)` calls
+   with real class-field syntax, then delete `_runtime.js`.
+3. **Fold `_hoisted.js` back** once `16-hud` and `17-bootstrap` no longer form
+   a cycle — likely after bootstrap is split into declarations and init.
+4. **Rename the remaining ~79 top-level symbols**, including the 14 shadowed
+   ones (each needs manual verification).
+5. **Behavioural diffing beyond fresh state** — replay an action log through
+   both builds and compare, rather than only comparing world genesis.
 
 ## Regenerating the analysis
 
