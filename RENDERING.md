@@ -11,9 +11,27 @@ Source lines ~25400–25900 in the local pretty-printed bundle.
 >   line. The burin-line and cloud machinery survives underneath.
 > - **Masonry** — the wall-course branch now draws corporate panelling
 >   (staggered seams, vent slats, inspection plates, corner bolts) when
->   `uCourseH >= 0.95`. Materials with `courseH < 0.95` (`stoneOld`, the
->   first-era fabric: initial ruins, rubble, the spring rim) keep the
->   original Roman courses on purpose — evidence there was a before.
+>   `uCourseH >= 0.95`, at panel sizes large enough not to read as
+>   ashlar. Materials with `courseH < 0.95` (`stoneOld`) draw
+>   **board-formed concrete** — shutter seams, form-tie holes on the
+>   pour grid, pour-lift tonal banding. The Roman coursing is gone;
+>   the ruins are ours now. The only remaining token of deep antiquity
+>   is deliberate spolia: one column embedded near the plaza edge, and
+>   roughly one rubble drum in ten (`Pa`).
+> - **Ruin geometry** (pass 3) — arches keep their silhouette but shed
+>   the Roman dressing: no imposts, no keystone; flat bearing pads, a
+>   service conduit over the crown, and bent rebar standing proud of
+>   every spalled break (`Hn`). Vault ribs became flat pour-joint bands.
+>   Column anchors became stacks with a service deck and a lit aerial.
+> - **Scenery** (pass 3, all scene-only, never in `structGroup`):
+>   benched landfill mounds with gull orbits, seven billboards still
+>   advertising via a runtime `CanvasTexture` atlas (zero shipped
+>   bytes), trash-can fires flickered by `world.sceneTick`, wrecked
+>   cars, containers, trolleys, pallets, fencing that ends in nothing.
+> - **Citizens** — per-instance clothing colour (`setColorAt`) and
+>   build (non-uniform instance scale), derived deterministically from
+>   the agent index; the figure base material is near-white so the
+>   instance colours carry.
 > - **Ink outlines** became neon rim light: hot pink near, cyan far.
 > - **Paper grain** became CRT scanlines plus chroma wobble, with a new
 >   `uTime`-driven VHS tracking bar (rolling displacement + chroma tear;
