@@ -54,13 +54,19 @@ Source lines ~25400–25900 in the local pretty-printed bundle.
 >     (board-formed concrete `stoneOld`, `rock`, `timber`, ground).
 >   - _1984_: materials flagged `dither` (`stone` — the corporate
 >     panelling fabric — and `distant`, the megastructure skyline)
->     quantize their engraved output to 1-bit through a 4×4 Bayer
->     threshold with an Atkinson-shaped contrast curve (highlights
->     blow, shadows crush), cell size held at ~2 screen px by
->     `engravingUniforms.uPxScale` so the supersampled downscale can't
->     grey it out. The fabric boundary is the style boundary. This is
->     ordered dither, not true Atkinson — a fragment shader cannot run
->     sequential error diffusion honestly.
+>     quantize their engraved output to 1-bit against a **64×64
+>     blue-noise threshold texture** (void-and-cluster, generated at
+>     load in ~50ms — deterministic, tiles on the torus, 4096 levels,
+>     zero shipped bytes) with an Atkinson-shaped contrast curve
+>     (highlights blow, shadows crush). The threshold is biased toward
+>     the mid wherever luminance is changing (`fwidth`), so clusters
+>     bunch along edges the way error diffusion does. Cell size is held
+>     at ~3 screen px by `engravingUniforms.uPxScale` so the
+>     supersampled downscale can't grey it out. The fabric boundary is
+>     the style boundary. This is still a screen, not true Atkinson — a
+>     fragment shader cannot run sequential error diffusion honestly —
+>     but it now has Atkinson's aperiodic clusters and edge behaviour
+>     instead of a repeating Bayer lattice.
 >   - _1984 for real_: PLATE captures run **true Atkinson error
 >     diffusion** on the CPU in `src/14-plates.js` (1/8 of the error to
 >     six neighbours, 2/8 discarded) — the still is rendered once at
