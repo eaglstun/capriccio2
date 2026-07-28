@@ -70,14 +70,6 @@ float vnoise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-// blue-noise threshold: 64x64 void-and-cluster texture, generated at load
-// (see makeBlueNoiseTexture). Aperiodic, 4096 levels, tiles seamlessly —
-// none of which a 4x4 Bayer lattice could do.
-uniform sampler2D uBlueNoise;
-float bnThresh(vec2 cell) {
-  return texture2D(uBlueNoise, (cell + 0.5) / 64.0).r;
-}
-
 void main() {
   vec2 px = 1.0 / uResolution;
 
@@ -91,9 +83,25 @@ void main() {
 
   float depthC = readDepth(suv);
   vec3 color = texture2D(tDiffuse, suv).rgb;
-  // chroma bleeds sideways inside the tracking bar
-  color.r = mix(color.r, texture2D(tDiffuse, suv + vec2(px.x * 3.0, 0.0)).r, tear * 0.85);
-  color.b = mix(color.b, texture2D(tDiffuse, suv - vec2(px.x * 3.0, 0.0)).b, tear * 0.85);
+
+  // ============ RGB SEPARATION ============
+  // inside the tracking bar the signal drops a generation: a tracking
+  // error is a TIMING fault, so luma and chroma drift out of alignment
+  // and the channels smear apart. R and B pull opposite ways; G nudges
+  // back the other way with a small vertical kick, because tracking is a
+  // line-sync fault. jag (the per-scanline hash) makes the tear ragged
+  // line to line rather than a clean smear. Hard edges on purpose —
+  // collage, not crossfade. Samples the displaced suv so separation and
+  // displacement agree, and clamps the coords so a large offset does not
+  // smear the frame edge across the border.
+  float band = step(trackPos, 0.085) * step(0.62, gate);
+  if (band > 0.5) {
+    float rag = 1.0 + 1.5 * jag;                    // 0.25 .. 1.75
+    vec2 clo = px, chi = 1.0 - px;
+    color.r = texture2D(tDiffuse, clamp(suv + vec2(px.x *  22.0, 0.0) * rag, clo, chi)).r;
+    color.g = texture2D(tDiffuse, clamp(suv + vec2(px.x *  -8.0, px.y * 4.0) * rag, clo, chi)).g;
+    color.b = texture2D(tDiffuse, clamp(suv + vec2(px.x * -16.0, 0.0) * rag, clo, chi)).b;
+  }
 
   bool skyC = depthC >= 0.999999;
   float distC = linDepth(depthC);
@@ -289,23 +297,6 @@ void main() {
   float vig = 1.0 - dot(vc, vc) * uVignette;
   color *= vig;
 
-  // ============ STYLE SLAB ============
-  // inside the tracking band the signal drops a generation: the same
-  // strip of frame re-renders as a 1-bit blue-noise-dithered plate. Hard
-  // edges on purpose — collage, not crossfade. (The band still carries
-  // the VHS displacement and chroma tear from above.)
-  float slab = step(trackPos, 0.085) * step(0.62, gate);
-  if (slab > 0.5) {
-    float sl = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    // Atkinson-shaped response: highlights blow, shadows crush
-    sl = clamp((sl - 0.5) * 1.5 + 0.56, 0.0, 1.0);
-    float bt = bnThresh(floor(gl_FragCoord.xy / 3.0));
-    // diffusion tell: where luminance is changing, pull the threshold
-    // toward the mid so clusters bunch along edges instead of screening
-    bt = mix(bt, 0.5, clamp(fwidth(sl) * 4.0, 0.0, 0.75));
-    color = sl > bt ? uPaper * 1.04 : vec3(0.17, 0.10, 0.32);
-  }
-
   gl_FragColor = vec4(color, 1.0);
 }
 `;
@@ -452,7 +443,6 @@ class J0 {
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
           uTime: { value: 0 },
-          uBlueNoise: { value: blueNoiseTex },
         },
         depthTest: !1,
         depthWrite: !1,
