@@ -121,6 +121,26 @@ const Or = { pos: new Vector3(), target: new Vector3() },
     onEngrave: () => Uh(),
     onBegin: () => {
       te.paused = !1;
+      // interstitial: the sky shader's own notes to itself, shown once,
+      // skippable by click or any key, never blocking the running world
+      const i = document.createElement("div");
+      ((i.id = "epigraph"),
+        (i.innerHTML =
+          "<div>faint horizontal burin lines, denser toward horizon, broken by cloudy noise</div>" +
+          "<div>dusk warms and darkens the paper sky a touch near the sun's side</div>"),
+        document.body.appendChild(i));
+      let t = !1;
+      const e = () => {
+        t ||
+          ((t = !0),
+          (i.style.opacity = "0"),
+          (i.style.pointerEvents = "none"),
+          window.removeEventListener("keydown", e, !0),
+          setTimeout(() => i.remove(), 1200));
+      };
+      (i.addEventListener("pointerdown", e),
+        window.addEventListener("keydown", e, !0),
+        setTimeout(e, 3e3));
     },
     onFolio: () => {
       ((gameState.folio = !gameState.folio),

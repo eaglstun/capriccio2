@@ -94,6 +94,15 @@ const nv = `
 #veil .begin { margin-top: 26px; border: 1px solid #6ff5ea; padding: 10px 38px; font-size: 13px;
   letter-spacing: 0.3em; cursor: pointer; background: none; font-family: inherit; color: #f4e9ff; }
 #veil .begin:hover { background: #ff71ce; color: #1a1036; border-color: #ff71ce; }
+#epigraph { position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; pointer-events: auto; cursor: pointer;
+  font-family: "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(to bottom, #241448 0%, #542a6e 46%, #c05490 78%, #ff9b6a 100%);
+  transition: opacity 1.1s; }
+#epigraph div { font-size: 13px; letter-spacing: 0.32em; line-height: 2; text-align: center;
+  color: #f4e9ff; max-width: 84vw; opacity: 0; animation: epi-in 1.5s ease 0.25s forwards; }
+#epigraph div + div { animation-delay: 1.0s; }
+@keyframes epi-in { to { opacity: 0.62; } }
 
 @media (max-width: 1020px) {
   #quals { display: none; }
