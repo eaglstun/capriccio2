@@ -2,6 +2,38 @@
 
 Source lines ~25400–25900 in the local pretty-printed bundle.
 
+> **This branch (`vaporwave`):** the machinery below is intact but
+> re-aimed at the end of humanity. What changed, in `src/00-shaders.js`:
+>
+> - **Sky** — the paper sky became a perpetual sunset gradient with a
+>   banded low sun, smog strata pooled on the horizon, a broken orbital
+>   ring, and azimuth-hashed light shafts rising off the megastructure
+>   line. The burin-line and cloud machinery survives underneath.
+> - **Masonry** — the wall-course branch now draws corporate panelling
+>   (staggered seams, vent slats, inspection plates, corner bolts) when
+>   `uCourseH >= 0.95`. Materials with `courseH < 0.95` (`stoneOld`, the
+>   first-era fabric: initial ruins, rubble, the spring rim) keep the
+>   original Roman courses on purpose — evidence there was a before.
+> - **Ink outlines** became neon rim light: hot pink near, cyan far.
+> - **Paper grain** became CRT scanlines plus chroma wobble, with a new
+>   `uTime`-driven VHS tracking bar (rolling displacement + chroma tear;
+>   every depth/colour read follows the displaced uv so the tear is whole).
+> - **New in the post pass:** an 8-tap two-ring neon bloom keyed on
+>   luminance _and_ saturation (paper never blooms, neon does), and a
+>   graded haze that reconstructs world height and drowns the low city
+>   in smog colour.
+> - **Palette now:** post `paper #e9b8d6`, `ink #ff3fae`; material
+>   `uInkCol #2b1a52`; stone family in `01-materials.js` is pastel
+>   violet/teal. The triplanar hatching is unchanged — it is what keeps
+>   this looking hand-made rather than filtered.
+> - The megastructure skyline itself is geometry, not sky: three merged
+>   scene-only meshes built at the end of `C_` in `src/05-world.js` from
+>   a fixed seed, never added to `structGroup`, so raycasting and
+>   gameplay cannot see it.
+>
+> The prose below describes the original engraving and is kept as the
+> reference for what the machinery was built to do.
+
 **The GLSL is the most readable code in the entire artifact.** Shaders live in
 template strings, and minifiers do not strip comments _inside_ strings — so
 the original author's comments survive verbatim. This is the only place in
