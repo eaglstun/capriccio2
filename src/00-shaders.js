@@ -37,6 +37,7 @@ uniform float uDusk;
 uniform float uVignette;
 uniform float uGrain;
 uniform float uLineWeight;
+uniform float uTime;
 
 float readDepth(vec2 uv) { return texture2D(tDepth, uv).x; }
 
@@ -69,13 +70,25 @@ float vnoise(vec2 p) {
 
 void main() {
   vec2 px = 1.0 / uResolution;
-  float depthC = readDepth(vUv);
-  vec3 color = texture2D(tDiffuse, vUv).rgb;
+
+  // VHS tracking: a slow-rolling displacement bar, latent most of the time
+  float trackPos = fract(vUv.y + uTime * 0.023);
+  float bar = smoothstep(0.0, 0.03, trackPos) * (1.0 - smoothstep(0.03, 0.10, trackPos));
+  float gate = smoothstep(0.58, 0.74, vnoise(vec2(uTime * 0.19, 4.7)));
+  float jag = hash21(vec2(floor(vUv.y * 140.0), floor(uTime * 11.0))) - 0.5;
+  float tear = bar * gate;
+  vec2 suv = vUv + vec2(tear * (0.006 + 0.012 * jag), 0.0);
+
+  float depthC = readDepth(suv);
+  vec3 color = texture2D(tDiffuse, suv).rgb;
+  // chroma bleeds sideways inside the tracking bar
+  color.r = mix(color.r, texture2D(tDiffuse, suv + vec2(px.x * 3.0, 0.0)).r, tear * 0.85);
+  color.b = mix(color.b, texture2D(tDiffuse, suv - vec2(px.x * 3.0, 0.0)).b, tear * 0.85);
 
   bool skyC = depthC >= 0.999999;
   float distC = linDepth(depthC);
 
-  vec4 ndcDir = vec4(vUv * 2.0 - 1.0, 1.0, 1.0);
+  vec4 ndcDir = vec4(suv * 2.0 - 1.0, 1.0, 1.0);
   vec4 vDir = uInvProjection * ndcDir;
   vec3 worldDir = normalize((uCameraWorld * vec4(vDir.xyz / vDir.w, 0.0)).xyz);
 
@@ -141,10 +154,10 @@ void main() {
     vec2 o1 = vec2(px.x, 0.0) * r;
     vec2 o2 = vec2(0.0, px.y) * r;
 
-    float dR = linDepth(readDepth(vUv + o1));
-    float dL = linDepth(readDepth(vUv - o1));
-    float dU = linDepth(readDepth(vUv + o2));
-    float dD = linDepth(readDepth(vUv - o2));
+    float dR = linDepth(readDepth(suv + o1));
+    float dL = linDepth(readDepth(suv - o1));
+    float dU = linDepth(readDepth(suv + o2));
+    float dD = linDepth(readDepth(suv - o2));
 
     // depth edge, scaled by distance so far geometry doesn't light up everywhere
     float dEdge = abs(dR - dL) + abs(dU - dD);
@@ -152,13 +165,13 @@ void main() {
     float depthEdge = smoothstep(depthThresh, depthThresh * 2.0, dEdge);
 
     // normal edge from reconstructed positions (creases, arch intrados)
-    vec3 pC = viewPos(vUv, depthC);
-    float ddRc = readDepth(vUv + o1); float ddLc = readDepth(vUv - o1);
-    float ddUc = readDepth(vUv + o2); float ddDc = readDepth(vUv - o2);
-    vec3 pR = viewPos(vUv + o1, ddRc);
-    vec3 pL = viewPos(vUv - o1, ddLc);
-    vec3 pU = viewPos(vUv + o2, ddUc);
-    vec3 pD = viewPos(vUv - o2, ddDc);
+    vec3 pC = viewPos(suv, depthC);
+    float ddRc = readDepth(suv + o1); float ddLc = readDepth(suv - o1);
+    float ddUc = readDepth(suv + o2); float ddDc = readDepth(suv - o2);
+    vec3 pR = viewPos(suv + o1, ddRc);
+    vec3 pL = viewPos(suv - o1, ddLc);
+    vec3 pU = viewPos(suv + o2, ddUc);
+    vec3 pD = viewPos(suv - o2, ddDc);
     vec3 dx = (abs(linDepth(ddRc) - distC) < abs(distC - linDepth(ddLc))) ? (pR - pC) : (pC - pL);
     vec3 dy = (abs(linDepth(ddUc) - distC) < abs(distC - linDepth(ddDc))) ? (pU - pC) : (pC - pD);
     vec3 nC = normalize(cross(dx, dy));
@@ -179,7 +192,25 @@ void main() {
     // neon rim light: hot pink up close, dissolving to cyan haze far off
     vec3 rimCol = mix(uInk, vec3(0.36, 0.94, 1.0), smoothstep(30.0, 180.0, distC));
     color = mix(color, rimCol, clamp(edge, 0.0, 1.0) * 0.92);
+
+    // graded haze: the low city drowns in smog-coloured air
+    vec3 wpC = (uCameraWorld * vec4(pC, 1.0)).xyz;
+    float lowness = 1.0 - smoothstep(-18.0, 34.0, wpC.y);
+    color = mix(color, vec3(0.50, 0.32, 0.45), fogF * lowness * 0.42);
   }
+
+  // ============ NEON BLOOM ============
+  // cheap two-ring bright-pass: saturated hot pixels bleed outward
+  vec3 bloom = vec3(0.0);
+  for (int k = 0; k < 8; k++) {
+    float ang = float(k) * 0.785398;
+    float rad = mod(float(k), 2.0) < 0.5 ? 3.5 : 8.0;
+    vec3 bs = texture2D(tDiffuse, suv + vec2(cos(ang), sin(ang)) * px * rad).rgb;
+    float mx = max(max(bs.r, bs.g), bs.b);
+    float sat = mx - min(min(bs.r, bs.g), bs.b);
+    bloom += bs * (smoothstep(0.60, 0.90, mx) * smoothstep(0.24, 0.52, sat));
+  }
+  color += bloom * 0.075;
 
   // ============ PAPER ============
   // tube tooth: static CRT scanlines + a coarse chroma wobble
@@ -260,6 +291,7 @@ class J0 {
           uVignette: { value: 0.58 },
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
+          uTime: { value: 0 },
         },
         depthTest: !1,
         depthWrite: !1,
@@ -299,7 +331,8 @@ class J0 {
   }
   render(t, e) {
     const n = this.postMat.uniforms;
-    ((n.uCameraNear.value = e.near),
+    ((n.uTime.value = performance.now() * 0.001),
+      (n.uCameraNear.value = e.near),
       (n.uCameraFar.value = e.far),
       n.uInvProjection.value.copy(e.projectionMatrixInverse),
       n.uCameraWorld.value.copy(e.matrixWorld),
