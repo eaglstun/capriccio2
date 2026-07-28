@@ -62,24 +62,24 @@ Two things I would keep frozen regardless:
 
 ## A0. The named citizens do not exist — and the tutorial sends you to find them ⭐ do first
 
-**This is a bug, found in play.** In tutorial beat 6 the card says *"Marcus is
-asking for a way up to the high terrace."* The player goes looking for Marcus.
+**This is a bug, found in play.** In tutorial beat 6 the card says _"Marcus is
+asking for a way up to the high terrace."_ The player goes looking for Marcus.
 
 There is no Marcus. He is a string in `12-requests.js` and a string in
 `19-tutorial.js`. Agents carry no name, no identity field of any kind, and
 nothing links a request to a citizen. The same is true of Tullia and Livia.
 
-It is a UX failure *caused by* the writing being good: the prose is specific
+It is a UX failure _caused by_ the writing being good: the prose is specific
 enough ("Marcus, lattice technician", "Livia sits in it at noon") that it
 implies a findable person, and then the tutorial explicitly points at him.
 
 ### Everything needed already exists
 
-| what | where | status |
-|---|---|---|
-| per-agent colour | `this.look[]` -> `setColorAt` / `instanceColor` | built, in use |
-| world-space labels | `labelsEl`, projects world -> screen | built, draws district names |
-| the request panel | `requestEl` in `16-hud.js` | built, currently inert |
+| what               | where                                           | status                      |
+| ------------------ | ----------------------------------------------- | --------------------------- |
+| per-agent colour   | `this.look[]` -> `setColorAt` / `instanceColor` | built, in use               |
+| world-space labels | `labelsEl`, projects world -> screen            | built, draws district names |
+| the request panel  | `requestEl` in `16-hud.js`                      | built, currently inert      |
 
 No new systems. Three existing ones wired together.
 
@@ -101,7 +101,7 @@ the other layers are useless without it — a distinctly coloured citizen is no
 easier to find in a crowd of 132 if you do not know where to look.
 
 **2. Give the current speaker a visible identity.** A distinct colour via
-`look[]`, plus a small marker so they read as *someone* rather than as a
+`look[]`, plus a small marker so they read as _someone_ rather than as a
 differently-dressed extra. Findable once framed; not lit up like a quest marker
 from across the map.
 
@@ -202,6 +202,96 @@ More agent states — pairs stopping to talk at gathering points, someone
 lingering at a fire, queues at a stall. Currently the loop is home → work →
 gather → home. This is presentation, not simulation, so it stays out of the
 frozen systems.
+### A5. Two more score tracks — driving, and strange
+
+The existing score is one loop: **Am9 – Fmaj9 – Cmaj9 – Gadd9** (i–VI–III–VII in
+A minor) at ~67bpm, drums entering at 0:30, one borrowed Dadd9 late. It is good
+and it is the *calm* end of the range. Two more, and **neither may be more
+tranquil than what exists.** More bass, more drums, and weird is welcome — it is
+vaporwave.
+
+Theory reference: `~/.claude/skills/guitar/references/theory.md`.
+Strudel reference: `~/.claude/skills/strudel/` — **read its gotchas first**, two
+of them silently produce no sound.
+
+#### Keep the tonic, change the mode
+
+All three tracks stay rooted on **A**, so any transition between them is a mode
+change rather than a key change and can happen without a jarring pivot.
+
+**Track 2 — A Dorian, driving.** Dorian is A B C D E F# G: natural minor with a
+**raised 6th**. That F# turns the IV chord major, and `Am → D` is the single
+most recognisable sound in the mode.
+
+- Loop: `Am9 | D6/9 | Am9 | Gadd9` — the D major where the ear expects Dm
+- ~78–84bpm, a real backbeat on 2 and 4, hats on sixteenths
+- **The bass carries this one** — a riff, not roots. Root / 5th / b7 / octave,
+  syncopated, well forward in the mix
+- This is the track for a city that is actually growing
+
+**Track 3 — the strange one.** Same tonic, harmony deliberately unstable. From
+the theory reference's substitution and borrowed-chord material:
+
+- Bar 1 is always `Am9` — the anchor
+- Bars 2–4 are **chosen per cycle** from a set that all voice-lead from A minor:
+  `Fmaj7#11` (lydian colour on VI), `Bm7b5` (the ii-half-diminished, tense),
+  `Dm6` (iv6, Dorian-tinged), `Abmaj7` (chromatic, genuinely foreign)
+- ~72bpm with a half-time feel, so it sits between the other two rather than
+  simply slower
+- Heavy detune, pitch drift, tape warble. Let it sag
+
+#### Generative — the part that matters
+
+"Generative" fails when it sounds random. The rule that prevents it:
+
+> **Randomise rhythm and choice. Never randomise pitch outside the scale.**
+> A random note in key sounds intentional. A random rhythm sounds broken.
+
+So constrain pitch material to the mode and let Strudel vary everything else:
+
+| technique | where |
+|---|---|
+| `chooseCycles(...)` | which chord fills bars 2–4 of track 3 |
+| `.degradeBy(0.2)` | hats, so the pattern breathes instead of ticking |
+| `.undegradeBy` | paired with the above for fills |
+| `.euclid(5,8)` / `(3,8)` | a shaker or rim that never lands square |
+| `.someCyclesBy(0.15, fn)` | an occasional whole-cycle variation |
+| `irand` + `.scale("A:dorian")` | a counter-melody that is always in key, never the same |
+| `perlin` | slow filter and detune drift — the tape sag |
+
+Track 2 should be **mostly fixed with generative edges** (hats, fills). Track 3
+should be **generative at its core** (the harmony itself moves).
+
+#### Which track plays when
+
+Do not shuffle. Bind it to the simulation, the way every other sound in this
+game already is — see `docs/AUDIO.md`.
+
+Suggested: **track 1 for a small city, track 2 as it grows, track 3 late or at
+night.** The score then reports the state of the world like the wind and the
+bell do. Cross-fade over several seconds; never cut.
+
+#### Technical, and non-obvious
+
+- **This project does NOT use `@strudel/web`.** It imports `@strudel/core`
+  subpaths plus `superdough` directly, with `webaudioOutput` inlined — see the
+  top of `src/18-music.js`. Keep that; the full bundle cost 908KB against
+  157KB for the subpath imports.
+- **Tempo is `setCps`, never `.cps()`.** The control sets a per-hap value the
+  scheduler never reads back, so the clock stays at the default and nothing
+  audibly changes.
+- **Sharps are `s`, not `#`** — `fs3`, not `f#3`. `#` fails to parse.
+- **Synthesized only.** No `samples()`, no CDN fetches, no shipped audio.
+- Build patterns after init, not at module top level.
+- The construction arpeggio stays bound to the sim as it is.
+
+#### Verify
+
+`yarn build` green, fresh-city numbers unchanged, and **listen to all three** —
+a pattern that throws at scheduler time fails silently to the eye. Report the
+bundle delta; three tracks of pattern code should be a few KB, not another
+dependency.
+
 
 ---
 
