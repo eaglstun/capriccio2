@@ -446,6 +446,57 @@ Do this one **after** the horizon — the horizon is the thing that actually
 bothers the eye, and clamping the camera without extending the ground would
 just hide one symptom of the same gap.
 
+### A12. You cannot tell what is carvable
+
+Walls and vaults are both the new-era fabric, so both render in the same 1-bit
+dither. Nothing distinguishes a surface that accepts a CARVE from one that does
+not, and the player has to learn it by clicking and being refused.
+
+**The actual rule**, from `draftAction`:
+
+| carvable | not carvable |
+|---|---|
+| `wall` structures | spans, vaults, stairs |
+| `giant` piers **not already carved** | ordinary piers, columns, all ornament |
+
+Note the second row — a giant pier can take exactly one carve, and after that
+its `carveAxis` is set and it is done.
+
+**There is also a bug.** `BuildOverlays.markCarvables` only iterates
+`e.action.t === "wall"`. **Giant piers are carvable and never marked**, so even
+the existing guide is lying by omission. Fix that as part of this.
+
+#### The design problem
+
+The dither already means something — it separates the end-of-humanity fabric
+from the first-era concrete (`courseH >= 0.95` vs below). Carvability is
+*orthogonal* to that: a player-built wall and a player-built vault are the same
+era and the same material, and only one takes a carve.
+
+So this needs a third signal that does not fight the era split.
+
+#### Recommended: subtle always, emphatic in context
+
+- **Always on, quietly** — carvable surfaces carry a slight difference in
+  treatment, enough to learn the language over time without making the world
+  look inconsistent. Surface relief, joint density, or a faint course marking
+  that reads as "this is a face you could open".
+- **Emphatic when CARVE is selected** — the existing dashed `markCarvables`
+  overlay already does this job and should get louder, plus the giant piers it
+  currently misses.
+
+Do not make the always-on state loud. Carvability matters for one tool out of
+seven, and a permanent hazard-stripe on every wall would cost more than it
+gives.
+
+#### Watch for
+
+- **Do not reuse the era distinction.** Old fabric already means something.
+- The signal must survive **at night**, when the fabric is mostly dark and the
+  neon carries the frame.
+- A giant pier that has already been carved must stop reading as carvable —
+  the state is per-structure, not per-type.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone
