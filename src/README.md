@@ -77,14 +77,33 @@ Start at `05-world.js` and `06-infill.js` — between them they hold the actual
 game. `00-shaders.js` is the most readable file in the project because GLSL
 comments survived minification (see `../COMMENTS.md`).
 
-## Next steps, roughly in order
+## Next steps
 
-1. **Scope analysis** — build the reference graph across files, then emit
-   `import`/`export` so this becomes a real module tree.
-2. **Progressive renaming** — with a module graph in place, rename mangled
-   identifiers one subsystem at a time. `05-world.js` and `06-infill.js` have
-   the best documentation behind them (`../SIMULATION.md`), so they are the
-   cheapest to name.
-3. **A build** that produces a bundle which behaves identically to `public/`.
-   Until then, `public/` is the source of truth and this directory is for
-   reading.
+**Scope analysis is done** — see `../DEPENDENCIES.md`. The headline: **there
+are no dependency cycles.** Every cross-file reference points backwards, so
+this file order is already a valid topological order and `import`/`export` can
+be added without any circular-import handling.
+
+Remaining, in order:
+
+1. **Map the vendor surface.** App code touches only **64 distinct three.js
+   symbols**. Identify them and the vendored 751KB can be replaced with named
+   imports from `three@0.180`. → agent `capriccio-vendor-mapper`
+2. **Progressive renaming**, one subsystem at a time, preserving reversibility
+   via `renames.json`. → agent `capriccio-renamer`
+3. **Emit `import`/`export`.** Cheap once 1 and 2 are done, because the graph
+   is acyclic and the dependency lists are small (most files need fewer than
+   ten names).
+4. **A build** that produces a bundle behaving identically to `public/`.
+
+Until step 4 lands, `public/` is the source of truth and this directory is for
+reading.
+
+## Regenerating the analysis
+
+```sh
+python3 tools/split_bundle.py --analyse    # section report
+python3 tools/split_bundle.py --write      # emit src/, verify reassembly
+python3 tools/scope_graph.py --shadows     # dependency graph + shadow audit
+python3 tools/scope_graph.py --json g.json # machine-readable graph
+```
