@@ -20,6 +20,7 @@ import { Ph, SectionMode, WanderMode } from "./13-modes.js";
 import { renderPlateImage } from "./14-plates.js";
 import { Soundscape } from "./15-audio.js";
 import { Hud } from "./16-hud.js";
+import { score } from "./18-music.js";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),
@@ -67,7 +68,13 @@ const ov = P_(Kt),
   ei = new Citizens(Kt, Ne, je),
   oi = new Requests(),
   Lh = new Soundscape();
-window.addEventListener("pointerdown", () => Lh.start(), { once: !0 });
+window.addEventListener(
+  "pointerdown",
+  () => {
+    (Lh.start(), score.start());
+  },
+  { once: !0 },
+);
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
 function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
@@ -465,13 +472,14 @@ function Nh(i) {
         ei.sync()),
       (Do += t),
       Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), updateQualityMeters(), gameState.dirty && ac()));
-    const e = ie.position;
-    Lh.update(t, {
-      dusk: ke.postMat.uniforms.uDusk.value,
-      waterDist: Kt.waterDistAt(e),
-      constructing: Ne.items.some((n) => n.stage < 1),
-      hour: te.hour,
-    });
+    const e = ie.position,
+      Vv = {
+        dusk: ke.postMat.uniforms.uDusk.value,
+        waterDist: Kt.waterDistAt(e),
+        constructing: Ne.items.some((n) => n.stage < 1),
+        hour: te.hour,
+      };
+    (Lh.update(t, Vv), score.update(t, Vv));
   }
   (ni.active || Te.update(),
     fe.updateResources(ei.population),

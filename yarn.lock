@@ -175,6 +175,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kabelsalat/core@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@kabelsalat/core@npm:0.4.0"
+  checksum: 10c0/76c26f00ff4d61a7be938c6b96153f1afc21497ee091bcf79764b6e8846c1fc00f3f785020aa91277db18656f20ea84fe036dff2991369e708f449159d786ef2
+  languageName: node
+  linkType: hard
+
+"@kabelsalat/lib@npm:0.4.1, @kabelsalat/lib@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "@kabelsalat/lib@npm:0.4.1"
+  dependencies:
+    "@kabelsalat/core": "npm:0.4.0"
+  checksum: 10c0/12ae89419cb88a32854e2e29a286104d41d6e8b5959abc1c153ede1270023563ac58fe28e057ef23cdf7ff55d106aa42fe3475844849bd31ca06521acc658a9b
+  languageName: node
+  linkType: hard
+
+"@kabelsalat/web@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "@kabelsalat/web@npm:0.4.1"
+  dependencies:
+    "@kabelsalat/core": "npm:0.4.0"
+    "@kabelsalat/lib": "npm:0.4.1"
+  checksum: 10c0/ab82149b2d6401422a1048059df6673a10b5e6a8a97793a20229c08590b66c0f514589177c2891c1a7a79ac99e26618786ee942875fb852efdf3d9b4a3887e75
+  languageName: node
+  linkType: hard
+
 "@rollup/rollup-android-arm-eabi@npm:4.62.3":
   version: 4.62.3
   resolution: "@rollup/rollup-android-arm-eabi@npm:4.62.3"
@@ -350,6 +376,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@strudel/core@npm:1.2.6, @strudel/core@npm:^1.2.6":
+  version: 1.2.6
+  resolution: "@strudel/core@npm:1.2.6"
+  dependencies:
+    "@kabelsalat/web": "npm:^0.4.1"
+    fraction.js: "npm:^5.2.1"
+  checksum: 10c0/6a7440cccafae4d256987e2d78aa94478ba5f9afaa03cdc67fbb81708228f728a3d282ecd741e8d0e9281030012e5f45d624c13f3bae3beeca0c6bb82325fc98
+  languageName: node
+  linkType: hard
+
+"@strudel/draw@npm:1.2.6":
+  version: 1.2.6
+  resolution: "@strudel/draw@npm:1.2.6"
+  dependencies:
+    "@strudel/core": "npm:1.2.6"
+  checksum: 10c0/d9c2745d64e55f2bec0a2d274e6fd2ee2b0893a5f5a83a9b36c1f563215f07aaa984da37c5773230f7b6c056931b8f4d5a0e0b3ee88c09d856564f469ad04f78
+  languageName: node
+  linkType: hard
+
+"@strudel/webaudio@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@strudel/webaudio@npm:1.3.0"
+  dependencies:
+    "@strudel/core": "npm:1.2.6"
+    "@strudel/draw": "npm:1.2.6"
+    superdough: "npm:1.3.0"
+    supradough: "npm:1.2.4"
+  checksum: 10c0/d20eb009687c746985000148ebf7032a3fecf0af24811822045d5b5a7b95a0b14ca97c97b55837a169870bb6c8cb59423006c4ea1579256085e1bbd7542dda02
+  languageName: node
+  linkType: hard
+
 "@types/estree@npm:1.0.9":
   version: 1.0.9
   resolution: "@types/estree@npm:1.0.9"
@@ -368,6 +425,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "capriccio@workspace:."
   dependencies:
+    "@strudel/core": "npm:^1.2.6"
+    "@strudel/webaudio": "npm:^1.3.0"
     three: "npm:0.180.0"
     vite: "npm:^5.4.0"
   languageName: unknown
@@ -486,6 +545,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fraction.js@npm:^5.2.1":
+  version: 5.3.4
+  resolution: "fraction.js@npm:5.3.4"
+  checksum: 10c0/f90079fe9bfc665e0a07079938e8ff71115bce9462f17b32fc283f163b0540ec34dc33df8ed41bb56f028316b04361b9a9995b9ee9258617f8338e0b05c5f95a
+  languageName: node
+  linkType: hard
+
 "fsevents@npm:~2.3.2, fsevents@npm:~2.3.3":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
@@ -541,6 +607,13 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 10c0/bbf2dcffe22d2b62d16de2711752070b539c0f644c7916f823ad6521986b2078cbe524f2d6240f58c46e9141ea0c7b87a029e100c0f7f175228cacaf30e41bba
+  languageName: node
+  linkType: hard
+
+"nanostores@npm:^0.11.3":
+  version: 0.11.4
+  resolution: "nanostores@npm:0.11.4"
+  checksum: 10c0/45ce577ccd96938b756c238e5783b0de3369381905f164e7bd003794d34a3c1eb7bddb049699a48a35bb03d9745bcb3cd6ad549b5e81493b2de22ae2bdccf14c
   languageName: node
   linkType: hard
 
@@ -710,6 +783,23 @@ __metadata:
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10c0/7bda1fc4c197e3c6ff17de1b8b2c20e60af81b63a52cb32ec5a5d67a20a7d42651e2cb34ebe93833c5a2a084377e17455854fee3e21e7925c64a51b6a52b0faf
+  languageName: node
+  linkType: hard
+
+"superdough@npm:1.3.0":
+  version: 1.3.0
+  resolution: "superdough@npm:1.3.0"
+  dependencies:
+    "@kabelsalat/lib": "npm:^0.4.1"
+    nanostores: "npm:^0.11.3"
+  checksum: 10c0/db598704c8bae22c002fd6f63423cb047affd7c78c9b0ae076a69ff4bd4174a5e33c8954219cb997f90c495b991f15e186f90561439612538704caf1238d6a64
+  languageName: node
+  linkType: hard
+
+"supradough@npm:1.2.4":
+  version: 1.2.4
+  resolution: "supradough@npm:1.2.4"
+  checksum: 10c0/4adb94630c411281941997c72ef46432ea4e5993c5ea75b0656ca822841da749023619a95d9fa3d013eabb404658ed8fdcd0ac8adc56a561a14c7a9afbc1ae45
   languageName: node
   linkType: hard
 
