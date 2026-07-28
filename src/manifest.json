@@ -1,0 +1,152 @@
+{
+  "source": "public/assets/index-DCXbw2vV.js",
+  "seam_line": 25401,
+  "vendor_lines": 25400,
+  "app_bytes": 174237,
+  "files": [
+    {
+      "file": "00-shaders.js",
+      "section": "shaders",
+      "bundle_start_line": 25401,
+      "bytes": 18025,
+      "statements": 6,
+      "header_bytes": 278
+    },
+    {
+      "file": "01-materials.js",
+      "section": "materials",
+      "bundle_start_line": 25918,
+      "bytes": 8126,
+      "statements": 22,
+      "header_bytes": 280
+    },
+    {
+      "file": "02-nav.js",
+      "section": "nav",
+      "bundle_start_line": 26208,
+      "bytes": 4281,
+      "statements": 2,
+      "header_bytes": 271
+    },
+    {
+      "file": "03-geometry.js",
+      "section": "geometry",
+      "bundle_start_line": 26365,
+      "bytes": 17890,
+      "statements": 22,
+      "header_bytes": 275
+    },
+    {
+      "file": "04-builders.js",
+      "section": "builders",
+      "bundle_start_line": 26962,
+      "bytes": 18484,
+      "statements": 6,
+      "header_bytes": 374
+    },
+    {
+      "file": "05-world.js",
+      "section": "world",
+      "bundle_start_line": 27603,
+      "bytes": 17101,
+      "statements": 10,
+      "header_bytes": 271
+    },
+    {
+      "file": "06-infill.js",
+      "section": "infill",
+      "bundle_start_line": 28218,
+      "bytes": 8971,
+      "statements": 4,
+      "header_bytes": 277
+    },
+    {
+      "file": "07-citizens.js",
+      "section": "citizens",
+      "bundle_start_line": 28494,
+      "bytes": 10389,
+      "statements": 11,
+      "header_bytes": 260
+    },
+    {
+      "file": "08-save.js",
+      "section": "save",
+      "bundle_start_line": 28849,
+      "bytes": 547,
+      "statements": 2,
+      "header_bytes": 258
+    },
+    {
+      "file": "09-catalogue.js",
+      "section": "catalogue",
+      "bundle_start_line": 28877,
+      "bytes": 2259,
+      "statements": 1,
+      "header_bytes": 263
+    },
+    {
+      "file": "10-overlays.js",
+      "section": "overlays",
+      "bundle_start_line": 28952,
+      "bytes": 3456,
+      "statements": 2,
+      "header_bytes": 261
+    },
+    {
+      "file": "11-tools.js",
+      "section": "tools",
+      "bundle_start_line": 29081,
+      "bytes": 10879,
+      "statements": 2,
+      "header_bytes": 266
+    },
+    {
+      "file": "12-requests.js",
+      "section": "requests",
+      "bundle_start_line": 29456,
+      "bytes": 3957,
+      "statements": 2,
+      "header_bytes": 256
+    },
+    {
+      "file": "13-modes.js",
+      "section": "modes",
+      "bundle_start_line": 29574,
+      "bytes": 4647,
+      "statements": 3,
+      "header_bytes": 267
+    },
+    {
+      "file": "14-plates.js",
+      "section": "plates",
+      "bundle_start_line": 29710,
+      "bytes": 1471,
+      "statements": 2,
+      "header_bytes": 252
+    },
+    {
+      "file": "15-audio.js",
+      "section": "audio",
+      "bundle_start_line": 29757,
+      "bytes": 4444,
+      "statements": 1,
+      "header_bytes": 267
+    },
+    {
+      "file": "16-hud.js",
+      "section": "hud",
+      "bundle_start_line": 29891,
+      "bytes": 22857,
+      "statements": 2,
+      "header_bytes": 248
+    },
+    {
+      "file": "17-bootstrap.js",
+      "section": "bootstrap",
+      "bundle_start_line": 30393,
+      "bytes": 16453,
+      "statements": 86,
+      "header_bytes": 271
+    }
+  ]
+}

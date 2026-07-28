@@ -66,6 +66,21 @@ The `type="module"` script tag means **the bundle will be refused by the
 browser if served with the wrong MIME type** — it must come back as
 `text/javascript`. Python's `http.server` gets this right.
 
+## `src/` is a reading copy, not a build
+
+`src/` holds the app section cut into 18 files by `tools/split_bundle.py`. It
+is a **lossless partition** — nothing renamed, nothing reordered, verified by
+byte-identical reassembly.
+
+**It is not runnable and not importable.** There are no `import`/`export`
+statements; every file references identifiers declared in the others, because
+the original was one concatenated scope with mangled names. Do not attempt to
+build or serve from `src/` until scope analysis has been done.
+
+`public/` remains the only runnable copy. If you change how the split works,
+re-run `python3 tools/split_bundle.py --write` — it aborts rather than emit a
+partition it cannot verify. See `src/README.md`.
+
 ## Working method
 
 Preferred order, by payoff:
