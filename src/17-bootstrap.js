@@ -452,7 +452,7 @@ let Ns = performance.now(),
 te.paused = !0;
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
-  if (((Aa.value += t), ov(Aa.value), !te.paused)) {
+  if (((Aa.value += t), ov(Aa.value), Kt.sceneTick && Kt.sceneTick(Aa.value), !te.paused)) {
     ((te.hour += t * te.speed),
       te.hour > 20.5 && ((te.hour = 5.6), te.day++, (gameState.dirty = !0)),
       os(te.hour),
