@@ -44,7 +44,8 @@
         "engravingUniforms",
         "syncLightUniforms",
         "t_"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "01-materials.js",
@@ -54,7 +55,7 @@
       "statements": 22,
       "header_bytes": 314,
       "prologue_bytes": 271,
-      "epilogue_bytes": 156,
+      "epilogue_bytes": 160,
       "imports": {
         "three": [
           "BufferAttribute",
@@ -90,9 +91,11 @@
         "isFlatGround",
         "lerp",
         "n_",
+        "r_",
         "seededRng",
         "terrainHeightAt"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "02-nav.js",
@@ -118,7 +121,8 @@
       },
       "exports": [
         "NavGraph"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "03-geometry.js",
@@ -173,7 +177,8 @@
         "newStructureParts",
         "setToneAttribute",
         "v_"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "04-builders.js",
@@ -217,7 +222,8 @@
       },
       "exports": [
         "buildStructureMesh"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "05-world.js",
@@ -282,7 +288,8 @@
         "P_",
         "Th",
         "World"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "06-infill.js",
@@ -322,7 +329,8 @@
       "exports": [
         "Co",
         "InfillSystem"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "07-citizens.js",
@@ -331,7 +339,7 @@
       "bytes": 10759,
       "statements": 11,
       "header_bytes": 294,
-      "prologue_bytes": 367,
+      "prologue_bytes": 371,
       "epilogue_bytes": 90,
       "imports": {
         "./_runtime.js": [
@@ -353,6 +361,7 @@
         ],
         "./01-materials.js": [
           "hashString",
+          "r_",
           "seededRng"
         ]
       },
@@ -366,13 +375,14 @@
         "W_",
         "X_",
         "gameState"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "08-save.js",
       "section": "save",
       "bundle_start_line": 28849,
-      "bytes": 601,
+      "bytes": 608,
       "statements": 2,
       "header_bytes": 292,
       "prologue_bytes": 113,
@@ -386,7 +396,8 @@
       "exports": [
         "loadGame",
         "saveGame"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "09-catalogue.js",
@@ -401,7 +412,8 @@
       "exports": [
         "BUILD_CATALOGUE",
         "VAULT_FOOTPRINTS"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "10-overlays.js",
@@ -431,7 +443,8 @@
       "exports": [
         "BuildOverlays",
         "Ol"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "11-tools.js",
@@ -479,7 +492,8 @@
       },
       "exports": [
         "PlacementTool"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "12-requests.js",
@@ -509,7 +523,8 @@
       },
       "exports": [
         "Requests"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "13-modes.js",
@@ -537,7 +552,8 @@
         "Ph",
         "SectionMode",
         "WanderMode"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "14-plates.js",
@@ -551,7 +567,8 @@
       "imports": {},
       "exports": [
         "renderPlateImage"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "15-audio.js",
@@ -569,7 +586,8 @@
       },
       "exports": [
         "Soundscape"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "16-hud.js",
@@ -578,7 +596,7 @@
       "bytes": 23131,
       "statements": 2,
       "header_bytes": 282,
-      "prologue_bytes": 240,
+      "prologue_bytes": 276,
       "epilogue_bytes": 54,
       "imports": {
         "./_runtime.js": [
@@ -590,6 +608,9 @@
         "./07-citizens.js": [
           "gameState"
         ],
+        "./_hoisted.js": [
+          "rv"
+        ],
         "three": [
           "Vector3"
         ]
@@ -598,17 +619,18 @@
         "Hud",
         "iv",
         "nv"
-      ]
+      ],
+      "relocated": []
     },
     {
       "file": "17-bootstrap.js",
       "section": "bootstrap",
       "bundle_start_line": 30393,
-      "bytes": 16966,
+      "bytes": 16715,
       "statements": 86,
       "header_bytes": 305,
       "prologue_bytes": 884,
-      "epilogue_bytes": 149,
+      "epilogue_bytes": 145,
       "imports": {
         "./00-shaders.js": [
           "J0",
@@ -699,10 +721,16 @@
         "os",
         "ov",
         "rc",
-        "rv",
         "sc",
         "te",
         "us"
+      ],
+      "relocated": [
+        {
+          "offset": 0,
+          "hoisted_start": 0,
+          "hoisted_len": 272
+        }
       ]
     }
   ]

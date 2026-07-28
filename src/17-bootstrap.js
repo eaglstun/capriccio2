@@ -1,7 +1,7 @@
 // Boot sequence, input wiring, quality meters, window.CAP
 //
 // Extracted from public/assets/index-DCXbw2vV.js, bundle lines
-// 30393–30967. Statements are verbatim; identifiers are
+// 30393–30951. Statements are verbatim; identifiers are
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write
 
@@ -22,22 +22,6 @@ import { Soundscape } from "./15-audio.js";
 import { Hud } from "./16-hud.js";
 // --- end generated imports ---
 
-function rv(i) {
-  const t = [
-    [100, "C"],
-    [90, "XC"],
-    [50, "L"],
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"],
-  ];
-  let e = "";
-  for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
-  return e || "I";
-}
 const Qe = document.getElementById("app"),
   Is = window.matchMedia?.("(pointer: coarse)").matches ?? !1,
   ke = new J0(Qe, { supersample: Is ? 1.05 : 1.4 }),
@@ -292,7 +276,7 @@ function rc() {
   ((gameState.res.stone += t.stone), (gameState.res.timber += t.timber));
   const e = Ne.serialize();
   (Ne.clear(),
-    Kt.rebuildAll([...Ah(), ...yt.playerActions]),
+    Kt.rebuildAll([...Ah(), ...gameState.playerActions]),
     Kt.seedGroundPockets(-18, 30, 14, 12, 34),
     Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77),
     Ih(e),
@@ -325,7 +309,7 @@ async function Uh(i = !1) {
     await new Promise((l) => setTimeout(l, 30)));
   const s = ke.snap(je, ie, e, n),
     r = gameState.plates.length + 1,
-    a = `${bi.length ? bi[0].name : yt.cityName} · day ${te.day}`,
+    a = `${bi.length ? bi[0].name : gameState.cityName} · day ${te.day}`,
     c = await renderPlateImage(s, a, r);
   (gameState.plates.push({
     cam: [...ie.position.toArray(), ...Te.target.toArray()],
@@ -589,7 +573,7 @@ window.CAP = {
       infill: Ne.items.length,
       navNodes: Kt.nav.nodes.length,
       pop: ei.population,
-      res: { ...yt.res },
+      res: { ...gameState.res },
       request: oi.active?.id ?? null,
       districts: bi.map((i) => i.name),
       draws: ke.lastDraws,
@@ -599,4 +583,4 @@ window.CAP = {
 };
 
 // --- generated exports ---
-export { Do, Fr, Lo, Ne, Or, Te, Us, ac, av, bi, cc, ei, fe, ic, ie, je, ke, ni, oc, oi, os, ov, rc, rv, sc, te, us };
+export { Do, Fr, Lo, Ne, Or, Te, Us, ac, av, bi, cc, ei, fe, ic, ie, je, ke, ni, oc, oi, os, ov, rc, sc, te, us };

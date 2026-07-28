@@ -249,7 +249,40 @@ def scan_top_level(text):
 
 
 ANCHORS_C = [(re.compile(p), n) for p, n in ANCHORS]
-IDENT_RX = re.compile(r"(?<![.\w$])([A-Za-z_$][\w$]*)")
+IDENT_RX = re.compile(r"(?<![\w$])([A-Za-z_$][\w$]*)")
+
+def is_property_access(masked, start):
+    """True if the identifier at `start` is a `.prop` access.
+
+    NOT a property access when preceded by `...` — spread syntax also ends in
+    a dot, and a naive `(?<![.\w$])` lookbehind silently skips every
+    spread-referenced identifier. That bug left `...yt` unrenamed while every
+    other `yt` became `gameState`, and the rebuilt game threw
+    `ReferenceError: yt is not defined` from CAP.status().
+    """
+    before = masked[:start]
+    if not before.endswith("."):
+        return False
+    return not before.endswith("...")
+
+
+# Statements hoisted out of their section into src/_hoisted.js.
+#
+# In one flat scope a `function` declaration is hoisted, so position does not
+# matter. Splitting into ES modules turns that free hoisting into a real
+# dependency — and where the reference points FORWARD it becomes an import
+# cycle. `16-hud.js` calls `rv()` (declared later, in the bootstrap section)
+# from inside a template literal; bootstrap in turn constructs `new Hud(...)`
+# at top level. Rollup has to pick an evaluation order for the cycle, picks
+# bootstrap first, and the game dies with
+#
+#     ReferenceError: Cannot access 'Hud' before initialization
+#
+# Relocating the function reproduces the hoisting the original relied on.
+# The relocation is RECORDED in the manifest and UNDONE by the integrity
+# check, so byte-identity with the original still holds.
+RELOCATE = [re.compile(r"^function rv\(i\) \{")]
+HOISTED = "_hoisted.js"
 
 
 def substitute(text, mapping):
@@ -269,6 +302,8 @@ def substitute(text, mapping):
         if new is None:
             continue
         a, b = mo.span(1)
+        if is_property_access(m, a):
+            continue
         # shorthand-property detection: `{ x }` / `, x ,` — renaming these
         # would silently change a property KEY, which the inverse check
         # cannot catch. Report them.
@@ -383,20 +418,31 @@ def main():
         counters[k] = counters.get(k, 0) + 1
         seq = counters[k]
         stem = f"{i:02d}-{k}" + (f"-{seq}" if seq > 1 else "")
-        body = app[s["start"]:s["end"]]
+        keep, reloc, pos = [], [], 0
+        for (sa, sb) in s["spans"]:
+            stmt = app[sa:sb]
+            if any(rx.match(stmt.lstrip()) for rx in RELOCATE):
+                reloc.append({"offset": pos, "text": stmt})
+                continue
+            keep.append(stmt)
+            pos += len(stmt)
+        body = "".join(keep)
         renamed, shorthand = substitute(body, renames)
         if shorthand:
             shorthand_hits.extend((stem, n) for n in set(shorthand))
         m = mask(renamed)
         names = []
         for (a, b) in s["spans"]:
-            st, _ = substitute(app[a:b], renames)
+            raw_stmt = app[a:b]
+            if any(rx.match(raw_stmt.lstrip()) for rx in RELOCATE):
+                continue          # moved to _hoisted.js; it exports these
+            st, _ = substitute(raw_stmt, renames)
             for nm in declared_names(st, mask(st)):
                 if nm not in names:
                     names.append(nm)
         parts.append({
             "stem": stem, "kind": k, "body": renamed, "masked": m,
-            "decls": names, "stmts": s["n"],
+            "decls": names, "stmts": s["n"], "reloc": reloc,
             "start_line": seam_line + app[:s["start"]].count("\n") + 1,
         })
 
@@ -404,10 +450,27 @@ def main():
     for p in parts:
         for nm in p["decls"]:
             owner.setdefault(nm, p["stem"])
+    for p in parts:
+        for r in p["reloc"]:
+            for nm in declared_names(r["text"], mask(r["text"])):
+                owner[substitute(nm, renames)[0]] = HOISTED[:-3]
 
     vspec = json.loads(VENDOR_IMPORTS.read_text()) if VENDOR_IMPORTS.exists() else {}
     vmodule = {n: mod for mod, ns in vspec.get("modules", {}).items() for n in ns}
     valias = vspec.get("aliases", {})
+
+    # ---- collect relocated statements into _hoisted.js ----
+    hoisted_pieces, hoist_index = [], {}
+    for p in parts:
+        for r in p["reloc"]:
+            rtext, _ = substitute(r["text"], renames)
+            hoist_index[(p["stem"], r["offset"])] = (
+                sum(len(x) for x in hoisted_pieces), len(rtext))
+            hoisted_pieces.append(rtext)
+    hoisted_body = "".join(hoisted_pieces)
+    hoisted_names = []
+    for piece in hoisted_pieces:
+        hoisted_names += declared_names(piece, mask(piece))
 
     # ---- pass 2: resolve references, emit imports/exports ----
     manifest = []
@@ -416,6 +479,8 @@ def main():
         for mo in IDENT_RX.finditer(p["masked"]):
             nm = mo.group(1)
             if nm in p["decls"] or nm in JS_KEYWORDS:
+                continue
+            if is_property_access(p["masked"], mo.start(1)):
                 continue
             prov = owner.get(nm)
             if prov:
@@ -460,7 +525,52 @@ def main():
             "epilogue_bytes": len(exports),
             "imports": {m: sorted(v) for m, v in needs.items()},
             "exports": exported,
+            "relocated": [
+                {"offset": r["offset"],
+                 "hoisted_start": hoist_index[(p["stem"], r["offset"])][0],
+                 "hoisted_len": hoist_index[(p["stem"], r["offset"])][1]}
+                for r in p["reloc"]
+            ],
         })
+
+    # ---- emit _hoisted.js ----
+    if hoisted_body:
+        hm = mask(hoisted_body)
+        hneeds = defaultdict(set)
+        for mo in IDENT_RX.finditer(hm):
+            nm = mo.group(1)
+            if nm in hoisted_names or nm in JS_KEYWORDS:
+                continue
+            if is_property_access(hm, mo.start(1)):
+                continue
+            prov = owner.get(nm)
+            if prov and prov != HOISTED[:-3]:
+                hneeds[f"./{prov}.js"].add(nm)
+            elif nm in vmodule:
+                hneeds[vmodule[nm]].add(nm)
+        himp = ""
+        if hneeds:
+            himp = GEN_OPEN + "\n".join(
+                f'import {{ {", ".join(sorted(v))} }} from "{m}";'
+                for m in sorted(hneeds)) + "\n" + GEN_CLOSE
+        hhead = (
+            "// Hoisted declarations.\n"
+            "//\n"
+            "// These `function` declarations were hoisted in the original single\n"
+            "// scope, so callers could sit ABOVE them. Splitting into ES modules\n"
+            "// turns that into a forward import — and, where the callee imports\n"
+            "// the caller back, an evaluation cycle that Rollup resolves in the\n"
+            "// wrong order (`Cannot access 'Hud' before initialization`).\n"
+            "//\n"
+            "// Moving them here reproduces the original hoisting. The relocation\n"
+            "// is recorded in manifest.json and undone by the integrity check,\n"
+            "// so byte-identity with the original bundle still holds.\n"
+            "// Regenerate: python3 tools/split_bundle.py --write\n\n"
+        )
+        hexp = EXP_OPEN + f"export {{ {', '.join(hoisted_names)} }};\n"
+        (OUT / HOISTED).write_text(hhead + himp + hoisted_body + hexp, encoding="utf8")
+        print(f"hoisted {len(hoisted_pieces)} statement(s) -> src/{HOISTED}: "
+              + ", ".join(hoisted_names))
 
     (OUT / "manifest.json").write_text(json.dumps({
         "source": str(BUNDLE), "seam_line": seam_line + 1,
@@ -479,6 +589,15 @@ def main():
         start = m["header_bytes"] + m.get("prologue_bytes", 0)
         end = len(raw) - m.get("epilogue_bytes", 0)
         body = raw[start:end]
+        if m.get("relocated"):
+            hraw = (OUT / HOISTED).read_text(encoding="utf8")
+            hbody = hraw[hraw.index(EXP_OPEN) - 0:] if False else hraw
+            hstart = hraw.index(GEN_CLOSE) + len(GEN_CLOSE) if GEN_CLOSE in hraw \
+                else hraw.index("\n\n") + 2
+            hcode = hraw[hstart:hraw.index(EXP_OPEN)]
+            for r in sorted(m["relocated"], key=lambda x: -x["offset"]):
+                piece = hcode[r["hoisted_start"]:r["hoisted_start"] + r["hoisted_len"]]
+                body = body[:r["offset"]] + piece + body[r["offset"]:]
         if inverse:
             body, _ = substitute(body, inverse)
         rebuilt.append(body)

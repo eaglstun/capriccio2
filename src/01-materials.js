@@ -302,4 +302,4 @@ const Vr = {
   $n = 7;
 
 // --- generated exports ---
-export { $n, Aa, Al, Ca, Dr, Nn, Vr, br, clamp, f_, fr, hashString, i_, isFlatGround, lerp, n_, seededRng, terrainHeightAt };
+export { $n, Aa, Al, Ca, Dr, Nn, Vr, br, clamp, f_, fr, hashString, i_, isFlatGround, lerp, n_, r_, seededRng, terrainHeightAt };

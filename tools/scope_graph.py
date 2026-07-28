@@ -30,10 +30,28 @@ import re
 import sys
 from collections import defaultdict
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from jsmask import mask  # noqa: E402
+
 SRC = pathlib.Path("src")
 BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
 SEAM_LINE = 25400          # vendor is lines 1..SEAM_LINE
-IDENT = re.compile(r"(?<![.\w$])([A-Za-z_$][\w$]*)")
+IDENT = re.compile(r"(?<![\w$])([A-Za-z_$][\w$]*)")
+
+def is_property_access(masked, start):
+    """True if the identifier at `start` is a `.prop` access.
+
+    NOT a property access when preceded by `...` — spread syntax also ends in
+    a dot, and a naive `(?<![.\w$])` lookbehind silently skips every
+    spread-referenced identifier. That bug left `...yt` unrenamed while every
+    other `yt` became `gameState`, and the rebuilt game threw
+    `ReferenceError: yt is not defined` from CAP.status().
+    """
+    before = masked[:start]
+    if not before.endswith("."):
+        return False
+    return not before.endswith("...")
+
 # Column-0 declarations in the vendor half — the authoritative list of names
 # the app can legitimately be importing from three.js.
 VENDOR_DECL = re.compile(
@@ -62,48 +80,6 @@ JS_GLOBALS = {
     "throw", "try", "catch", "finally", "switch", "case", "default", "delete",
     "void", "export", "import", "from", "as",
 }
-
-
-def mask(text):
-    """Blank out string/template/comment contents, preserving length."""
-    out = list(text)
-    i, n = 0, len(text)
-    while i < n:
-        c = text[i]
-        nxt = text[i + 1] if i + 1 < n else ""
-        if c == "/" and nxt == "/":
-            j = text.find("\n", i)
-            j = n if j < 0 else j
-            for k in range(i, j):
-                out[k] = " "
-            i = j
-            continue
-        if c == "/" and nxt == "*":
-            j = text.find("*/", i + 2)
-            j = n if j < 0 else j + 2
-            for k in range(i, j):
-                if out[k] != "\n":
-                    out[k] = " "
-            i = j
-            continue
-        if c in "'\"`":
-            q = c
-            j = i + 1
-            while j < n:
-                if text[j] == "\\":
-                    j += 2
-                    continue
-                if text[j] == q:
-                    j += 1
-                    break
-                j += 1
-            for k in range(i + 1, min(j - 1, n)):
-                if out[k] != "\n":
-                    out[k] = " "
-            i = j
-            continue
-        i += 1
-    return "".join(out)
 
 
 def load():
@@ -183,6 +159,8 @@ def main():
             if name in JS_GLOBALS:
                 continue
             a, b = mo.span(1)
+            if is_property_access(m, a):
+                continue
             prov = owner.get(name)
             if prov is not None:
                 if prov != fn and not is_object_key(m, a, b):

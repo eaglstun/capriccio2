@@ -19,7 +19,7 @@ function saveGame(i) {
     infill: i.infill,
     plates: gameState.plates.slice(-16),
     cityName: gameState.cityName,
-    doneRequests: [...yt.doneRequests],
+    doneRequests: [...gameState.doneRequests],
     folio: gameState.folio,
   };
   try {

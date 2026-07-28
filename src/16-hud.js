@@ -9,6 +9,7 @@
 import { Vector3 } from "three";
 import { gameState } from "./07-citizens.js";
 import { BUILD_CATALOGUE } from "./09-catalogue.js";
+import { rv } from "./_hoisted.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 

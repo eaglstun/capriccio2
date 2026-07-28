@@ -7,7 +7,7 @@
 
 // --- generated imports ---
 import { BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Object3D, SphereGeometry, Vector3 } from "three";
-import { hashString, seededRng } from "./01-materials.js";
+import { hashString, r_, seededRng } from "./01-materials.js";
 import { Co } from "./06-infill.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
