@@ -10,6 +10,18 @@ import { BufferAttribute, Color, DoubleSide, MeshBasicMaterial, MeshLambertMater
 import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders.js";
 // --- end generated imports ---
 
+/**
+ * Build a Lambert material with the engraving shader hooked into it.
+ *
+ * The whole look is injected via `onBeforeCompile` rather than a custom
+ * ShaderMaterial, so the material keeps three.js's own lighting, shadows and
+ * fog and only the SURFACE treatment is ours. That is why shadows work at all.
+ *
+ * `i` carries the per-material knobs — stone colour, joint alpha, course
+ * height (`uCourseH`, which also selects the masonry treatment: board-formed
+ * concrete below 0.95, corporate panelling above), and whether this material
+ * dithers to 1-bit.
+ */
 function createStoneMaterial(i = {}) {
   const t = new MeshLambertMaterial({ color: 16777215, side: i.side ?? DoubleSide, fog: !0 }),
     e = new Color(i.stone ?? "#ead4e6");
@@ -56,6 +68,17 @@ varying vec2 vToneE;`,
     t
   );
 }
+/**
+ * The material palette — every surface family in the world, built once.
+ *
+ * stone / stoneOld  end-of-humanity fabric vs first-era concrete
+ * rock / timber / plaster / green / fabric
+ * distant           the megastructure skyline
+ * rust / verdigris / toxic   the later palette families
+ * gold / window / figure / ghost / ghostBad / water
+ *
+ * `ghost` and `ghostBad` are the placement previews — valid and invalid.
+ */
 function n_() {
   // style is period: the end-of-humanity fabric (corporate panelling,
   // courseH >= 0.95) renders in the 1984 1-bit dither; the older fabric
@@ -165,6 +188,18 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   );
 }
 const Aa = { value: 0 };
+/**
+ * The neon glow material.
+ *
+ * Not one pink and one cyan: every ~7m cell of glow geometry hashes itself a
+ * lamp family (pink, cyan, sodium, mercury, halogen, acid green, magenta),
+ * then leans toward its district's signature colour. A second hash decides
+ * which signs are FAILING — flickering per tick, half-lit, or collapsed to
+ * magenta because a channel died.
+ *
+ * Because the variation is a hash of world position, it costs no extra draw
+ * calls, no per-instance attributes, and is stable across frames and reloads.
+ */
 function i_() {
   // neon is no longer one pink and one cyan. Every ~7m cell of glow
   // geometry hashes itself a lamp family — pink, cyan, sodium orange,
@@ -244,6 +279,14 @@ float gHash(vec2 p){ p=fract(p*vec2(234.34,435.345)); p+=dot(p,p+34.23); return 
     i
   );
 }
+/**
+ * Deterministic PRNG from a 32-bit seed. Returns a function producing [0, 1).
+ *
+ * This is the backbone of save replay. Every mesh builder seeds from the
+ * action id (`seededRng(id * 7919 + k)`), so replaying the action log rebuilds
+ * a byte-identical city. Nothing that renders persisted state may use
+ * Math.random().
+ */
 function seededRng(i) {
   let t = i >>> 0;
   return function () {
@@ -255,6 +298,7 @@ function seededRng(i) {
     );
   };
 }
+/** 3D integer hash -> [0, 1). The value-noise lattice sampler. */
 function fr(i, t, e = 0) {
   let n =
     (Math.imul(i, 374761393) +
@@ -266,15 +310,18 @@ function fr(i, t, e = 0) {
     ((n ^ (n >>> 16)) >>> 0) / 4294967296
   );
 }
+/** FNV-1a over a string -> uint32. Used to seed PRNGs from stable keys. */
 function hashString(i) {
   let t = 2166136261;
   for (let e = 0; e < i.length; e++)
     ((t ^= i.charCodeAt(e)), (t = Math.imul(t, 16777619)));
   return t >>> 0;
 }
+/** Smoothstep easing curve, 3t^2 - 2t^3. */
 function Al(i) {
   return i * i * (3 - 2 * i);
 }
+/** 2D value noise: bilinear blend of four hashed lattice corners, smoothstepped. */
 function s_(i, t, e = 0) {
   const n = Math.floor(i),
     s = Math.floor(t),
@@ -288,6 +335,11 @@ function s_(i, t, e = 0) {
     d = Al(o);
   return a + (c - a) * u + (l - a) * d + (a - c - l + h) * u * d;
 }
+/**
+ * Fractal brownian motion — `e` octaves of value noise, each half the
+ * amplitude and ~twice the frequency. The 2.02 lacunarity rather than exactly
+ * 2 keeps octaves from aligning into visible grid artefacts.
+ */
 function Sr(i, t, e = 4, n = 0) {
   let s = 0.5,
     r = 1,
@@ -306,6 +358,7 @@ const clamp = (i, t, e) => Math.max(t, Math.min(e, i)),
     const n = clamp((e - i) / (t - i), 0, 1);
     return n * n * (3 - 2 * n);
   };
+/** Pick a random element of `t` using seeded generator `i`. */
 function r_(i, t) {
   return t[Math.floor(i() * t.length) % t.length];
 }
@@ -315,9 +368,25 @@ const br = 20260726,
   Dr = 20,
   Lr = 26,
   Ca = -26;
+/** The canyon's centreline x at depth `t` — a slow sine, so it meanders. */
 function c_(i) {
   return o_ + Math.sin(i * 0.011) * 7;
 }
+/**
+ * The landform, before terracing. Layered features, each blended in:
+ *
+ *   1. base fBm, +/-2.75 units of gentle roll
+ *   2. the city plain — flattened almost to zero in the middle, so there is
+ *      somewhere buildable
+ *   3. a plateau to the north (`Dr`), and a shelf raised inside it
+ *   4. a mesa to the east (`Lr`), with a rounded summit
+ *   5. THE CANYON — carved along the meandering centreline from `c_`, with a
+ *      noisy width, dropping to `Ca`. The pow(f, 1.25) makes its walls steep
+ *      rather than a smooth valley.
+ *
+ * All noise is seeded from `br` (a fixed constant), so the world is the same
+ * for every player.
+ */
 function rawTerrainHeight(i, t) {
   let e = (Sr(i * 0.012, t * 0.012, 4, br) - 0.5) * 5.5;
   const n = Math.max(Math.abs(i + 25) / 95, Math.abs(t - 20) / 85),
@@ -339,6 +408,16 @@ function rawTerrainHeight(i, t) {
     m = Ca + (Sr(t * 0.02, 3.3, 3, br + 9) - 0.5) * 4 + t * 0.012;
   return ((e = lerp(e, m, Math.pow(f, 1.25))), e);
 }
+/**
+ * The playable terrain height: `rawTerrainHeight` TERRACED into 2.3-unit steps.
+ *
+ * The smoothstep across each step boundary rounds the edge slightly, and the
+ * result is blended 88% toward the terraced value rather than 100% — so the
+ * steps read as strata with a little slump rather than as a staircase.
+ *
+ * This is the single function most responsible for the Piranesi silhouette,
+ * and it is why flat buildable ledges exist at all.
+ */
 function terrainHeightAt(i, t) {
   const e = rawTerrainHeight(i, t),
     n = 2.3,
@@ -349,6 +428,7 @@ function terrainHeightAt(i, t) {
     c = (r + a) * n;
   return lerp(e, c, 0.88);
 }
+/** Surface normal by central difference, sampling +/- `e` on both axes. */
 function terrainNormalAt(i, t, e = 0.9) {
   const n = terrainHeightAt(i - e, t),
     s = terrainHeightAt(i + e, t),
@@ -356,13 +436,27 @@ function terrainNormalAt(i, t, e = 0.9) {
     o = terrainHeightAt(i, t + e);
   return new Vector3(n - s, 2 * e, r - o).normalize();
 }
+/** Slope as 1 - normal.y: 0 is flat, 1 is vertical. */
 function terrainSlopeAt(i, t) {
   return 1 - terrainNormalAt(i, t).y;
 }
+/**
+ * Is this walkable/buildable? Slope under 0.22.
+ *
+ * Used by `NavGraph.seedTerrain` to decide where ground nodes go, so this one
+ * threshold determines the whole reachable extent of the map.
+ */
 function isFlatGround(i, t) {
   return terrainSlopeAt(i, t) < 0.22;
 }
 const d_ = 300;
+/**
+ * The terrain mesh: a 600x600 plane at 520x520 segments, displaced by
+ * `terrainHeightAt`.
+ *
+ * ~271k vertices, built once. It is the largest single mesh in the scene and
+ * the reason the triangle count sits around 580k.
+ */
 function f_() {
   const t = d_ * 2,
     e = new PlaneGeometry(t, t, 520, 520);

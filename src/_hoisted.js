@@ -11,6 +11,15 @@
 // so byte-identity with the original bundle still holds.
 // Regenerate: python3 tools/split_bundle.py --write
 
+/**
+ * Format the day number for the HUD.
+ *
+ * Lives here rather than in the bootstrap module because the HUD calls it from
+ * inside a template literal, while bootstrap constructs the HUD — a cycle that
+ * ES modules resolve in the wrong order. In the original single scope,
+ * function hoisting made position irrelevant; splitting into modules turned
+ * that into a real dependency. See the header above.
+ */
 function rv(i) {
   const t = [
     [100, "C"],

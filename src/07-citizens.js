@@ -12,6 +12,19 @@ import { Co } from "./06-infill.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
+/**
+ * The population: a fixed pool of agents walking the nav graph.
+ *
+ * Drawn as THREE InstancedMeshes (three body variants, chosen by agent index
+ * % 3) so the whole population costs three draw calls regardless of size.
+ * `dummy` is a scratch Object3D used to compose each instance matrix — the
+ * standard three.js instancing pattern, and the reason there is no Object3D
+ * per citizen.
+ *
+ * The pool is allocated once at `Co` slots and never grows or shrinks;
+ * citizens are switched on and off via `active`. No allocation at runtime, no
+ * GC churn in the frame loop.
+ */
 class Citizens {
   constructor(t, e, n) {
     defineField(this, "world");
@@ -68,6 +81,7 @@ class Citizens {
       });
     }
   }
+  /** Nav nodes citizens live at: every FINISHED house. Homes are houses only. */
   spawnPoints() {
     const t = [];
     for (const e of this.infill.items) {
@@ -77,6 +91,7 @@ class Citizens {
     }
     return t;
   }
+  /** Nav nodes citizens work at: finished stalls, workshops and gardens. */
   workPoints() {
     const t = [];
     for (const e of this.infill.items)
@@ -89,6 +104,15 @@ class Citizens {
       }
     return t;
   }
+  /**
+   * Where citizens congregate in the evening: the town centre, anywhere
+   * explicitly designated `gathering`, and — the interesting one — every
+   * pocket with `scenic > 0.7`.
+   *
+   * That is the only use of `scenic` outside pocket selection. It is computed
+   * for every pocket and never shown in the HUD, but it decides where people
+   * choose to spend their evenings. A view is not scored; it is visited.
+   */
   gatherPoints() {
     const t = [],
       e = this.world.nav.nearest(new Vector3(-18, 0, 28), 20);
@@ -98,6 +122,18 @@ class Citizens {
         n.designation === "gathering" && n.navNode >= 0 && t.push(n.navNode));
     return t;
   }
+  /**
+   * Reconcile the active population against available housing. Called after
+   * the world changes.
+   *
+   * population = min(poolSize, 14 + infill.capacity), and capacity is
+   * `finished houses x4 + 8` — so the pool cap is a hard ceiling on the city.
+   *
+   * Newly activated agents are assigned a home (round-robin over houses) and a
+   * work node (strided by 7 so neighbours don't all commute to the same
+   * stall). Agents above the population line are simply switched off; their
+   * slots are reused unchanged next time the city grows.
+   */
   sync() {
     this.population = Math.min(Co, 14 + this.infill.capacity);
     const t = this.spawnPoints(),
@@ -122,6 +158,16 @@ class Citizens {
       } else o || (r.active = !1);
     }
   }
+  /**
+   * Send agent `t` to nav node `e`, if a route exists.
+   *
+   * Paths are stored as cloned Vector3s rather than node indices, so the agent
+   * keeps walking a sensible line even if the graph is edited mid-journey —
+   * an undone structure tombstones its nodes, and a path holding indices would
+   * start reading dead entries.
+   *
+   * A path of fewer than two points is discarded: there is nowhere to walk.
+   */
   goto(t, e) {
     if (e < 0) return;
     const n = this.world.nav.nearest(t.pos, 16);
@@ -132,6 +178,30 @@ class Citizens {
       (t.seg = 0),
       (t.segT = 0));
   }
+  /**
+   * Advance every citizen. `t` is delta seconds, `e` is the hour.
+   *
+   * THE DAILY ROUTINE. Each agent has a personal `offset` of about +/-0.8h
+   * added to the clock, so the population doesn't move in lockstep — some
+   * leave early, some linger:
+   *
+   *   07.4-11.0   home  -> towork
+   *   12.0-16.6   work  -> wander   (small chance per second)
+   *   16.8-19.4   work/wander -> gather
+   *   19.6-06.0   anything -> tohome
+   *   otherwise   a rare idle stroll to a linked neighbour
+   *
+   * `towork`/`tohome` are the walking states; on arriving with an empty path
+   * they settle into `work`/`home`.
+   *
+   * Movement walks the path segment by segment, `segT` being progress along
+   * the current one, so speed is even regardless of segment length.
+   *
+   * Two touches that sell it: `bob` runs ~7x faster while walking and lifts
+   * the body slightly, and STANDING agents are nudged off the node by a
+   * sin/cos of their own offset — otherwise everyone at a gathering point
+   * would occupy exactly the same spot.
+   */
   update(t, e) {
     const n = this.workPoints(),
       s = this.gatherPoints(),

@@ -48,6 +48,16 @@ function atkinsonDither(img) {
   }
   return (g.putImageData(id, 0, 0), c);
 }
+/**
+ * Compose a finished plate: dither the render, mat it on paper, and caption it.
+ *
+ * `i` is the source image, `t` the caption (district and day), `e` the plate
+ * number. Returns a data URL.
+ *
+ * The caption uses Roman numerals via `tv` — Piranesi numbered his plates
+ * Tav. I, Tav. II. Keeping that convention at the end of humanity says the
+ * recording survived the culture that invented it.
+ */
 function renderPlateImage(i, t, e) {
   return new Promise((n) => {
     const s = new Image();
@@ -79,6 +89,7 @@ function renderPlateImage(i, t, e) {
       (s.src = i));
   });
 }
+/** Integer to Roman numerals, for the Tav. plate numbering. */
 function tv(i) {
   const t = [
     [100, "C"],

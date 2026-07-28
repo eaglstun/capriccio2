@@ -236,8 +236,11 @@ class Hud {
           What you engrave is what remains.
         </div>
         <button class="begin">BEGIN</button>
-        <a href="/about.html" style="margin-top:16px; font-size:10px; letter-spacing:0.16em;
-          opacity:0.45; font-style:italic; color:inherit; text-decoration:none">about this city</a>
+        <div style="margin-top:16px; font-size:10px; letter-spacing:0.16em; opacity:0.45; font-style:italic">
+          <a href="/how-to-play.html" style="color:inherit; text-decoration:none">how to play</a>
+          <span style="opacity:0.5; margin:0 8px">·</span>
+          <a href="/about.html" style="color:inherit; text-decoration:none">about this city</a>
+        </div>
       </div>
     `;
     const e = t.querySelector("#palette"),

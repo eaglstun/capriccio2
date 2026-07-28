@@ -1,4 +1,4 @@
-# CAPRICCIO
+# CAPRICCIO 2
 
 **A city of arches, grown inside its own monuments — and then, the same city at the end of humanity.**
 
@@ -85,6 +85,7 @@ reverted:
 | `about.html`       | colophon and the things worth noticing                         |
 | `docs/SIMULATION.md`    | how the game actually works — pockets, agents, growth          |
 | `docs/PROGRESSION.md`   | how it plays out: favor tiers, the five requests, the ceilings |
+| `docs/CHARACTERS.md`    | the cast, the five requests, and the rules the writing follows |
 | `docs/RENDERING.md`     | the engraving renderer, and what the reskin did to it          |
 | `docs/AUDIO.md`         | the procedural soundscape                                      |
 | `docs/COMMENTS.md`      | every comment that survived minification                       |

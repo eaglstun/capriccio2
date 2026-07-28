@@ -9,6 +9,30 @@
 import { Ch, gameState } from "./07-citizens.js";
 // --- end generated imports ---
 
+/**
+ * Write the whole game to localStorage under `Ch` ("capriccio-save-v1").
+ *
+ * The save is an ACTION LOG, not a world snapshot — `actions` is every build
+ * the player has made, and `loadGame`'s caller replays them through
+ * `World.applyAction` to reconstruct the city. See docs/SIMULATION.md.
+ *
+ * Two consequences worth knowing:
+ *   - Construction must stay deterministic. Every mesh builder seeds its PRNG
+ *     from the action id, so a replay rebuilds the identical city.
+ *   - The seeded starting ruins are NOT in here. They are regenerated at world
+ *     gen and deliberately kept out of the player log, which keeps saves small
+ *     and the ruins canonical.
+ *
+ * `i` carries the frame-local bits the caller owns: {day, hour, infill}, where
+ * infill is `InfillSystem.serialize()` — the vernacular buildings, which are
+ * procedural and so cannot be derived from the action log alone.
+ *
+ * Only the last 16 plates survive. That cap is the game's closest thing to a
+ * goal: engraving a seventeenth pushes the oldest out of the record forever.
+ *
+ * Failure is swallowed: a full or disabled localStorage must not take the game
+ * down mid-play.
+ */
 function saveGame(i) {
   const t = {
     v: 1,
@@ -27,6 +51,14 @@ function saveGame(i) {
   } catch {}
   gameState.dirty = !1;
 }
+/**
+ * Read the save back, or null if there isn't a usable one.
+ *
+ * Returns null on all three failure modes — absent, unparseable, or written by
+ * a different schema version — so the caller has exactly one case to handle:
+ * null means "start fresh". The version gate is a hard equality check rather
+ * than a range, so a future format cannot be half-read by this build.
+ */
 function loadGame() {
   try {
     const i = localStorage.getItem(Ch);
