@@ -173,7 +173,9 @@ function flyCam(i, t, e = 1.9) {
 // stored — the save format is frozen, and hashing the id means a reload
 // produces the same Marcus, and any future request gets a speaker for free.
 // Modulo 14 because population is never below the base 14, so the speaker
-// is always an active, walking citizen.
+// is always an active, walking citizen. The "voice:" salt is not decoration:
+// it is the one prefix under which all five request ids land on five
+// DIFFERENT citizens — Marcus and Tullia must not share a body.
 let Uv = "";
 function syncSpeaker() {
   const i = oi.active;
@@ -181,7 +183,7 @@ function syncSpeaker() {
     (ei.setSpeaker(-1), (Uv = ""));
     return;
   }
-  (ei.setSpeaker(hashString(i.id) % 14),
+  (ei.setSpeaker(hashString("voice:" + i.id) % 14),
     (Uv = (i.text.match(/—\s*(.*)$/s)?.[1] ?? "").trim()));
 }
 const Or = { pos: new Vector3(), target: new Vector3() },

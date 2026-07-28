@@ -263,6 +263,84 @@ edge, the luminance curve, the `bnThresh` lookup and the two-tone assignment.
 in daylight and at night**. It is intermittent — gated on noise — so a
 screenshot at an arbitrary moment will usually miss it. Drive `uTime` or wait.
 
+### A7. Citizens get their own outline colour
+
+The neon rim light currently treats every surface the same — hot pink near,
+cyan far, whether it is a wall, a wrecked car or a person. **Give the citizens
+their own outline colour** so the living things read differently from the
+scenery.
+
+#### The problem, stated properly
+
+Outlines are computed in the **screen-space post pass** from depth and normal
+discontinuities. That pass sees a colour buffer and a depth buffer and has **no
+idea what object any pixel belongs to**. There is nothing to branch on.
+
+So this needs a mask, and the useful finding is that one is already available
+for free.
+
+#### The alpha channel of the intermediate target is unused
+
+Verified:
+
+- The offscreen target is created without a `format` override, so it is RGBA
+- Every material writes `gl_FragColor = vec4(engraved, diffuseColor.a)`, and
+  opaque materials give `1.0`
+- The post pass reads only `.rgb` and outputs `vec4(color, 1.0)`
+
+**So alpha is a spare per-pixel channel that currently carries no information.**
+
+#### The approach
+
+1. **The `figure` material writes a distinctive alpha** — say `0.5` — instead
+   of `1.0`. It is opaque and blending is off, so this changes nothing about how
+   it draws; the value simply lands in the buffer.
+2. **The post pass samples `texture2D(tDiffuse, suv).a`** and, where it is near
+   that value, uses a different outline colour.
+3. Everything else is untouched.
+
+**Test with a threshold, not equality.** The target uses `LinearFilter`, so
+alpha is interpolated across edges — which is convenient, because the outline
+lives exactly at those edges. A band like `a > 0.35 && a < 0.75` will catch the
+silhouette; tune it against a real frame.
+
+#### Alternative if that proves awkward
+
+Do the citizen edge **in the material pass** as a fresnel rim on the figure
+material, and leave the post-pass outline alone. Entirely local, no cross-pass
+plumbing, no risk. The cost is that it reads as a rim glow rather than a crisp
+silhouette line, because the material pass cannot see a neighbour's depth.
+
+Try the alpha mask first; fall back to this if the mask fights anything.
+
+#### What colour
+
+Suggestion, not instruction: **something warm.** The palette is sodium,
+mercury, halogen, pink and cyan — all of it lamps and signage. The citizens are
+the only living things in the frame, and a warm outline against the cold neon
+would say so without a word of UI. Amber or a warm white.
+
+Avoid the district colours — those already mean something and reusing them
+would muddy both.
+
+#### Watch for
+
+- **Plates are safe, but confirm it.** The post pass outputs `vec4(color, 1.0)`,
+  so the intermediate alpha never reaches the exported PNG. Take a plate with
+  citizens in frame and check they are not transparent.
+- **The infill buildings must not pick this up.** Only the figure material
+  writes the marker value.
+- **Check it at night**, when the citizens are near-black shapes and their
+  outline is most of what you can see of them.
+- Do not let the citizen outline glow brighter than the neon; they should read
+  as *different*, not as *important*.
+
+#### Verify
+
+`yarn build` green, fresh-city numbers unchanged, and screenshots of citizens
+outlined distinctly in daylight and at night — plus one plate confirming the
+export is unaffected.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone

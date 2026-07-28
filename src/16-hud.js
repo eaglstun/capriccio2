@@ -78,8 +78,7 @@ const nv = `
    discovers the count by filling it */
 #folio-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 9px; }
 #folio-strip i { display: block; aspect-ratio: 3/2; border: 1px solid rgba(111,245,234,0.3); font-style: normal; }
-#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); cursor: pointer; }
-#folio-strip i.held:hover { border-color: #6ff5ea; }
+#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); }
 #folio-strip i.last { border-color: #ff71ce; box-shadow: 0 0 5px rgba(255,113,206,0.6); }
 #wanderhint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 7px 18px;
   font-size: 11px; letter-spacing: 0.15em; display: none; font-style: italic; }
@@ -495,10 +494,6 @@ class Hud {
         (r &&
           (s.classList.add("held"),
           (s.title = `Tav. ${tv(r.n)} — ${r.caption}`),
-          // each plate keeps its full camera pose; clicking the slot eases
-          // the camera back to exactly that view — then and now, compared
-          // from the same position
-          (s.onclick = () => this.cb.onPlateSlot?.(r)),
           n === t.length - 1 && s.classList.add("last")),
           e.appendChild(s));
       }
