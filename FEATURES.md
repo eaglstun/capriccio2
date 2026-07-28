@@ -341,6 +341,45 @@ would muddy both.
 outlined distinctly in daylight and at night — plus one plate confirming the
 export is unaffected.
 
+### A8. A hint after Tullia asks for water
+
+The second request is the hardest thing in the game and nothing helps the
+player with it.
+
+> *"No water climbs so high. The spring across the great void mocks us every
+> dry summer."* — Tullia
+
+To satisfy it the player must get a water source above y=14 on the far side of
+the canyon. That means: know that **aqueducts carry water** and an ordinary
+bridge does not, find the spring, and cross the void.
+
+Measured, the distances are unforgiving:
+
+| from | to | distance |
+|---|---|---|
+| spring pool (126, −6) | high terrace (−28, −86) | **174 units** |
+| spring pool | massif rim (92, −10) | 34 |
+| massif rim | high terrace | **142** |
+
+Max span is **55** under 60 clearance, **95** at 60+, **150** at 150+. So even
+the shortest leg of the crossing cannot be done in one span at any clearance
+the player is likely to hold — **it has to be broken into legs with
+intermediate piers**, and nothing in the game says so.
+
+**Add a hint.** Requirements:
+
+- It appears **only after the player has struggled** — some delay, or some
+  number of growth ticks with the request unmet. Not on arrival; being told the
+  answer immediately is worse than the current silence.
+- It is **a citizen speaking**, not a tooltip. `docs/CHARACTERS.md` has the
+  rules — a consequence, not an instruction. Something that gestures at
+  aqueducts and at piers standing in the void without naming a tool or a
+  button.
+- It should not repeat endlessly. Once, or at most twice.
+
+Keep the discovery. The hint should make the player think "oh — I could put a
+pier *in* the canyon", not hand them a recipe.
+
 ### A4. Ambient life
 
 More agent states — pairs stopping to talk at gathering points, someone
