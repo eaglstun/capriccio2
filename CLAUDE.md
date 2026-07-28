@@ -1,4 +1,4 @@
-# CAPRICCIO — project notes
+# CAPRICCIO 2 — project notes
 
 ## What this is
 

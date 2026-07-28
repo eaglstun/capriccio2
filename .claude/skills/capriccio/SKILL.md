@@ -16,6 +16,7 @@ with no source.
 | `docs/SIMULATION.md`  | the runtime model — pockets, agents, growth, all five stat formulas |
 | `docs/RENDERING.md`   | how the engraving look works (triplanar hatching)                   |
 | `docs/AUDIO.md`       | the procedural soundscape                                           |
+| `docs/CHARACTERS.md`  | the cast and the rules the citizen writing follows                  |
 | `docs/COMMENTS.md`    | every comment that survived minification — the only stated intent   |
 | `tools/probe.js` | `CAPX` introspection helpers                                        |
 
