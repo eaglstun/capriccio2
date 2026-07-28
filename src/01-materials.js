@@ -7,7 +7,7 @@
 
 // --- generated imports ---
 import { BufferAttribute, Color, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, PlaneGeometry, Vector3 } from "three";
-import { Q0, e_, engravingUniforms, t_ } from "./00-shaders.js";
+import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders.js";
 // --- end generated imports ---
 
 function createStoneMaterial(i = {}) {
@@ -30,6 +30,8 @@ function createStoneMaterial(i = {}) {
         (n.uniforms.uLocalGain = { value: i.gain ?? 1 }),
         (n.uniforms.uDither = { value: i.dither ? 1 : 0 }),
         (n.uniforms.uPxScale = engravingUniforms.uPxScale),
+        (n.uniforms.uDistrictPos = districtUniforms.uDistrictPos),
+        (n.uniforms.uDistrictCol = districtUniforms.uDistrictCol),
         (n.vertexShader = n.vertexShader
           .replace(
             "#include <common>",
@@ -68,6 +70,11 @@ function n_() {
     r = createStoneMaterial({ stone: "#4fb3a5", jointAlpha: 0 }),
     o = createStoneMaterial({ stone: "#f0619e", jointAlpha: 0 }),
     a = createStoneMaterial({ stone: "#dcc9e8", jointAlpha: 0.1, courseH: 1.5, gain: 0.34, dither: !0 }),
+    // material families beyond the violet: nameable, placeable, and each
+    // holding its own value band so the hues can argue without mud
+    rust = createStoneMaterial({ stone: "#b06a3c", jointAlpha: 0.3, courseH: 1.1 }),
+    verdigris = createStoneMaterial({ stone: "#5fbf9e", jointAlpha: 0.24, courseH: 0.98 }),
+    toxic = createStoneMaterial({ stone: "#b9cf4e", jointAlpha: 0.14, courseH: 2.5 }),
     c = new MeshPhongMaterial({
       color: "#e07ac0",
       emissive: "#6a1d5a",
@@ -144,6 +151,9 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
       green: r,
       fabric: o,
       distant: a,
+      rust,
+      verdigris,
+      toxic,
       gold: c,
       window: l,
       figure: h,
@@ -155,8 +165,83 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
 }
 const Aa = { value: 0 };
 function i_() {
+  // neon is no longer one pink and one cyan. Every ~7m cell of glow
+  // geometry hashes itself a lamp family — pink, cyan, sodium orange,
+  // mercury blue-green, halogen white, acid green, magenta — then the
+  // district palette pulls it toward the quarter's signature. A second
+  // hash decides which signs are failing: flickering, half-lit, or
+  // collapsed to magenta because a channel died. The base material
+  // colour (driven by time of day) survives as pure intensity.
   const i = new MeshBasicMaterial({ color: "#ffa8e0", fog: !1 });
-  return ((i.toneMapped = !1), i);
+  return (
+    (i.toneMapped = !1),
+    (i.onBeforeCompile = (t) => {
+      ((t.uniforms.uTimeG = Aa),
+        (t.uniforms.uDistrictPos = districtUniforms.uDistrictPos),
+        (t.uniforms.uDistrictCol = districtUniforms.uDistrictCol),
+        (t.vertexShader = t.vertexShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+varying vec3 vWpG;`,
+          )
+          .replace(
+            "#include <fog_vertex>",
+            `#include <fog_vertex>
+vWpG = (modelMatrix * vec4(transformed,1.0)).xyz;`,
+          )),
+        (t.fragmentShader = t.fragmentShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+uniform float uTimeG;
+uniform vec3 uDistrictPos[8];
+uniform vec3 uDistrictCol[8];
+varying vec3 vWpG;
+float gHash(vec2 p){ p=fract(p*vec2(234.34,435.345)); p+=dot(p,p+34.23); return fract(p.x*p.y); }`,
+          )
+          .replace(
+            "#include <opaque_fragment>",
+            `{
+  vec3 cell = floor(vWpG / 7.0);
+  float h1 = gHash(cell.xz + cell.y * 7.31);
+  float h2 = gHash(cell.zx * 1.73 + cell.y * 3.7 + 11.0);
+  vec3 hue =
+    h1 < 0.22 ? vec3(1.05, 0.30, 0.76) :   // neon pink
+    h1 < 0.42 ? vec3(0.26, 0.95, 1.05) :   // neon cyan
+    h1 < 0.56 ? vec3(1.10, 0.60, 0.16) :   // sodium vapour
+    h1 < 0.68 ? vec3(0.44, 1.02, 0.80) :   // mercury vapour
+    h1 < 0.78 ? vec3(1.02, 1.00, 0.94) :   // halogen white
+    h1 < 0.90 ? vec3(0.64, 1.05, 0.28) :   // acid green
+                vec3(1.05, 0.26, 1.05);    // magenta
+  // failing filaments
+  float lit = 1.0;
+  if (h2 < 0.10) {
+    // flicker: random per tick, mostly on, sometimes gone
+    float fl = gHash(vec2(floor(uTimeG * 13.0), h1 * 97.0));
+    lit = fl < 0.62 ? 1.0 : 0.12;
+  } else if (h2 < 0.19) {
+    lit = 0.34;                            // half-lit, limping
+  } else if (h2 < 0.27) {
+    hue = vec3(1.02, 0.22, 0.92);          // a channel died: stuck magenta
+  }
+  // the quarter's signature leans on its lamps
+  vec3 dAcc = vec3(0.0); float dW = 0.0;
+  for (int dk = 0; dk < 8; dk++) {
+    float dRad = uDistrictPos[dk].z;
+    if (dRad > 1.0) {
+      float w = 1.0 - smoothstep(dRad * 0.55, dRad, distance(vWpG.xz, uDistrictPos[dk].xy));
+      dAcc += uDistrictCol[dk] * w; dW += w;
+    }
+  }
+  if (dW > 0.001) hue = mix(hue, (dAcc / dW) * 1.35, min(dW, 1.0) * 0.45);
+  float inten = max(outgoingLight.r, max(outgoingLight.g, outgoingLight.b));
+  gl_FragColor = vec4(hue * inten * lit, diffuseColor.a);
+}`,
+          )));
+    }),
+    i
+  );
 }
 function seededRng(i) {
   let t = i >>> 0;
