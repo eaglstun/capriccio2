@@ -263,6 +263,7 @@ function Hn(i, t, e, n, s = {}) {
           (m = Math.max(m, _.springY + _.r + (a ? 1.05 : 0.55)));
       return m;
     };
+  const rb = [];
   if ((c.moveTo(-l, 0), c.lineTo(l, 0), r > 0.01)) {
     const f = Math.max(3, Math.round(i / 2.2));
     let m = l;
@@ -273,8 +274,9 @@ function Hn(i, t, e, n, s = {}) {
         A = m - (m - g) * 0.4,
         b = Math.max(h(A), t * Math.max(0.12, 1 - p));
       c.lineTo(A, b);
+      rb.push([A, b]);
       const v = Math.max(h(g), b - r * o() * t * 0.1);
-      (c.lineTo(g, v), (m = g));
+      (c.lineTo(g, v), rb.push([g, v]), (m = g));
     }
     c.lineTo(-l, Math.max(h(-l), t * (1 - r * o() * 0.9)));
   } else (c.lineTo(l, t), c.lineTo(-l, t));
@@ -294,8 +296,32 @@ function Hn(i, t, e, n, s = {}) {
     bevelEnabled: !1,
     curveSegments: s.curveSeg ?? 20,
   });
-  if ((u.translate(0, 0, -e / 2), !a || !n.length)) return u;
-  const d = [u];
+  u.translate(0, 0, -e / 2);
+  // rebar at the breaks: bent bars stand proud of every spalled edge
+  const rods = [];
+  if (r > 0.05)
+    for (const [rx, ry] of rb) {
+      if (o() < 0.4) continue;
+      const rn = 1 + Math.floor(o() * 2);
+      for (let rk = 0; rk < rn; rk++) {
+        const rlen = 0.5 + o() * 0.95,
+          rod = new BoxGeometry(0.05, rlen, 0.05);
+        (rod.translate(0, rlen / 2 - 0.18, 0),
+          rod.rotateZ((o() - 0.5) * 0.9),
+          rod.rotateX((o() - 0.5) * 0.5),
+          rod.translate(
+            rx + (o() - 0.5) * 0.7,
+            ry - 0.04,
+            (o() - 0.5) * e * 0.6,
+          ),
+          rods.push(rod));
+      }
+    }
+  if (!a || !n.length)
+    return rods.length
+      ? ec([u, ...rods].map((f) => (f.index ? f.toNonIndexed() : f)), !1)
+      : u;
+  const d = [u, ...rods];
   for (const f of n) {
     const m = Math.min(0.5, Math.max(0.24, f.r * 0.16)),
       _ = e + 0.34,
@@ -308,11 +334,13 @@ function Hn(i, t, e, n, s = {}) {
     const p = new ExtrudeGeometry(g, { depth: _, bevelEnabled: !1, curveSegments: 20 });
     (p.translate(f.cx, f.springY, -_ / 2), d.push(p));
     for (const b of [-1, 1]) {
-      const v = new BoxGeometry(m * 2.6, 0.55, e + 0.5);
-      (v.translate(f.cx + b * (f.r + m * 0.5), f.springY - 0.28, 0), d.push(v));
+      // flat bearing pad where the rib lands — a poured joint, not an impost
+      const v = new BoxGeometry(m * 2.3, 0.2, e + 0.42);
+      (v.translate(f.cx + b * (f.r + m * 0.5), f.springY - 0.1, 0), d.push(v));
     }
-    const A = new BoxGeometry(Math.min(0.85, f.r * 0.3), m * 2.1, e + 0.46);
-    (A.translate(f.cx, f.springY + f.r + m * 0.35, 0), d.push(A));
+    // service conduit slung across the face above the crown; no keystone
+    const A = new BoxGeometry(Math.min(f.r * 2.4, i - 0.6), 0.13, 0.13);
+    (A.translate(f.cx, f.springY + f.r + m + 0.3, e * 0.5 + 0.04), d.push(A));
   }
   return ec(
     d.map((f) => (f.index ? f.toNonIndexed() : f)),
@@ -372,14 +400,15 @@ function v_(i, t, e, n = {}) {
     for (let h = 0; h <= c; h++) {
       const u = (e * h) / c,
         d = new Shape();
-      (d.moveTo(i + 0.22, 0),
-        d.absarc(0, 0, i + 0.22, 0, Math.PI, !1),
+      // flat pour-joint band, not a protruding rib — segments of a cast tube
+      (d.moveTo(i + 0.09, 0),
+        d.absarc(0, 0, i + 0.09, 0, Math.PI, !1),
         d.lineTo(-i + 0.1, 0),
         d.absarc(0, 0, i - 0.1, Math.PI, 0, !0),
         d.closePath());
-      const f = new ExtrudeGeometry(d, { depth: 0.55, bevelEnabled: !1, curveSegments: 18 });
+      const f = new ExtrudeGeometry(d, { depth: 1.1, bevelEnabled: !1, curveSegments: 18 });
       (f.rotateY(Math.PI / 2),
-        f.translate(Math.min(u, e - 0.55), 0, 0),
+        f.translate(Math.min(u, e - 1.1), 0, 0),
         a.push(f));
     }
     return ec(
@@ -476,23 +505,37 @@ function x_(i, t, e) {
   return l.merge();
 }
 function Pa(i) {
+  // concrete debris: tilted slab fragments, rebar proud of the breaks.
+  // one drum in ten is older than everything else here — spolia
   const t = new MeshBuilder(),
     e = i();
-  if (e < 0.45) {
+  if (e < 0.1) {
     const s = 0.35 + i() * 0.5,
-      r = 0.5 + i() * 2.2;
+      r = 0.5 + i() * 1.6;
     t.cylinder(s, r, [0, 0, 0], 10, 1, s * (0.86 + i() * 0.1));
+  } else if (e < 0.62) {
+    const sw = 1.2 + i() * 1.6,
+      sd = 0.9 + i() * 1.2,
+      sl = new BoxGeometry(sw, 0.22 + i() * 0.12, sd);
+    (sl.rotateZ(0.12 + i() * 0.4),
+      sl.rotateY(i() * Math.PI),
+      sl.translate(0, 0.28, 0),
+      t.addRaw(sl));
+    const rn = 2 + Math.floor(i() * 2);
+    for (let rk = 0; rk < rn; rk++) {
+      const rl = 0.4 + i() * 0.7,
+        rod = new BoxGeometry(0.045, rl, 0.045);
+      (rod.rotateZ((i() - 0.5) * 1.2),
+        rod.rotateX((i() - 0.5) * 0.7),
+        rod.translate((i() - 0.5) * sw * 0.8, 0.3 + rl * 0.3, (i() - 0.5) * sd * 0.7),
+        t.addRaw(rod));
+    }
   } else
-    e < 0.75
-      ? t.box(
-          0.7 + i() * 1.4,
-          0.4 + i() * 0.8,
-          0.6 + i() * 1,
-          [0, 0, 0],
-          i() * Math.PI,
-        )
-      : (t.box(0.9, 0.3, 0.9, [0, 0, 0], i()),
-        t.box(0.7, 0.35, 0.7, [0.05, 0.3, 0.05], i()));
+    e < 0.85
+      ? (t.box(0.9, 0.3, 0.9, [0, 0, 0], i()),
+        t.box(0.7, 0.35, 0.7, [0.05, 0.3, 0.05], i()))
+      : (t.box(0.7 + i() * 1.4, 0.4 + i() * 0.8, 0.6 + i() * 1, [0, 0, 0], i() * Math.PI),
+        t.box(0.5, 0.5, 0.45, [0.3, 0.2, -0.2], i()));
   const n = t.merge();
   return (Ri(n, 0, 1.2, 0.86, 1), n);
 }
@@ -526,19 +569,27 @@ function buildAnchor(i) {
     s = i.topY - n,
     r = i.age ?? 0.15;
   if (i.style === "column") {
+    // a stack, not a column: poured footing, tapered flue, service deck, aerial
     const o = new MeshBuilder(r),
       a = clamp(s * 0.075, 1.1, 2);
     (o.box(a * 3.2, 1.2, a * 3.2, [0, 0, 0]),
       o.box(a * 2.7, 1, a * 2.7, [0, 1.2, 0]),
       o.cylinder(a, s - 4.4, [0, 2.2, 0], 18, 1, a * 0.88),
-      o.box(a * 2.6, 0.7, a * 2.6, [0, s - 2.2, 0]),
-      o.box(a * 3, 1.5, a * 3, [0, s - 1.5, 0]));
+      o.box(a * 1.6, 1.7, a * 1.6, [0, s - 2.2, 0]),
+      o.box(a * 3, 0.5, a * 3, [0, s - 0.5, 0]),
+      o.box(0.14, 2.8, 0.14, [a * 1.05, s, 0]),
+      o.box(0.9, 0.05, 0.05, [a * 1.05, s + 2.1, 0]));
+    for (const cp of [-1, 1])
+      (o.box(0.1, 0.6, 0.1, [cp * (a * 1.4), s, a * 1.4]),
+        o.box(0.1, 0.6, 0.1, [cp * (a * 1.4), s, -a * 1.4]));
     const c = o.merge();
     (Ri(c, 0, 4, 0.85, 1, r),
       Yt(t, "stone", be(c, i.x, n, i.z)),
       (t.cost.stone = Math.round(s * 3)));
     const g = new CylinderGeometry(a * 1.08, a * 1.08, 0.13, 12);
-    (g.translate(i.x, n + s - 2.7, i.z), Yt(t, "glow", g));
+    (g.translate(i.x, n + s - 0.78, i.z), Yt(t, "glow", g));
+    const g2 = new BoxGeometry(0.2, 0.3, 0.2);
+    (g2.translate(i.x + a * 1.05, n + s + 2.8, i.z), Yt(t, "glow", g2));
   } else {
     const o = i.style === "giant" ? 9 : 4.6;
     if (i.style === "giant" && i.carveAxis) {

@@ -513,23 +513,27 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     ink = 1.0 - smoothstep(0.015, 0.015 + w, d);
     blockTone = eHash21(floor(co / g)) - 0.5;
   } else if (ch < 0.95) {
-    // the first era: coursed roman masonry survives on the oldest stone
+    // board-formed concrete: shutter seams and form-tie holes.
+    // this is the oldest fabric there is now — poured, not laid
     float along = an.x > an.z ? wp.z : wp.x;
     float course = floor(wp.y / ch);
     float fy = abs(fract(wp.y / ch) - 0.5) * ch;
     float wy = fwidth(wp.y) + 0.012;
-    float hJoint = 1.0 - smoothstep(0.014, 0.014 + wy, ch * 0.5 - fy);
-    float stag = mod(course, 2.0) * 1.05;
-    float vx = abs(fract((along + stag) / 2.1) - 0.5) * 2.1;
+    float hJoint = 1.0 - smoothstep(0.012, 0.012 + wy, ch * 0.5 - fy);
+    ink = hJoint * 0.75;
+    // form-tie holes on the pour grid
+    float tw = ch * 3.4;
+    float th2 = ch * 2.2;
+    vec2 tie = vec2((fract(along / tw) - 0.5) * tw, (fract(wp.y / th2) - 0.5) * th2);
     float wx = fwidth(along) + 0.012;
-    float vJoint = 1.0 - smoothstep(0.012, 0.012 + wx, vx);
-    ink = max(hJoint, vJoint * 0.8);
-    blockTone = eHash21(vec2(course, floor((along + stag) / 2.1))) - 0.5;
+    ink = max(ink, (1.0 - smoothstep(0.055, 0.055 + wx * 2.0, length(tie))) * 0.6);
+    // faint pour-lift banding: each lift a slightly different batch
+    blockTone = (eHash21(vec2(course, 7.0)) - 0.5) * 0.7;
   } else {
     // corporate panelling: staggered cladding seams, vent slats, corner bolts
     float along = an.x > an.z ? wp.z : wp.x;
-    float ph = ch * 1.55;
-    float pw = ch * 2.7;
+    float ph = ch * 2.6;
+    float pw = ch * 5.2;
     float row = floor(wp.y / ph);
     float stag = mod(row, 2.0) * pw * 0.5;
     float u = along + stag;
