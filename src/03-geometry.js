@@ -636,6 +636,16 @@ function be(i, t, e, n, s = 0) {
   return (s && i.rotateY(s), i.translate(t, e, n), i);
 }
 const dn = (i, t, e) => new Vector3(i, t, e);
+/**
+ * A pier, giant pier or column — the foundations everything else springs from.
+ *
+ * Registers an entry in `world.anchors` carrying its `top` point, and that is
+ * what the placement tool snaps spans and stairs to. A span cannot begin in
+ * mid-air; it begins on one of these.
+ *
+ * A giant pier's base is itself habitable ("colossal — its base becomes a
+ * place"), so it emits pockets where an ordinary pier does not.
+ */
 function buildAnchor(i) {
   const t = newStructureParts(),
     e = seededRng(i.id * 7919 + 11),
