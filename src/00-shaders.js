@@ -34,6 +34,7 @@ uniform float uFogDensity;
 uniform vec3 uPaper;
 uniform vec3 uInk;
 uniform float uDusk;
+uniform float uDawn;
 uniform float uVignette;
 uniform float uGrain;
 uniform float uLineWeight;
@@ -113,8 +114,12 @@ void main() {
     vec3 zenithCol  = vec3(0.30, 0.21, 0.50);
     vec3 sky = mix(horizonCol, midCol, smoothstep(-0.04, 0.30, elev));
     sky = mix(sky, zenithCol, smoothstep(0.18, 0.75, elev));
+    // cool blue-grey morning: the gradient chills before the day bleaches it
+    vec3 dawnSky = mix(vec3(0.74, 0.79, 0.88), vec3(0.27, 0.31, 0.47),
+                       smoothstep(-0.02, 0.62, elev));
+    sky = mix(sky, dawnSky, uDawn * 0.85);
     // by day the gradient relaxes toward the paper; dusk saturates it
-    sky = mix(sky, uPaper, (1.0 - uDusk) * 0.34);
+    sky = mix(sky, uPaper, (1.0 - max(uDusk, uDawn)) * 0.42);
     float sunDot = dot(worldDir, uSunDir);
     float sunAmt = pow(max(sunDot, 0.0), 18.0);
     // faint horizontal burin lines, denser toward horizon, broken by cloudy noise
@@ -132,8 +137,13 @@ void main() {
     float disc = smoothstep(0.9880, 0.9903, sunDot) * stripes;
     vec3 sunCol = mix(vec3(1.00, 0.42, 0.76), vec3(1.00, 0.92, 0.70),
                       smoothstep(0.9903, 0.9968, sunDot));
+    // dusk drives the sun violent orange; dawn pales it to chalk
+    sunCol = mix(sunCol, vec3(1.04, 0.55, 0.22), uDusk * (1.0 - smoothstep(0.20, 0.40, uSunDir.y)));
+    sunCol = mix(sunCol, vec3(0.96, 0.98, 1.02), uDawn * 0.75);
     sky = mix(sky, sunCol, disc);
-    sky += vec3(1.0, 0.36, 0.62) * sunAmt * 0.30 * (1.0 - disc);
+    vec3 glowCol = mix(vec3(1.0, 0.36, 0.62), vec3(1.05, 0.44, 0.16), uDusk);
+    glowCol = mix(glowCol, vec3(0.80, 0.86, 0.96), uDawn * 0.8);
+    sky += glowCol * sunAmt * (0.30 + 0.22 * uDusk) * (1.0 - disc);
     // smog strata pooled against the horizon, dirtier than any weather
     float smogT = 1.0 - smoothstep(-0.02, 0.15, elev);
     float smogN = vnoise(vec2(worldDir.x * 2.6 + 11.0, elev * 70.0));
@@ -146,6 +156,34 @@ void main() {
     ringA *= smoothstep(0.06, 0.16, elev)
            * (0.35 + 0.65 * smoothstep(0.30, 0.62, vnoise(worldDir.xz * 17.0 + 5.0)));
     sky = mix(sky, vec3(0.97, 0.88, 1.02), ringA * 0.4);
+    // satellites: slow points on fixed tracks, perfectly straight — too
+    // high and too steady to be birds. Some tumble and flare as a dead
+    // panel catches the sun; the derelict ones have gone amber. They are
+    // still transmitting; the billboards below are still advertising.
+    for (int sk = 0; sk < 9; sk++) {
+      float fk = float(sk);
+      float sh1 = hash21(vec2(fk * 3.71, 9.23));
+      float sh2 = hash21(vec2(fk * 5.13, 2.81));
+      vec3 sax = normalize(vec3(sh1 - 0.5, 0.55 + sh2 * 0.45, sh2 - 0.5));
+      vec3 su = normalize(cross(sax, vec3(0.0, 1.0, 0.0)));
+      vec3 sv = cross(sax, su);
+      float sth = uTime * (0.011 + sh2 * 0.013) + sh1 * 40.0;
+      vec3 sd = cos(sth) * su + sin(sth) * sv;
+      if (sd.y > 0.10) {
+        float sdd = dot(worldDir, sd);
+        float sw = fwidth(sdd) + 6.0e-6;
+        float sdisc = smoothstep(1.0 - sw * 8.0, 1.0 - sw * 2.5, sdd);
+        float tumbling = step(0.5, sh2);
+        float flare = tumbling * pow(max(sin(uTime * (0.5 + sh1 * 0.8) + fk * 2.1), 0.0), 30.0) * 1.4;
+        float derelict = step(0.78, sh1);
+        vec3 scol = mix(vec3(1.02, 1.03, 1.10), vec3(0.92, 0.58, 0.34), derelict);
+        float samp2 = mix(0.95, 0.40, derelict) * (0.65 + 0.35 * uDusk) + flare;
+        // a faint ink ring so the point reads on the pale sheet
+        float sring = smoothstep(1.0 - sw * 22.0, 1.0 - sw * 9.0, sdd) * (1.0 - sdisc);
+        sky = mix(sky, vec3(0.24, 0.16, 0.36), sring * 0.45 * clamp(samp2 + 0.25, 0.0, 1.0));
+        sky = mix(sky, scol * (0.95 + flare * 0.5), sdisc * clamp(samp2, 0.0, 1.0));
+      }
+    }
     // vertical light shafts rising off the megastructure line
     float az = atan(worldDir.x, worldDir.z);
     float azc = floor(az * 5.093 + 16.0);
@@ -155,8 +193,9 @@ void main() {
     shaft *= (1.0 - smoothstep(0.02, 0.40, elev)) * smoothstep(-0.03, 0.02, elev);
     vec3 shaftCol = mix(vec3(0.45, 0.95, 1.0), vec3(1.0, 0.45, 0.85), step(0.5, hash21(vec2(azc, 3.0))));
     sky += shaftCol * shaft * (0.10 + 0.24 * uDusk);
-    // dusk warms and darkens the paper sky a touch near the sun's side
-    vec3 duskTint = mix(vec3(1.0), vec3(1.04, 0.80, 0.92), uDusk * (0.35 + 0.65 * sunAmt));
+    // dusk warms and darkens the paper sky hard near the sun's side —
+    // the violent-orange hour before the artificial lights take over
+    vec3 duskTint = mix(vec3(1.0), vec3(1.09, 0.76, 0.58), uDusk * (0.35 + 0.65 * sunAmt));
     sky = sky * duskTint;
     sky *= 1.0 - uDusk * 0.22 * (1.0 - sunAmt);
     color = sky;
@@ -314,6 +353,7 @@ class J0 {
           uPaper: { value: new Color(this.paper) },
           uInk: { value: new Color(this.ink) },
           uDusk: { value: 0 },
+          uDawn: { value: 0 },
           uVignette: { value: 0.58 },
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
@@ -351,6 +391,9 @@ class J0 {
   }
   setDusk(t) {
     this.postMat.uniforms.uDusk.value = t;
+  }
+  setDawn(t) {
+    this.postMat.uniforms.uDawn.value = t;
   }
   setSunDir(t) {
     this.postMat.uniforms.uSunDir.value.copy(t);
@@ -428,6 +471,43 @@ const engravingUniforms = {
   // by J0.resize so the 1-bit cells survive the supersampled downscale
   uPxScale: { value: 3 },
 };
+// palette by district: each named quarter tints the fabric and the neon
+// inside its radius. Hue goes where the name sends it; the value stays
+// put (the tint is luminance-preserving in the shader). Re-derived as
+// the city grows, so the map of colour moves with the map of people.
+const districtUniforms = {
+  uDistrictPos: { value: Array.from({ length: 8 }, () => new Vector3(0, 0, 0)) },
+  uDistrictCol: { value: Array.from({ length: 8 }, () => new Color(0, 0, 0)) },
+};
+// the signature word of the name picks the hue: Ember runs hot, the
+// Cistern runs cold, and a player who notices has found something real
+const districtHues = {
+  Lantern: 0.09, Ember: 0.02, Candle: 0.13,
+  Cistern: 0.54, Spring: 0.47, Well: 0.60,
+  Garden: 0.33, Laurel: 0.40, Green: 0.29,
+  Quiet: 0.72, Sleeping: 0.78, Patient: 0.64,
+  Bright: 0.15, Morning: 0.57, White: 0.83,
+};
+function districtHash(i) {
+  let t = 2166136261;
+  for (let e = 0; e < i.length; e++)
+    ((t ^= i.charCodeAt(e)), (t = Math.imul(t, 16777619)));
+  return (t >>> 0) / 4294967296;
+}
+function setDistricts(i) {
+  for (let t = 0; t < 8; t++) {
+    const e = i?.[t],
+      n = districtUniforms.uDistrictPos.value[t];
+    if (!e) {
+      n.set(0, 0, 0);
+      continue;
+    }
+    const s = e.name.split(" ")[1] ?? e.name,
+      r = districtHues[s] ?? districtHash(s);
+    (n.set(e.x, e.z, 17 + Math.min(34, e.size * 2.4)),
+      districtUniforms.uDistrictCol.value[t].setHSL(r, 0.62, 0.64));
+  }
+}
 function syncLightUniforms(i, t) {
   const e = (s) => 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
   engravingUniforms.uSunDirW.value.copy(i.position).sub(i.target.position).normalize();
@@ -472,6 +552,8 @@ uniform float uDebugView;
 uniform float uLocalGain;
 uniform float uDither;
 uniform float uPxScale;
+uniform vec3 uDistrictPos[8];
+uniform vec3 uDistrictCol[8];
 
 float eHash21(vec2 p) {
   p = fract(p * vec2(234.34, 435.345));
@@ -665,6 +747,28 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   stone *= 1.0 + mas.y * 0.085;
   stone *= mix(vec3(1.0), vec3(0.83, 0.78, 0.92), age * 0.85);
 
+  // palette by district: explode the hue, hold the value. The tint is
+  // luminance-matched so the dark/mid/light hierarchy never moves.
+  {
+    vec3 dAcc = vec3(0.0);
+    float dW = 0.0;
+    for (int dk = 0; dk < 8; dk++) {
+      float dRad = uDistrictPos[dk].z;
+      if (dRad > 1.0) {
+        float dDist = distance(vWorldPosE.xz, uDistrictPos[dk].xy);
+        float w = 1.0 - smoothstep(dRad * 0.55, dRad, dDist);
+        dAcc += uDistrictCol[dk] * w;
+        dW += w;
+      }
+    }
+    if (dW > 0.001) {
+      vec3 dCol = dAcc / dW;
+      float sLum = dot(stone, vec3(0.2126, 0.7152, 0.0722));
+      float dLum = dot(dCol, vec3(0.2126, 0.7152, 0.0722));
+      stone = mix(stone, dCol * (sLum / max(dLum, 0.05)), min(dW, 1.0) * 0.62);
+    }
+  }
+
   vec3 engraved = mix(stone, uInkCol, clamp(ink, 0.0, 1.0));
 
   // section poché: interior of cut solids reads as dark diagonal-lined mass
@@ -700,4 +804,4 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
 `;
 
 // --- generated exports ---
-export { J0, Q0, e_, engravingUniforms, syncLightUniforms, t_ };
+export { J0, Q0, districtUniforms, e_, engravingUniforms, setDistricts, syncLightUniforms, t_ };

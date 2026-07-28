@@ -6,9 +6,9 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
+import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { J0, engravingUniforms, syncLightUniforms } from "./00-shaders.js";
+import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders.js";
 import { Aa, Nn, Vr, clamp, lerp, n_ } from "./01-materials.js";
 import { Ah, C_, P_, World } from "./05-world.js";
 import { InfillSystem } from "./06-infill.js";
@@ -76,6 +76,13 @@ window.addEventListener(
   { once: !0 },
 );
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
+const dc_dusk = new Color("#ff8c46"),      // violent orange
+  dc_dawn = new Color("#dbe2f2"),          // chalk-pale morning sun
+  dc_hemi = new Color("#d8cdf0"),
+  dc_hemiDawn = new Color("#c3cfe6"),
+  dc_paperDay = new Color("#f0ddeb"),      // bleached high day
+  dc_paperDusk = new Color("#eb9f76"),     // the hot sheet
+  dc_paperDawn = new Color("#bfc8d8");     // cool blue-grey
 function os(i) {
   const t = clamp((i - 5.5) / 15, 0, 1),
     e = lerp(2.05, -2.05, t),
@@ -86,16 +93,31 @@ function os(i) {
       Math.cos(e) * Math.cos(n),
     );
   (Pe.position.copy(s.multiplyScalar(420)), Pe.target.position.set(0, 0, 0));
+  // the low-sun factor splits in two: the same sun angle is a cool
+  // blue-grey morning before noon and a violent orange dusk after it.
+  // Between them the day bleaches. Free variety, twice a day.
   const r = 1 - Math.sin(Math.PI * t),
-    o = Nn(0.45, 0.95, r);
-  (Pe.color.setStyle(o > 0.4 ? "#ff9ecf" : "#ffe9f2"),
+    o = Nn(0.45, 0.95, r),
+    hv = Nn(0.42, 0.58, t),
+    duskAmt = o * hv,
+    dawnAmt = o * (1 - hv);
+  (Pe.color.set("#fff3ec"),
+    Pe.color.lerp(dc_dusk, Nn(0.2, 0.8, duskAmt)),
+    Pe.color.lerp(dc_dawn, Nn(0.2, 0.8, dawnAmt)),
     (Pe.intensity = lerp(3.5, 2.55, o)),
     (Nr.intensity = lerp(0.6, 0.42, o)),
-    ke.setDusk(o),
+    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt),
+    ke.setDusk(duskAmt),
+    ke.setDawn(dawnAmt),
     ke.setSunDir(Pe.position.clone().normalize()),
     syncLightUniforms(Pe, Nr));
+  // paper follows the hour — blue-grey morning, bleached high day, hot
+  // dusk — and the fog agrees with the sheet
+  const pc = dc_paperDay.clone().lerp(dc_paperDusk, duskAmt).lerp(dc_paperDawn, dawnAmt);
+  (ke.setPaper(pc), je.fog.color.copy(pc));
+  // artificial light takes over as the sun drops — harder at dusk
   const a = Kt.glowMat,
-    c = 0.3 + o * 1.25;
+    c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9;
   a.color.setRGB(1.05 * c + 0.12, 0.42 * c + 0.06, 0.85 * c + 0.12);
 }
 os(te.hour);
@@ -471,7 +493,7 @@ function Nh(i) {
         oi.check(Kt, Ne),
         ei.sync()),
       (Do += t),
-      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), updateQualityMeters(), gameState.dirty && ac()));
+      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), setDistricts(bi), updateQualityMeters(), gameState.dirty && ac()));
     const e = ie.position,
       Vv = {
         dusk: ke.postMat.uniforms.uDusk.value,
@@ -581,7 +603,7 @@ window.CAP = {
       Ne.grow(12, 999);
       for (let e = 0; e < 9; e++) Ne.grow(12, 0);
     }
-    return (ei.sync(), (bi = Rh(Kt, Ne)), Ne.items.length);
+    return (ei.sync(), (bi = Rh(Kt, Ne)), setDistricts(bi), Ne.items.length);
   },
   skip(i) {
     for (te.hour += i; te.hour > 20.5; ) ((te.hour -= 14.9), te.day++);
