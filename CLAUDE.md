@@ -46,6 +46,16 @@ lines**. It still parses clean (`node --check` passes) and behaves identically
 byte-identical to what is deployed.** Use 662KB when citing the real artifact's
 size publicly; use the local line numbers only for navigation.
 
+## Package manager: yarn, not npm
+
+This project uses **yarn** (4.17, pinned via `packageManager` in
+`package.json`). Use `yarn install` / `yarn build` — never `npm install`, which
+would create a competing `package-lock.json`.
+
+`.yarnrc.yml` sets `nodeLinker: node-modules` rather than Yarn 4's default
+Plug'n'Play, because Vite/Rollup resolve more predictably against a real
+`node_modules` tree — particularly the `three/addons/*` subpath imports.
+
 ## Running it
 
 The bundle requests `/assets/...` by absolute path, so it must be served from

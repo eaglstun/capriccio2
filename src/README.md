@@ -27,8 +27,8 @@ section **byte for byte**, and it aborts if any anchor stops matching.
 ## It builds, and it runs
 
 ```sh
-npm install
-npm run build     # -> dist/
+yarn install
+yarn build        # -> dist/
 ```
 
 **662,197 bytes** against the original deployed **662,267** — a 0.01%
