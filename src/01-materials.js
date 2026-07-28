@@ -28,6 +28,8 @@ function createStoneMaterial(i = {}) {
         (n.uniforms.uCourseH = { value: i.courseH ?? 1.02 }),
         (n.uniforms.uDebugView = engravingUniforms.uDebugView),
         (n.uniforms.uLocalGain = { value: i.gain ?? 1 }),
+        (n.uniforms.uDither = { value: i.dither ? 1 : 0 }),
+        (n.uniforms.uPxScale = engravingUniforms.uPxScale),
         (n.vertexShader = n.vertexShader
           .replace(
             "#include <common>",
@@ -47,19 +49,25 @@ varying vec2 vToneE;`,
           .replace("#include <opaque_fragment>", e_)));
     }),
     (t.customProgramCacheKey = () =>
-      `engraved|${i.stone ?? ""}|${i.jointAlpha ?? 0.34}|${i.courseH ?? 1.02}|${i.gain ?? 1}`),
+      `engraved|${i.stone ?? ""}|${i.jointAlpha ?? 0.34}|${i.courseH ?? 1.02}|${i.gain ?? 1}|${i.dither ? 1 : 0}`),
     t
   );
 }
 function n_() {
-  const i = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02 }),
+  // style is period: the end-of-humanity fabric (corporate panelling,
+  // courseH >= 0.95) renders in the 1984 1-bit dither; the older fabric
+  // (board-formed concrete, rock, timber) keeps the c.1750 burin hatching.
+  // `distant` is dithered too — the megastructure skyline is the newest
+  // thing on the horizon, and the far field going 1-bit doubles as
+  // depth arbitration.
+  const i = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02, dither: !0 }),
     t = createStoneMaterial({ stone: "#ddc2de", jointAlpha: 0.42, courseH: 0.88 }),
     e = createStoneMaterial({ stone: "#cdb9d8", jointAlpha: 0.4, courseH: 2.3 }),
     n = createStoneMaterial({ stone: "#78ccc4", jointAlpha: 0.16, courseH: 0.42 }),
     s = createStoneMaterial({ stone: "#f4e0f0", jointAlpha: 0.07 }),
     r = createStoneMaterial({ stone: "#4fb3a5", jointAlpha: 0 }),
     o = createStoneMaterial({ stone: "#f0619e", jointAlpha: 0 }),
-    a = createStoneMaterial({ stone: "#dcc9e8", jointAlpha: 0.1, courseH: 1.5, gain: 0.34 }),
+    a = createStoneMaterial({ stone: "#dcc9e8", jointAlpha: 0.1, courseH: 1.5, gain: 0.34, dither: !0 }),
     c = new MeshPhongMaterial({
       color: "#e07ac0",
       emissive: "#6a1d5a",

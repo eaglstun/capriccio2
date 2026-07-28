@@ -48,6 +48,28 @@ Source lines ~25400–25900 in the local pretty-printed bundle.
 >   scene-only meshes built at the end of `C_` in `src/05-world.js` from
 >   a fixed seed, never added to `structGroup`, so raycasting and
 >   gameplay cannot see it.
+> - **Competing styles** (pass 4) — style is period, and four periods
+>   now argue over the frame with hard edges:
+>   - _c.1750_: the triplanar burin hatching, still on all old fabric
+>     (board-formed concrete `stoneOld`, `rock`, `timber`, ground).
+>   - _1984_: materials flagged `dither` (`stone` — the corporate
+>     panelling fabric — and `distant`, the megastructure skyline)
+>     quantize their engraved output to 1-bit through a 4×4 Bayer
+>     threshold with an Atkinson-shaped contrast curve (highlights
+>     blow, shadows crush), cell size held at ~2 screen px by
+>     `engravingUniforms.uPxScale` so the supersampled downscale can't
+>     grey it out. The fabric boundary is the style boundary. This is
+>     ordered dither, not true Atkinson — a fragment shader cannot run
+>     sequential error diffusion honestly.
+>   - _1984 for real_: PLATE captures run **true Atkinson error
+>     diffusion** on the CPU in `src/14-plates.js` (1/8 of the error to
+>     six neighbours, 2/8 discarded) — the still is rendered once at
+>     2000px, so the sequential algorithm applies honestly. Plates are
+>     now 1-bit ink `#2b1a52` on paper `#f6e0ef`.
+>   - _1990_: the VHS tracking bar now switches styles as well as
+>     displacing pixels — inside the gated band the finished frame
+>     re-quantizes to a hard-edged 1-bit dithered strip (post pass,
+>     `STYLE SLAB` block); neon bloom and scanlines stay "now".
 >
 > The prose below describes the original engraving and is kept as the
 > reference for what the machinery was built to do.

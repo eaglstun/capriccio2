@@ -68,6 +68,18 @@ float vnoise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
+// 4x4 Bayer threshold (values centred in 0..1)
+float bayer4(vec2 p) {
+  vec2 q = floor(mod(p, 4.0));
+  float i = q.x + q.y * 4.0;
+  float m =
+    i ==  0.0 ?  0.0 : i ==  1.0 ?  8.0 : i ==  2.0 ?  2.0 : i ==  3.0 ? 10.0 :
+    i ==  4.0 ? 12.0 : i ==  5.0 ?  4.0 : i ==  6.0 ? 14.0 : i ==  7.0 ?  6.0 :
+    i ==  8.0 ?  3.0 : i ==  9.0 ? 11.0 : i == 10.0 ?  1.0 : i == 11.0 ?  9.0 :
+    i == 12.0 ? 15.0 : i == 13.0 ?  7.0 : i == 14.0 ? 13.0 : 5.0;
+  return (m + 0.5) / 16.0;
+}
+
 void main() {
   vec2 px = 1.0 / uResolution;
 
@@ -231,6 +243,20 @@ void main() {
   float vig = 1.0 - dot(vc, vc) * uVignette;
   color *= vig;
 
+  // ============ STYLE SLAB ============
+  // inside the tracking band the signal drops a generation: the same
+  // strip of frame re-renders as a 1-bit ordered-dither plate. Hard
+  // edges on purpose — collage, not crossfade. (The band still carries
+  // the VHS displacement and chroma tear from above.)
+  float slab = step(trackPos, 0.085) * step(0.62, gate);
+  if (slab > 0.5) {
+    float sl = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    // Atkinson-shaped response: highlights blow, shadows crush
+    sl = clamp((sl - 0.5) * 1.5 + 0.56, 0.0, 1.0);
+    float bt = bayer4(floor(gl_FragCoord.xy / 2.0));
+    color = sl > bt ? uPaper * 1.04 : vec3(0.17, 0.10, 0.32);
+  }
+
   gl_FragColor = vec4(color, 1.0);
 }
 `;
@@ -317,6 +343,10 @@ class J0 {
       (this.postMat.uniforms.uLineWeight.value = Math.max(
         1,
         n * this.ss * 0.78,
+      )),
+      (engravingUniforms.uPxScale.value = Math.max(
+        2,
+        Math.round(n * this.ss * 2),
       )));
   }
   setDusk(t) {
@@ -394,6 +424,9 @@ const engravingUniforms = {
   uAmbSky: { value: 0.3 },
   uAmbGround: { value: 0.15 },
   uDebugView: { value: 0 },
+  // dither cell size in render-target pixels — kept at ~2 screen pixels
+  // by J0.resize so the 1-bit cells survive the supersampled downscale
+  uPxScale: { value: 3 },
 };
 function syncLightUniforms(i, t) {
   const e = (s) => 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
@@ -437,6 +470,8 @@ uniform float uJointAlpha;
 uniform float uCourseH;
 uniform float uDebugView;
 uniform float uLocalGain;
+uniform float uDither;
+uniform float uPxScale;
 
 float eHash21(vec2 p) {
   p = fract(p * vec2(234.34, 435.345));
@@ -449,6 +484,18 @@ float eNoise(vec2 p) {
   float a = eHash21(i), b = eHash21(i + vec2(1,0));
   float c = eHash21(i + vec2(0,1)), d = eHash21(i + vec2(1,1));
   return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+}
+
+// 4x4 Bayer threshold for the 1-bit era (values centred in 0..1)
+float eBayer4(vec2 p) {
+  vec2 q = floor(mod(p, 4.0));
+  float i = q.x + q.y * 4.0;
+  float m =
+    i ==  0.0 ?  0.0 : i ==  1.0 ?  8.0 : i ==  2.0 ?  2.0 : i ==  3.0 ? 10.0 :
+    i ==  4.0 ? 12.0 : i ==  5.0 ?  4.0 : i ==  6.0 ? 14.0 : i ==  7.0 ?  6.0 :
+    i ==  8.0 ?  3.0 : i ==  9.0 ? 11.0 : i == 10.0 ?  1.0 : i == 11.0 ?  9.0 :
+    i == 12.0 ? 15.0 : i == 13.0 ?  7.0 : i == 14.0 ? 13.0 : 5.0;
+  return (m + 0.5) / 16.0;
 }
 
 float lineAA(float s, float duty) {
@@ -625,6 +672,20 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     float s = (vWorldPosE.x + vWorldPosE.y * 1.3 + vWorldPosE.z) * 5.0;
     float pl = lineAA(s, 0.32);
     engraved = mix(vec3(0.13, 0.09, 0.24), vec3(0.30, 0.20, 0.42), pl);
+  }
+
+  // the 1-bit era: end-of-humanity fabric (corporate panelling) renders
+  // as ordered dither with an Atkinson-shaped response — contrast
+  // stretched so highlights blow out and shadows crush, the way the
+  // discarded 2/8 error does in the real algorithm. Hard binary output;
+  // the fabric boundary IS the style boundary. Old fabric (board-formed
+  // concrete, rock, timber, ground) keeps the burin hatching.
+  if (uDither > 0.5 && uCutting < 0.5) {
+    float dl = dot(engraved, vec3(0.2126, 0.7152, 0.0722));
+    dl = clamp((dl - 0.5) * 1.45 + 0.56, 0.0, 1.0);
+    float bt = eBayer4(floor(gl_FragCoord.xy / uPxScale));
+    vec3 dPaper = mix(vec3(0.97), uStoneCol, 0.30);
+    engraved = dl > bt ? dPaper : uInkCol * 0.92;
   }
 
   if (uDebugView > 0.5) {
