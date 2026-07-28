@@ -109,6 +109,27 @@ void main() {
                       smoothstep(0.9903, 0.9968, sunDot));
     sky = mix(sky, sunCol, disc);
     sky += vec3(1.0, 0.36, 0.62) * sunAmt * 0.30 * (1.0 - disc);
+    // smog strata pooled against the horizon, dirtier than any weather
+    float smogT = 1.0 - smoothstep(-0.02, 0.15, elev);
+    float smogN = vnoise(vec2(worldDir.x * 2.6 + 11.0, elev * 70.0));
+    sky = mix(sky, vec3(0.44, 0.27, 0.38), smogT * (0.30 + 0.28 * smoothstep(0.35, 0.8, smogN)));
+    // the orbital ring: still up there, in pieces
+    vec3 ringN = normalize(vec3(0.55, 0.62, -0.42));
+    float ringD = dot(worldDir, ringN);
+    float ringW = fwidth(ringD) * 1.5 + 0.0018;
+    float ringA = 1.0 - smoothstep(ringW, ringW * 3.2, abs(ringD));
+    ringA *= smoothstep(0.06, 0.16, elev)
+           * (0.35 + 0.65 * smoothstep(0.30, 0.62, vnoise(worldDir.xz * 17.0 + 5.0)));
+    sky = mix(sky, vec3(0.97, 0.88, 1.02), ringA * 0.4);
+    // vertical light shafts rising off the megastructure line
+    float az = atan(worldDir.x, worldDir.z);
+    float azc = floor(az * 5.093 + 16.0);
+    float shR = hash21(vec2(azc, 17.0));
+    float shD = abs(fract(az * 5.093 + 16.0) - 0.5);
+    float shaft = (1.0 - smoothstep(0.015, 0.075, shD)) * step(0.74, shR);
+    shaft *= (1.0 - smoothstep(0.02, 0.40, elev)) * smoothstep(-0.03, 0.02, elev);
+    vec3 shaftCol = mix(vec3(0.45, 0.95, 1.0), vec3(1.0, 0.45, 0.85), step(0.5, hash21(vec2(azc, 3.0))));
+    sky += shaftCol * shaft * (0.10 + 0.24 * uDusk);
     // dusk warms and darkens the paper sky a touch near the sun's side
     vec3 duskTint = mix(vec3(1.0), vec3(1.04, 0.80, 0.92), uDusk * (0.35 + 0.65 * sunAmt));
     sky = sky * duskTint;

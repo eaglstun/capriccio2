@@ -546,6 +546,86 @@ function C_(i) {
   }
   const R = new Mesh(Nl(v), i.mats.green);
   ((R.castShadow = !0), i.structGroup.add(R));
+  // ---- the megastructure line: dead arcologies on every horizon ----
+  // fixed seed, scene-only scenery: never in structGroup, never raycast,
+  // emits no pockets and no nav — the game cannot see it
+  {
+    const q = seededRng(20260726),
+      xt = [],
+      xs = [],
+      xb = [];
+    for (const [q0, q1, qn, h0, h1] of [
+      [352, 420, 26, 40, 130],
+      [430, 545, 22, 90, 260],
+    ])
+      for (let k = 0; k < qn; k++) {
+        const az = ((k + q() * 0.7) / qn) * Math.PI * 2,
+          rad = q0 + q() * (q1 - q0),
+          px = Math.sin(az) * rad,
+          pz = Math.cos(az) * rad,
+          w = 16 + q() * 36,
+          dp = 14 + q() * 26,
+          hg = h0 + q() * (h1 - h0),
+          rot = q() * Math.PI,
+          bg = new BoxGeometry(w, hg, dp);
+        (bg.translate(0, hg / 2 - 40, 0),
+          bg.rotateY(rot),
+          bg.translate(px, 0, pz),
+          xt.push(bg));
+        if (q() < 0.5) {
+          const tp = new BoxGeometry(w * 0.55, hg * 0.38, dp * 0.55);
+          (tp.translate(0, hg * 1.17 - 40, 0),
+            tp.rotateY(rot),
+            tp.translate(px, 0, pz),
+            xt.push(tp));
+        }
+        if (q() < 0.45) {
+          const sp = new BoxGeometry(1.8, hg * 0.5, 1.8);
+          (sp.translate(0, hg * 1.24 - 40, 0),
+            sp.rotateY(rot),
+            sp.translate(px, 0, pz),
+            xt.push(sp));
+          const bc = new BoxGeometry(2.6, 2.6, 2.6);
+          (bc.translate(px, hg * 1.49 - 40, pz), xb.push(bc));
+        }
+        if (q() < 0.4) {
+          const ns = 1 + Math.floor(q() * 3);
+          for (let j = 0; j < ns; j++) {
+            const off = (q() - 0.5) * w * 0.6,
+              st = new BoxGeometry(1.1, hg * (0.3 + q() * 0.35), 1.1);
+            (st.translate(
+              px - Math.sin(az) * (dp * 0.5 + 2) + Math.cos(az) * off,
+              hg * 0.45 - 40,
+              pz - Math.cos(az) * (dp * 0.5 + 2) - Math.sin(az) * off,
+            ),
+              xs.push(st));
+          }
+        }
+      }
+    for (let k = 0; k < 8; k++) {
+      const az = q() * Math.PI * 2,
+        rad = 370 + q() * 130,
+        gb = new BoxGeometry(80 + q() * 70, 2.6, 4.5);
+      (gb.rotateY(az),
+        gb.translate(Math.sin(az) * rad, 24 + q() * 96, Math.cos(az) * rad),
+        xt.push(gb));
+    }
+    const mt = new Mesh(
+      Nl(xt),
+      new MeshBasicMaterial({ color: "#2a1f52", fog: !0 }),
+    );
+    ((mt.castShadow = !1), (mt.receiveShadow = !1), i.scene.add(mt));
+    const ms = new Mesh(
+      Nl(xs),
+      new MeshBasicMaterial({ color: "#5fd7ee", fog: !0 }),
+    );
+    ((ms.castShadow = !1), i.scene.add(ms));
+    const mb = new Mesh(
+      Nl(xb),
+      new MeshBasicMaterial({ color: "#ff4f9a", fog: !1 }),
+    );
+    ((mb.castShadow = !1), i.scene.add(mb));
+  }
 }
 function P_(i) {
   const t = new BufferGeometry(),
