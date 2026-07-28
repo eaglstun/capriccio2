@@ -86,6 +86,8 @@ reverted:
 | `docs/SIMULATION.md`    | how the game actually works — pockets, agents, growth          |
 | `docs/PROGRESSION.md`   | how it plays out: favor tiers, the five requests, the ceilings |
 | `docs/CHARACTERS.md`    | the cast, the five requests, and the rules the writing follows |
+| `FEATURES.md`      | the current feature plan                                       |
+| `CHRONICLE.md`     | the Chronicle: replay, and engraving from the past              |
 | `docs/RENDERING.md`     | the engraving renderer, and what the reskin did to it          |
 | `docs/AUDIO.md`         | the procedural soundscape                                      |
 | `docs/COMMENTS.md`      | every comment that survived minification                       |

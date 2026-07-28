@@ -153,25 +153,21 @@ and identity must be deterministic so a reloaded city has the same Marcus.
 
 ## Tier A — additive, nothing needs unfreezing
 
-### A1. The Chronicle — replay the city's growth ⭐ recommended
+### A1. The Chronicle — moved to its own plan
 
-**The save is already an event-sourced action log.** Feeding it to
-`applyAction` one entry at a time, with a delay, replays the entire history of
-the city from empty ground to now.
+Specced separately in **`CHRONICLE.md`**, because it turned out to carry a
+mechanic rather than being a viewer: the folio is what you chose to keep, the
+Chronicle is everything that happened, and you can engrave a plate from inside
+it at the cost of one of your sixteen.
 
-That is a time-lapse of everything you built, and **the architecture already
-supports it completely** — no new state, no new save fields, no simulation
-change. It is the feature this codebase was accidentally designed for.
+Two things were verified while speccing it and both belong here:
 
-Thematically it is the best fit available: a game about what survives, which
-can show you the record of how it got here.
+- **Actions carry no timestamp.** The log is an ordering, not a timeline.
+- **Infill is not in the action log**, and the order it grew in is recorded
+  nowhere, so the organic growth of the city is not reconstructable.
 
-- Scrub bar over the action log
-- Play/pause, speed control
-- The camera can follow each action as it lands, or hold a wide shot
-- End frame is the present day
-
-Cost: low. Risk: very low — it reads the log, it does not write.
+`CHRONICLE.md` contains a time-critical enabler — stamping `day`/`hour` onto
+new actions — that is worth taking even if the rest is deferred.
 
 ### A2. Procedural requests — fill the mid-game
 
