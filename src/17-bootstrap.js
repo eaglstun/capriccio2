@@ -262,6 +262,15 @@ const Or = { pos: new Vector3(), target: new Vector3() },
         t,
       );
     },
+    // a folio slot returns the camera to exactly the plate's stored pose
+    onPlateSlot: (i) => {
+      i?.cam?.length === 6 &&
+        flyCam(
+          new Vector3(i.cam[0], i.cam[1], i.cam[2]),
+          new Vector3(i.cam[3], i.cam[4], i.cam[5]),
+          2.2,
+        );
+    },
   });
 function av(i) {
   switch (i) {
