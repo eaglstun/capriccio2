@@ -151,8 +151,13 @@ previous phase), `applyAction` itself, the pocket model, catalogue `key` values,
 structure envelopes. `public/` never edited. Never run `split_bundle.py --write`;
 never delete `src/.hand-edited`. No shipped binary assets or runtime fetches.
 
-**The save format gains exactly one thing:** `day` and `hour` on new action
-objects. Nothing else.
+**The save format is no longer frozen** — nobody has played this, so there are
+no saves to protect. The `day`/`hour` stamping has already shipped; anything
+else the Chronicle needs from the save may simply be added.
+
+What has NOT changed is that `applyAction` and the pocket model must stay
+deterministic. That was never a compat constraint: the save is an action log,
+so non-deterministic replay means saving and reloading gives a different city.
 
 ---
 

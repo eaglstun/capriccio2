@@ -235,6 +235,44 @@ class Citizens {
       s = this.gatherPoints(),
       r = Math.random,
       o = [0, 0, 0];
+    // ---- ambient life. PRESENTATION ONLY — nothing here touches routine,
+    // pockets or growth; it only changes how a standing body is posed.
+    //   - gathered agents pair off with their nearest standing neighbour
+    //     (within 7m) and face each other: a conversation
+    //   - agents standing at a finished stall form a queue behind it,
+    //     spaced down a line and facing the counter
+    //   - everyone else standing idles — a slow look around, instead of
+    //     holding one heading like a chess piece
+    const stallNodes = new Set();
+    for (const it of this.infill.items)
+      if (it.kind === "stall" && it.stage >= 1) {
+        const pk = this.world.pockets[it.pocketIdx];
+        pk && pk.navNode >= 0 && stallNodes.add(pk.navNode);
+      }
+    const talk = new Map(),
+      qRank = new Map(); // workNode -> next place in that stall's queue
+    {
+      const standing = [];
+      for (const c of this.agents)
+        c.active && c.path.length === 0 && c.state === "gather" && standing.push(c);
+      for (let i = 0; i < standing.length; i++) {
+        const c = standing[i];
+        if (talk.has(c)) continue;
+        let bj = -1,
+          bd = 49; // pair only within 7m
+        for (let j = i + 1; j < standing.length; j++) {
+          const b = standing[j];
+          if (talk.has(b)) continue;
+          const d = (c.pos.x - b.pos.x) ** 2 + (c.pos.z - b.pos.z) ** 2;
+          d < bd && ((bd = d), (bj = j));
+        }
+        bj >= 0 && (talk.set(c, standing[bj]), talk.set(standing[bj], c));
+      }
+    }
+    // where a standing agent's scatter-nudge puts it — used both to place a
+    // body and to aim its talking partner at it
+    const sX = (c) => c.pos.x + Math.sin(c.offset * 37.7) * 2.1,
+      sZ = (c) => c.pos.z + Math.cos(c.offset * 51.3) * 2.1;
     let a = -1;
     for (const c of this.agents) {
       if ((a++, !c.active)) continue;
@@ -293,20 +331,56 @@ class Citizens {
                 (c.pos.copy(c.path[c.path.length - 1]), (c.path = [])))
             : c.pos.lerpVectors(f, m, c.segT));
       }
-      if (
-        ((c.bob += t * (c.path.length ? 9 : 1.2)),
-        this.dummy.position.copy(c.pos),
-        c.path.length ||
+      c.bob += t * (c.path.length ? 9 : 1.2);
+      this.dummy.position.copy(c.pos);
+      // where a standing body should aim itself, if anywhere in particular
+      let faceX = null,
+        faceZ = null;
+      if (!c.path.length) {
+        if (c.state === "work" && stallNodes.has(c.workNode)) {
+          // the stall queue: file back from the counter along a direction
+          // hashed off the nav node, everyone facing the stall
+          const k = qRank.get(c.workNode) ?? 0;
+          qRank.set(c.workNode, k + 1);
+          const qa = (c.workNode * 2.399) % (Math.PI * 2),
+            qd = 1.1 + 0.78 * k;
+          ((this.dummy.position.x +=
+            Math.sin(qa) * qd + Math.sin(c.offset * 9.1) * 0.14),
+            (this.dummy.position.z +=
+              Math.cos(qa) * qd + Math.cos(c.offset * 9.1) * 0.14),
+            (faceX = c.pos.x),
+            (faceZ = c.pos.z));
+        } else {
           ((this.dummy.position.x += Math.sin(c.offset * 37.7) * 2.1),
-          (this.dummy.position.z += Math.cos(c.offset * 51.3) * 2.1)),
-        (this.dummy.position.y += c.path.length
-          ? Math.abs(Math.sin(c.bob)) * 0.06
-          : 0),
-        c.path.length >= 2)
-      ) {
+            (this.dummy.position.z += Math.cos(c.offset * 51.3) * 2.1));
+          const p = talk.get(c);
+          p && ((faceX = sX(p)), (faceZ = sZ(p)));
+        }
+      }
+      this.dummy.position.y += c.path.length
+        ? Math.abs(Math.sin(c.bob)) * 0.06
+        : 0;
+      if (c.path.length >= 2) {
         const f = c.path[Math.min(c.seg + 1, c.path.length - 1)];
         this.dummy.lookAt(f.x, this.dummy.position.y, f.z);
-      } else this.dummy.rotation.set(0, c.offset * 23.1, 0);
+      } else if (faceX !== null)
+        // face the partner or the counter, with the small sway of somebody
+        // actually talking, or actually waiting
+        this.dummy.rotation.set(
+          0,
+          Math.atan2(
+            faceX - this.dummy.position.x,
+            faceZ - this.dummy.position.z,
+          ) + Math.sin(c.bob * 0.6) * 0.07,
+          0,
+        );
+      else
+        // idle: look around slowly instead of holding one heading
+        this.dummy.rotation.set(
+          0,
+          c.offset * 23.1 + Math.sin(c.bob * 0.31) * 0.5,
+          0,
+        );
       const lk = this.look[a];
       if (a === this.speaker) {
         // the speaker reads as someone: HUD magenta, and the mark turning

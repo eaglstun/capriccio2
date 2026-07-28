@@ -38,27 +38,46 @@ uses that fact except reload.
 
 ---
 
-## The freeze decision — this is the call to make first
+## What is still constrained — and what no longer is
 
-Eight passes stayed safe because seven things never moved: `pickPocket`, the
-five stat formulas, `applyAction`, the pocket model, the save format, catalogue
-`key` values, and structure envelopes. Every pass was checked against them.
+**No one has played this yet. There are no saves in the world to protect.**
+Every constraint that existed to preserve backward compatibility is lifted.
 
-Some features below need that relaxed. **Unfreezing is not the end of the
-world, but it must be deliberate and narrow** — one named system at a time,
-with the rest still enforced, and with a stated way to tell whether it broke.
+That is a real unblocking, but it does not lift everything, because several
+items on the old frozen list were never about compatibility at all. Sort them:
 
-Two things I would keep frozen regardless:
+### Lifted — these were compat constraints
 
-- **`applyAction` and the pocket model.** These are what make replay
-  deterministic. Break them and old saves quietly rebuild into different
-  cities.
-- **Existing catalogue `key` values.** _Adding_ a key is safe; changing one
-  orphans every save that used it.
+- **The save format may change.** Add fields, rename fields, restructure it.
+  Bump `v` and drop the old-version branch if that is cleaner.
+- **Catalogue `key` values may change.** They are referenced by `chooseKind`
+  and the builders, so it is a refactor — but a safe one, and no save will be
+  orphaned.
+- **Resource field names may change.** `res.timber` can genuinely become
+  `res.salvage` rather than a label-only rename. See A14.
 
----
+### Still constrained — these are correctness, not compat
 
----
+- **`applyAction` and the pocket model must stay deterministic.** This was
+  never about old saves. The save IS an action log, so if replay is not
+  deterministic then saving and reloading gives you a *different city* — the
+  feature breaks against itself, today, with no history involved.
+- **Every builder must keep seeding from the action id.** Same reason.
+- **Structure envelopes still govern pockets.** Changing a footprint changes
+  what the city grows, which is a gameplay decision rather than a bug — make it
+  deliberately if at all, not as a side effect of restyling.
+- **`public/` is never edited.** It is the original artifact and the reference
+  everything is verified against.
+- **Never run `split_bundle.py --write`**; never delete `src/.hand-edited`.
+  `src/` is hand-edited and regenerating would silently destroy it.
+- **No shipped binary assets or runtime fetches.** Procedural or nothing.
+
+### The verification numbers still apply
+
+A fresh city should still report **24 structures, 48 pockets, 1331 navNodes,
+46 pop, kinds 12/34/1/1** unless a change is *meant* to move them. They are the
+cheapest signal that something drifted by accident, and that is worth keeping
+whether or not anyone has a save.
 
 ## A0. The named citizens do not exist — and the tutorial sends you to find them ⭐ do first
 
@@ -340,6 +359,254 @@ would muddy both.
 `yarn build` green, fresh-city numbers unchanged, and screenshots of citizens
 outlined distinctly in daylight and at night — plus one plate confirming the
 export is unaffected.
+
+### A8. A hint after Tullia asks for water
+
+The second request is the hardest thing in the game and nothing helps the
+player with it.
+
+> *"No water climbs so high. The spring across the great void mocks us every
+> dry summer."* — Tullia
+
+To satisfy it the player must get a water source above y=14 on the far side of
+the canyon. That means: know that **aqueducts carry water** and an ordinary
+bridge does not, find the spring, and cross the void.
+
+Measured, the distances are unforgiving:
+
+| from | to | distance |
+|---|---|---|
+| spring pool (126, −6) | high terrace (−28, −86) | **174 units** |
+| spring pool | massif rim (92, −10) | 34 |
+| massif rim | high terrace | **142** |
+
+Max span is **55** under 60 clearance, **95** at 60+, **150** at 150+. So even
+the shortest leg of the crossing cannot be done in one span at any clearance
+the player is likely to hold — **it has to be broken into legs with
+intermediate piers**, and nothing in the game says so.
+
+**Add a hint.** Requirements:
+
+- It appears **only after the player has struggled** — some delay, or some
+  number of growth ticks with the request unmet. Not on arrival; being told the
+  answer immediately is worse than the current silence.
+- It is **a citizen speaking**, not a tooltip. `docs/CHARACTERS.md` has the
+  rules — a consequence, not an instruction. Something that gestures at
+  aqueducts and at piers standing in the void without naming a tool or a
+  button.
+- It should not repeat endlessly. Once, or at most twice.
+
+Keep the discovery. The hint should make the player think "oh — I could put a
+pier *in* the canyon", not hand them a recipe.
+
+### A9. Stone is invisible, not scarce
+
+**Found in play: "I couldn't figure out how to get more stone."**
+
+There is nothing to find. Stone accrues automatically at **18 per game-hour**,
+timber at 6, and both are **capped** — 2600 stone, 900 timber. No building
+produces it, no citizen mines it, and no amount of play changes the rate.
+
+That is a defensible design, but the UI never says it, so a player watching the
+number fall reasonably assumes there is a source somewhere and goes looking for
+a mechanic that does not exist.
+
+**Make the rate and the cap legible.** Options, cheapest first:
+
+- Show it as a rate — `700 STONE` becomes something that also conveys "+18/hr"
+- Show the cap when near it, so stockpiling reads as pointless rather than
+  broken
+- A quiet line on first low-stone moment, in the citizens' register
+
+Do **not** add a stone-producing building. The scarcity is a pacing device that
+works; only its legibility is broken.
+
+### A10. Gamepad support
+
+Add Web Gamepad API support for the main view.
+
+- Left stick: orbit. Right stick or triggers: zoom.
+- Face buttons: cycle tool, confirm a placement, cancel.
+- Shoulder buttons: cycle mode (BUILD / SECTION / WANDER / PLATE).
+- **WANDER especially wants a stick** — first-person walking on a keyboard is
+  the weakest input in the game.
+
+Poll `navigator.getGamepads()` in the existing frame loop; do not add a second
+loop. Detect on `gamepadconnected` and stay entirely dormant otherwise — no
+prompts, no UI, nothing that appears for players without a pad.
+
+Mouse and keyboard must keep working identically at all times; a connected pad
+adds a path, it never takes one away.
+
+### A11. The world reads as floating
+
+Two related complaints, one cause.
+
+**Measured:** the terrain plane is 600x600, so ground ends at **radius 300**.
+The megastructure skyline sits at **radius 352-545**. There is a gap between
+where the ground stops and where the backdrop begins, and at low camera angles
+you can see the edge of the world.
+
+**a) Extend the horizon.** Either grow the terrain plane, or add low hills
+around the perimeter to close the gap between ground and skyline. Hills are
+cheaper — they need no extra resolution in the playable area and can be a
+coarse merged mesh, scene-only and never in `structGroup`.
+
+Keep it *low*. The city should still feel like it sits on a plain; the point is
+that the plain has an edge you cannot see over, not that it is ringed by
+mountains.
+
+**b) Clamp the camera above ground.** Nice-to-have, explicitly optional per the
+user. The orbit camera can currently go below the terrain, which shows the
+underside of the world. A simple clamp against `terrainHeightAt` plus a small
+margin would fix it.
+
+Do this one **after** the horizon — the horizon is the thing that actually
+bothers the eye, and clamping the camera without extending the ground would
+just hide one symptom of the same gap.
+
+### A12. You cannot tell what is carvable
+
+Walls and vaults are both the new-era fabric, so both render in the same 1-bit
+dither. Nothing distinguishes a surface that accepts a CARVE from one that does
+not, and the player has to learn it by clicking and being refused.
+
+**The actual rule**, from `draftAction`:
+
+| carvable | not carvable |
+|---|---|
+| `wall` structures | spans, vaults, stairs |
+| `giant` piers **not already carved** | ordinary piers, columns, all ornament |
+
+Note the second row — a giant pier can take exactly one carve, and after that
+its `carveAxis` is set and it is done.
+
+**There is also a bug.** `BuildOverlays.markCarvables` only iterates
+`e.action.t === "wall"`. **Giant piers are carvable and never marked**, so even
+the existing guide is lying by omission. Fix that as part of this.
+
+#### The design problem
+
+The dither already means something — it separates the end-of-humanity fabric
+from the first-era concrete (`courseH >= 0.95` vs below). Carvability is
+*orthogonal* to that: a player-built wall and a player-built vault are the same
+era and the same material, and only one takes a carve.
+
+So this needs a third signal that does not fight the era split.
+
+#### Recommended: subtle always, emphatic in context
+
+- **Always on, quietly** — carvable surfaces carry a slight difference in
+  treatment, enough to learn the language over time without making the world
+  look inconsistent. Surface relief, joint density, or a faint course marking
+  that reads as "this is a face you could open".
+- **Emphatic when CARVE is selected** — the existing dashed `markCarvables`
+  overlay already does this job and should get louder, plus the giant piers it
+  currently misses.
+
+Do not make the always-on state loud. Carvability matters for one tool out of
+seven, and a permanent hazard-stripe on every wall would cost more than it
+gives.
+
+#### Watch for
+
+- **Do not reuse the era distinction.** Old fabric already means something.
+- The signal must survive **at night**, when the fabric is mostly dark and the
+  neon carries the frame.
+- A giant pier that has already been carved must stop reading as carvable —
+  the state is per-structure, not per-type.
+
+### A13. Billboard text clips, and every sign is the same typeface
+
+**Two problems in the same place** — the runtime canvas atlas at the end of
+`C_` in `05-world.js`.
+
+#### a) The clipping is measurable
+
+Cells are **512px wide**, text is centred at x=256, and **nothing measures
+anything**. Every headline is drawn at a fixed `bold 52px Georgia` and hoped
+for. Measured against the real font:
+
+| headline | width | |
+|---|---|---|
+| EVERYDAY LOW PRICES | **688px** | overflows by 176 |
+| MIRAMAR ESTATES | **558px** | overflows by 46 |
+| GRAND OPENING | 492px | fits, barely |
+| OPEN 24 HOURS | 462px | fits |
+| AZURE COAST | 399px | fits |
+| VISTAPHONE | 379px | fits |
+| SUNMIST | 266px | fits |
+
+All seven sub-lines fit (258–392px).
+
+**Fix it properly, not by shortening the two strings.** Measure with
+`measureText` and shrink the font until it fits, with a margin — so any future
+copy is safe by construction rather than by luck. Something like: start at 52,
+step down while `measureText(s).width > 512 - 2*margin`.
+
+Do the same for the sub-line even though none currently overflow; the next
+person to write a longer tagline should not have to know this.
+
+#### b) Every sign is Georgia
+
+Seven different companies across decades of a dead economy, all set in one
+serif. Real signage is a jumble — that is most of what makes a strip look like
+a strip.
+
+Give each cell its own face. **System fonts only** — no webfonts, nothing
+fetched, per the standing constraint. There is plenty of range in what is
+already installed:
+
+- a grotesque for the phone company (Helvetica, Arial)
+- a fat condensed sans for the supermarket (Impact, Haettenschweiler)
+- a geometric for the resort (Futura, Century Gothic, Avenir Next)
+- a slab or typewriter for the motel (Courier, American Typewriter)
+- keep a serif for one or two — Georgia earns its place among others
+
+Vary weight, tracking and case too, not just family. A sign that is
+`letter-spacing`-wide and thin reads as a completely different era from a fat
+condensed one, even in the same family.
+
+**Specify fallbacks** — `"Impact, Haettenschweiler, sans-serif"` — since the
+game runs on machines that will not all have the same fonts. A missing font
+silently falls back to the default and the variety quietly disappears, which is
+exactly the kind of thing that will not show up on the machine it was built on.
+
+### A14. TIMBER is the wrong word
+
+The second resource is still called **TIMBER**, which is a word for a material
+nobody in this city uses. The buildings it pays for are corrugated sheet,
+tarps, shipping containers and salvaged panel — the shanty modules from pass 3.
+Nothing is made of wood.
+
+This is the same drift already applied to FAVOR → CLEARANCE, and it follows the
+rule in `docs/CHARACTERS.md`: **words tied to dead things die.** Timber died
+with the forests.
+
+#### Recommended: SALVAGE
+
+It says the material comes from **taking apart what is already there**, which is
+exactly what the infill looks like and exactly what a city at the end of
+humanity would actually be built from. It also pairs correctly with STONE:
+one quarried, one scavenged.
+
+Alternatives if it does not sit right: SCRAP (blunter), SHEET (more technical),
+COMPOSITE (colder). Avoid POLYMER — it competes with the cypress hint, which
+already uses "in polymer".
+
+#### Scope: rename it properly
+
+No saves exist, so this is **not** a label-only change like CLEARANCE was.
+Rename the field: `gameState.res.timber` becomes `res.salvage` throughout —
+state, costs, the income tick, `costOf`, the affordability check, the save
+object, the HUD id.
+
+Also update `docs/PROGRESSION.md` and the how-to-play page, which both name it.
+
+The material is separately `mats.timber` in code. Rename that too while in
+there — and if the surfaces it draws still read as *planks* rather than as
+salvaged sheet, that is worth fixing at the same time, since the word and the
+look should agree.
 
 ### A4. Ambient life
 

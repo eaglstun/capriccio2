@@ -37,6 +37,11 @@ class PlacementTool {
     defineField(this, "ghostMat");
     defineField(this, "ghostBadMat");
     defineField(this, "chalk");
+    // the game clock ({day, hour}), set by the bootstrap. Every committed
+    // action is stamped with the moment it was made — the Chronicle enabler.
+    // Old saves simply lack the fields; older builds ignore them. See
+    // CHRONICLE.md.
+    defineField(this, "clock", null);
     ((this.world = t),
       (this.camera = e),
       (this.scene = n),
@@ -417,6 +422,12 @@ class PlacementTool {
     return this.validate(r)
       ? Fl(o)
         ? ((r.id = gameState.nextId++),
+          // stamp the moment of creation onto the action — day and hour to
+          // one decimal. Backward-compatible both ways: absent on old saves,
+          // ignored by older builds, and loadGame gates only on `v`.
+          this.clock &&
+            ((r.day = this.clock.day),
+            (r.hour = Math.round(this.clock.hour * 10) / 10)),
           W_(o),
           r.t === "carve" && (gameState.res.stone += 15),
           gameState.playerActions.push(structuredClone(r)),
