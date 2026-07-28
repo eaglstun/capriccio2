@@ -30,7 +30,7 @@ class Soundscape {
     const e = this.noiseSource(8),
       n = t.createBiquadFilter();
     ((n.type = "bandpass"),
-      (n.frequency.value = 480),
+      (n.frequency.value = 390),
       (n.Q.value = 0.6),
       (this.windGain = t.createGain()),
       (this.windGain.gain.value = 0.05),
@@ -83,12 +83,12 @@ class Soundscape {
   bell() {
     const t = this.ctx;
     for (const [e, n, s] of [
-      [392, 0.1, 2.6],
-      [587, 0.05, 1.9],
-      [988, 0.022, 1.1],
+      [392, 0.1, 4.4],
+      [587, 0.05, 3.1],
+      [988, 0.022, 1.9],
     ]) {
       const r = t.createOscillator();
-      r.frequency.value = e * (1 + (Math.random() - 0.5) * 0.004);
+      r.frequency.value = e * (1 + (Math.random() - 0.5) * 0.011);
       const o = t.createGain();
       (o.gain.setValueAtTime(n, t.currentTime),
         o.gain.exponentialRampToValueAtTime(1e-4, t.currentTime + s),
