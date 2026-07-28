@@ -118,6 +118,9 @@ function startWalkthrough() {
     get camFree() {
       return camFree;
     },
+    get ceded() {
+      return ceded;
+    },
     get ticks() {
       return tickCount;
     },
@@ -158,7 +161,11 @@ function startWalkthrough() {
   // One optional move per beat. Any real drag or wheel cancels it instantly
   // and permanently for that beat; a fresh beat may move once more.
   let flight = null,
-    camFree = !1;
+    camFree = !1,
+    // set forever once the player clicks the request panel: the
+    // request-click fly (17-bootstrap) outranks the walkthrough, and a
+    // beat change resets camFree but never this
+    ceded = !1;
   function vantage(tgt, dist, elev) {
     // keep the player's current azimuth — the view turns to face the target
     // without ever swinging around it
@@ -170,7 +177,7 @@ function startWalkthrough() {
     );
   }
   function flyTo(tgt, dist, elev, dur = 1.7) {
-    if (camFree) return;
+    if (camFree || ceded) return;
     if (REDUCED) {
       cam.position.copy(vantage(tgt, dist, elev));
       controls.target.copy(tgt);
@@ -232,6 +239,19 @@ function startWalkthrough() {
   CAP.tools.onCommit = (a) => {
     prevCommit?.(a);
     onBuilt(a);
+  };
+  // "find who is asking" must actually find them, tutorial or no
+  // tutorial. Clicking the request starts the bootstrap's own camera
+  // flight to the speaker; if the walkthrough kept flying its per-beat
+  // moves the two would write the camera on alternate frames and the
+  // player would land wherever the tutorial was headed, not at the
+  // citizen. So the click cancels any tutorial flight in progress and
+  // cedes the camera to the game for the rest of the walkthrough.
+  const prevReq = CAP.hud.cb.onRequestClick;
+  CAP.hud.cb.onRequestClick = () => {
+    ceded = !0;
+    flight = null;
+    prevReq?.();
   };
 
   // --- the six beats ------------------------------------------------------
@@ -468,7 +488,7 @@ function startWalkthrough() {
       controls.target.lerpVectors(flight.g0, flight.g1, s);
       controls.update();
       if (k >= 1) flight = null;
-    } else if (beat === 1 && !camFree && !REDUCED) {
+    } else if (beat === 1 && !camFree && !ceded && !REDUCED) {
       // the slow establishing drift — killed forever by the first real drag
       const tg = controls.target,
         dx = cam.position.x - tg.x,
