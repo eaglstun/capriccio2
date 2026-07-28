@@ -19,14 +19,14 @@ class BuildOverlays {
     defineField(this, "stringMat");
     (t.add(this.marks, this.live),
       (this.dashMat = new LineDashedMaterial({
-        color: "#8f4a34",
+        color: "#ff5fc8",
         transparent: !0,
         opacity: 0.6,
         dashSize: 0.6,
         gapSize: 0.45,
       })),
       (this.stringMat = new LineBasicMaterial({
-        color: "#6d3f2e",
+        color: "#2ec8d4",
         transparent: !0,
         opacity: 0.65,
       })));

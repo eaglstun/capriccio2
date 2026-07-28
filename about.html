@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>CAPRICCIO 2 — about</title>
+<meta name="description" content="CAPRICCIO 2 — a city of arches, at the end of humanity. What it is, what changed, and what to look for." />
+<meta property="og:title" content="CAPRICCIO 2 — about" />
+<meta property="og:description" content="The same city, ten thousand years later. What changed, and what deliberately did not." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --ink:#1a1036; --deep:#241448; --violet:#542a6e; --mauve:#c05490;
+    --pink:#ff71ce; --cyan:#6ff5ea; --pale:#b8fff9; --paper:#f4e9ff; --amber:#ff9b6a;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body {
+    min-height:100%;
+    background:
+      radial-gradient(120% 80% at 50% 100%, rgba(255,155,106,.28) 0%, rgba(255,113,206,.14) 38%, transparent 72%),
+      linear-gradient(#1a1036 0%, #241448 42%, #3a1c56 78%, #6b2f63 100%);
+    color:var(--paper);
+    font-family:"Avenir Next","Futura","Century Gothic","Helvetica Neue",Arial,sans-serif;
+    font-size:16px; line-height:1.62; letter-spacing:.012em;
+    padding:0 24px 96px;
+  }
+  /* scanlines, to match the game's post pass */
+  body::after {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:9;
+    background:repeating-linear-gradient(180deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px);
+    mix-blend-mode:multiply;
+  }
+  main { max-width:660px; margin:0 auto; position:relative; z-index:1; }
+  header { padding:88px 0 8px; text-align:center; }
+  h1 {
+    margin:0; font-size:clamp(30px,7.2vw,52px); font-weight:600;
+    letter-spacing:.34em; text-indent:.34em; color:var(--paper);
+    text-shadow:2px 0 rgba(1,205,254,.85), -2px 0 rgba(255,113,206,.85);
+  }
+  .sub { margin:.7em 0 0; font-style:italic; color:var(--pale); letter-spacing:.04em; opacity:.92; }
+  .rule { width:150px; height:1px; margin:34px auto 0;
+          background:linear-gradient(90deg,transparent,var(--mauve),transparent); }
+  h2 {
+    margin:56px 0 14px; font-size:12px; font-weight:600;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--cyan);
+  }
+  p { margin:0 0 17px; color:#e6d8f4; }
+  em { color:var(--pale); font-style:italic; }
+  strong { color:var(--paper); font-weight:600; }
+  a { color:var(--pink); text-decoration:none; border-bottom:1px solid rgba(255,113,206,.4); }
+  a:hover { border-bottom-color:var(--pink); }
+  ul { margin:0 0 17px; padding:0; list-style:none; }
+  li { position:relative; padding:0 0 13px 22px; color:#e6d8f4; }
+  li::before { content:"—"; position:absolute; left:0; color:var(--mauve); }
+  .note {
+    border-left:2px solid var(--mauve); padding:2px 0 2px 18px;
+    margin:26px 0; color:var(--pale); font-style:italic;
+  }
+  dl { margin:0; display:grid; grid-template-columns:auto 1fr; gap:9px 20px; }
+  dt { color:var(--cyan); font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding-top:3px; }
+  dd { margin:0; color:#e6d8f4; }
+  footer { margin-top:66px; padding-top:26px; border-top:1px solid rgba(192,84,144,.3);
+           font-size:13px; color:#b9a6d0; text-align:center; }
+  .play { display:inline-block; margin-top:34px; padding:11px 30px;
+          border:1px solid var(--pink); color:var(--paper); letter-spacing:.26em;
+          font-size:13px; border-bottom-width:1px; }
+  .play:hover { background:rgba(255,113,206,.14); }
+  @media (prefers-reduced-motion:no-preference) {
+    header, main > section { animation:rise .7s cubic-bezier(.2,.7,.3,1) both; }
+    main > section:nth-of-type(n+2) { animation-delay:.06s; }
+    @keyframes rise { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:none; } }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>CAPRICCIO 2</h1>
+    <p class="sub">a city of arches, at the end of humanity</p>
+    <div class="rule"></div>
+  </header>
+
+  <section>
+    <h2>What this is</h2>
+    <p>A city builder. You raise the architecture — piers, spans, stairs, vaults — and
+    you do not place a single house. The citizens decide what to do with the spaces you
+    leave them. Roof a terrace and someone moves in. Bring water somewhere and the
+    neighbourhood turns toward it.</p>
+    <p>The architecture emits <em>pockets</em>: habitable voids scored on shelter, light,
+    outlook and distance to water. Everything that happens afterwards follows from those
+    numbers. You are never asked to build a home, only to make somewhere worth living.</p>
+  </section>
+
+  <section>
+    <h2>Where it came from</h2>
+    <p><strong>CAPRICCIO was made by Ethan Mollick with Fable</strong>, one of a series of
+    city builders generated in the manner of particular artists. That one took Giovanni
+    Battista Piranesi — the eighteenth-century engraver whose imaginary Roman ruins were
+    always grander and more impossible than anything that stood. A <em>capriccio</em> is
+    exactly that: a painting of buildings that never shared a horizon.</p>
+    <p>It shipped as a single 662KB file. No images, no audio, no fonts, no models —
+    every stone, every citizen, every sound generated in code at load. It would fit twice
+    over on a floppy disk.</p>
+  </section>
+
+  <section>
+    <h2>This version</h2>
+    <p>The same game, at the end of humanity.</p>
+    <p>Not a sequel and not a remake. Every rule underneath is untouched — the scoring, the
+    growth, the save format, the way citizens choose where to live. What changed is the
+    world those rules run in.</p>
+    <p>The ruins you inherit are concrete and rebar rather than marble. Overpasses stand on
+    the ridge with the roadway gone. A pipe still drains into the canyon, staining the rock,
+    with nobody upstream. A tower crane holds a pallet of blocks it was carrying when the
+    work stopped. Satellites cross overhead on fixed tracks, some tumbling, still
+    transmitting. And the billboards are still lit, still cheerful, still selling to an
+    empty plain.</p>
+    <div class="note">The point is how little is different. The citizens still want shelter,
+    light, water, and somewhere to gather in the evening. Ten thousand years, and the list
+    is the same list.</div>
+  </section>
+
+  <section>
+    <h2>Things you might not notice</h2>
+    <ul>
+      <li>The birds became drones. Same schedule, same two-to-four calls, same falling
+      pitch — a square wave where there used to be a sine.</li>
+      <li>Marcus is still Marcus. His trade changed. Tullia still talks about the
+      gardens up there.</li>
+      <li><strong>SOULS</strong> never changed. Everything around it went technical and
+      that one word stayed.</li>
+      <li>A quarter can still be named for candles, one entry away from a quarter named
+      for sodium lamps. Place names outlive the things they were named for.</li>
+      <li>The oldest fabric still carries antique stone, reused in newer walls the way
+      late Rome reused what it found.</li>
+      <li>The five meters are the original five. <strong>ACCESS, SHELTER, LIGHT,
+      BELONGING, GRANDEUR</strong> — needs do not date.</li>
+      <li>Between the title and the city, two lines appear. They are real comments from
+      the sky shader — notes the program wrote to itself about how to draw its own
+      sunset, which survived only because comments inside strings are not stripped.</li>
+      <li>Only sixteen plates survive a save. Engrave a seventeenth and watch which one
+      leaves the record. Choosing what remains is the closest this game has to a goal.</li>
+      <li>The five requests run out. After that the only way to earn the clearance to build
+      further is to publish what you have already made.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Colophon</h2>
+    <dl>
+      <dt>Renders</dt>
+      <dd>three.js r180. Engraved hatching projected in world space, so the strokes sit on
+      the stone instead of crawling across the screen.</dd>
+      <dt>Dither</dt>
+      <dd>The world is dithered against a blue-noise threshold generated at load —
+      aperiodic, clustered, biased toward edges, an homage rather than a copy.
+      <strong>The plates are the real thing</strong>: true Atkinson error diffusion, six
+      neighbours at one eighth each and two eighths thrown away, exactly as it ran on a
+      Macintosh in 1984.</dd>
+      <dt>Sound</dt>
+      <dd>Entirely synthesized. Pink-noise wind gusting on a fourteen-second cycle, water
+      that fades in with the square of the distance, and a bell whose upper partials decay
+      first because that is what struck metal does.</dd>
+      <dt>Score</dt>
+      <dd>Written in <a href="https://strudel.cc">Strudel</a> — the JavaScript port of
+      Alex McLean's <em>TidalCycles</em>, a language for describing music as patterns
+      rather than sequencing it note by note. The piece is four chords in A minor that
+      take half a minute to decide they want percussion, suspend their thirds for a while,
+      and borrow exactly one major chord, late. No samples: every voice is generated.</dd>
+      <dt>Walkthrough</dt>
+      <dd>Six beats, played inside the game. It advances when you actually do the thing,
+      never on a timer, and the camera yields the moment you touch it. What you build
+      during it is real and stays.</dd>
+      <dt>Assets</dt>
+      <dd>None. There is nothing to download but the code.</dd>
+    </dl>
+  </section>
+
+  <p style="text-align:center"><a class="play" href="/">ENTER THE CITY</a></p>
+
+  <footer>
+    Original CAPRICCIO by Ethan Mollick, generated with Fable.<br />
+    This version built on top of it — same rules, later century.
+  </footer>
+
+</main>
+</body>
+</html>

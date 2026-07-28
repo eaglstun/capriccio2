@@ -2,6 +2,84 @@
 
 Source lines ~25400–25900 in the local pretty-printed bundle.
 
+> **This branch (`vaporwave`):** the machinery below is intact but
+> re-aimed at the end of humanity. What changed, in `src/00-shaders.js`:
+>
+> - **Sky** — the paper sky became a perpetual sunset gradient with a
+>   banded low sun, smog strata pooled on the horizon, a broken orbital
+>   ring, and azimuth-hashed light shafts rising off the megastructure
+>   line. The burin-line and cloud machinery survives underneath.
+> - **Masonry** — the wall-course branch now draws corporate panelling
+>   (staggered seams, vent slats, inspection plates, corner bolts) when
+>   `uCourseH >= 0.95`, at panel sizes large enough not to read as
+>   ashlar. Materials with `courseH < 0.95` (`stoneOld`) draw
+>   **board-formed concrete** — shutter seams, form-tie holes on the
+>   pour grid, pour-lift tonal banding. The Roman coursing is gone;
+>   the ruins are ours now. The only remaining token of deep antiquity
+>   is deliberate spolia: one column embedded near the plaza edge, and
+>   roughly one rubble drum in ten (`Pa`).
+> - **Ruin geometry** (pass 3) — arches keep their silhouette but shed
+>   the Roman dressing: no imposts, no keystone; flat bearing pads, a
+>   service conduit over the crown, and bent rebar standing proud of
+>   every spalled break (`Hn`). Vault ribs became flat pour-joint bands.
+>   Column anchors became stacks with a service deck and a lit aerial.
+> - **Scenery** (pass 3, all scene-only, never in `structGroup`):
+>   benched landfill mounds with gull orbits, seven billboards still
+>   advertising via a runtime `CanvasTexture` atlas (zero shipped
+>   bytes), trash-can fires flickered by `world.sceneTick`, wrecked
+>   cars, containers, trolleys, pallets, fencing that ends in nothing.
+> - **Citizens** — per-instance clothing colour (`setColorAt`) and
+>   build (non-uniform instance scale), derived deterministically from
+>   the agent index; the figure base material is near-white so the
+>   instance colours carry.
+> - **Ink outlines** became neon rim light: hot pink near, cyan far.
+> - **Paper grain** became CRT scanlines plus chroma wobble, with a new
+>   `uTime`-driven VHS tracking bar (rolling displacement + chroma tear;
+>   every depth/colour read follows the displaced uv so the tear is whole).
+> - **New in the post pass:** an 8-tap two-ring neon bloom keyed on
+>   luminance _and_ saturation (paper never blooms, neon does), and a
+>   graded haze that reconstructs world height and drowns the low city
+>   in smog colour.
+> - **Palette now:** post `paper #e9b8d6`, `ink #ff3fae`; material
+>   `uInkCol #2b1a52`; stone family in `01-materials.js` is pastel
+>   violet/teal. The triplanar hatching is unchanged — it is what keeps
+>   this looking hand-made rather than filtered.
+> - The megastructure skyline itself is geometry, not sky: three merged
+>   scene-only meshes built at the end of `C_` in `src/05-world.js` from
+>   a fixed seed, never added to `structGroup`, so raycasting and
+>   gameplay cannot see it.
+> - **Competing styles** (pass 4) — style is period, and four periods
+>   now argue over the frame with hard edges:
+>   - _c.1750_: the triplanar burin hatching, still on all old fabric
+>     (board-formed concrete `stoneOld`, `rock`, `timber`, ground).
+>   - _1984_: materials flagged `dither` (`stone` — the corporate
+>     panelling fabric — and `distant`, the megastructure skyline)
+>     quantize their engraved output to 1-bit against a **64×64
+>     blue-noise threshold texture** (void-and-cluster, generated at
+>     load in ~50ms — deterministic, tiles on the torus, 4096 levels,
+>     zero shipped bytes) with an Atkinson-shaped contrast curve
+>     (highlights blow, shadows crush). The threshold is biased toward
+>     the mid wherever luminance is changing (`fwidth`), so clusters
+>     bunch along edges the way error diffusion does. Cell size is held
+>     at ~3 screen px by `engravingUniforms.uPxScale` so the
+>     supersampled downscale can't grey it out. The fabric boundary is
+>     the style boundary. This is still a screen, not true Atkinson — a
+>     fragment shader cannot run sequential error diffusion honestly —
+>     but it now has Atkinson's aperiodic clusters and edge behaviour
+>     instead of a repeating Bayer lattice.
+>   - _1984 for real_: PLATE captures run **true Atkinson error
+>     diffusion** on the CPU in `src/14-plates.js` (1/8 of the error to
+>     six neighbours, 2/8 discarded) — the still is rendered once at
+>     2000px, so the sequential algorithm applies honestly. Plates are
+>     now 1-bit ink `#2b1a52` on paper `#f6e0ef`.
+>   - _1990_: the VHS tracking bar now switches styles as well as
+>     displacing pixels — inside the gated band the finished frame
+>     re-quantizes to a hard-edged 1-bit dithered strip (post pass,
+>     `STYLE SLAB` block); neon bloom and scanlines stay "now".
+>
+> The prose below describes the original engraving and is kept as the
+> reference for what the machinery was built to do.
+
 **The GLSL is the most readable code in the entire artifact.** Shaders live in
 template strings, and minifiers do not strip comments _inside_ strings — so
 the original author's comments survive verbatim. This is the only place in

@@ -6,6 +6,13 @@ export default defineConfig({
   // asset, which would be both wasteful and deeply confusing.
   publicDir: false,
   build: {
+    // two pages: the game, and the about/colophon page
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        about: "about.html",
+      },
+    },
     outDir: "dist",
     emptyOutDir: true,
     target: "es2022",

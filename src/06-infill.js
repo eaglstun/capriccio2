@@ -203,8 +203,35 @@ function N_(i, t, e, n, s, r) {
     (f.box(l, u, h, [0, 0, 0]),
       d && f.box(l * 0.86, u * 0.85, h * 0.86, [0.1, u, -0.05]),
       a(f.merge(), r() < 0.4 ? o.plaster : o.timber));
-    const m = Il(l * (d ? 0.9 : 1), h * (d ? 0.9 : 1), 1.1 + r() * 0.4);
-    (m.translate(0.05, d ? u * 1.85 : u, 0), a(m, o.timber));
+    // flat shanty roof: slab, tank, dish, aerial — the gable went with the era
+    const m0 = d ? u * 1.85 : u,
+      m1 = l * (d ? 0.9 : 1),
+      m2 = h * (d ? 0.9 : 1),
+      m = new MeshBuilder(0);
+    (m.box(m1 + 0.34, 0.16 + r() * 0.1, m2 + 0.34, [d ? 0.1 : 0, m0, d ? -0.05 : 0]),
+      m.box(0.7, 0.45, 0.55, [m1 * 0.24, m0 + 0.16, -m2 * 0.2]),
+      a(m.merge(), o.timber));
+    if (r() < 0.7) {
+      const mt = new CylinderGeometry(0.42, 0.42, 0.85, 8);
+      (mt.translate(-m1 * 0.26, m0 + 0.6, m2 * 0.18), a(mt, o.plaster));
+    }
+    if (r() < 0.65) {
+      const md = new CylinderGeometry(0.5, 0.5, 0.07, 10);
+      (md.rotateX(1.1),
+        md.rotateY(r() * Math.PI * 2),
+        md.translate(m1 * 0.3, m0 + 0.55, m2 * 0.28),
+        a(md, o.plaster, !1));
+    }
+    const ma = new BoxGeometry(0.06, 1.7, 0.06);
+    (ma.translate(-m1 * 0.34, m0 + 0.95, -m2 * 0.3), a(ma, o.timber, !1));
+    const mg = new BoxGeometry(0.14, 0.16, 0.14);
+    (mg.translate(-m1 * 0.34, m0 + 1.85, -m2 * 0.3), a(mg, c, !1));
+    if (r() < 0.5) {
+      const mp = new BoxGeometry(1.7, 0.05, 1.2);
+      (mp.rotateZ(0.14),
+        mp.translate(l * 0.2, m0 + 0.3, h / 2 + 0.35),
+        a(mp, o.fabric, !1));
+    }
     const _ = new BoxGeometry(0.9, 1.8, 0.12);
     (_.translate(l * 0.15, 0.9, h / 2 + 0.03), a(_, o.fabric, !1));
     const g = d ? 3 : 2;
@@ -243,8 +270,10 @@ function N_(i, t, e, n, s, r) {
       (m.translate(-l * 0.3 + f * l * 0.3, 0.95, 0.2 - r() * 0.4),
         a(m, f === 1 ? o.green : o.plaster, !1));
     }
-    const d = new BoxGeometry(0.24, 0.3, 0.24);
-    (d.translate(l * 0.4, 2.1, 0.8), e.push(a(d, c, !1)));
+    const d = new BoxGeometry(1.5, 0.32, 0.09);
+    (d.rotateX(-0.18), d.translate(0, 2.62, 0.6), e.push(a(d, c, !1)));
+    const d2 = new BoxGeometry(0.24, 0.3, 0.24);
+    (d2.translate(l * 0.4, 2.1, 0.8), a(d2, c, !1));
   } else if (s === "garden") {
     const l = new MeshBuilder(0.1);
     (l.box(3.4, 0.35, 2.4, [0, 0, 0]),
@@ -272,16 +301,24 @@ function N_(i, t, e, n, s, r) {
       a(l.merge(), o.stone));
     const h = new CylinderGeometry(0.16, 0.22, 1.1, 7);
     (h.translate(0, 1.1, 0), a(h, o.gold, !1));
+    const h2 = new BoxGeometry(1.6, 0.07, 0.07);
+    (h2.translate(0, 2.42, 0.52), a(h2, c, !1));
     const u = new BoxGeometry(0.2, 0.26, 0.2);
     (u.translate(0.55, 0.65, 0.3), e.push(a(u, c, !1)));
   } else {
     const l = 3.8 + r() * 1.4,
       h = new MeshBuilder(0.08);
     (h.box(l, 3, 3.4, [0, 0, 0]), a(h.merge(), o.stoneOld));
-    const u = Il(l, 3.4, 0.9);
-    (u.translate(0, 3, 0), a(u, o.timber));
+    const u = new MeshBuilder(0);
+    (u.box(l + 0.3, 0.22, 3.7, [0, 3, 0]),
+      u.box(1.2, 0.6, 0.9, [-l * 0.2, 3.22, 0.5]),
+      a(u.merge(), o.timber));
+    const u2 = new CylinderGeometry(0.55, 0.62, 0.35, 9);
+    (u2.translate(l * 0.05, 3.4, -0.5), a(u2, o.plaster, !1));
     const d = new BoxGeometry(0.5, 1.8, 0.5);
     (d.translate(l * 0.3, 3.4, -0.8), a(d, o.stoneOld));
+    const d0 = new BoxGeometry(0.14, 0.14, 0.14);
+    (d0.translate(l * 0.3, 4.4, -0.8), a(d0, c, !1));
     const f = new BoxGeometry(2.2, 0.08, 1.8);
     (f.rotateX(-0.15), f.translate(-l / 2 - 1, 2.3, 0.4), a(f, o.fabric));
     const m = new BoxGeometry(0.7, 0.6, 0.1);

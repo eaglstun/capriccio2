@@ -30,7 +30,7 @@ class Soundscape {
     const e = this.noiseSource(8),
       n = t.createBiquadFilter();
     ((n.type = "bandpass"),
-      (n.frequency.value = 480),
+      (n.frequency.value = 390),
       (n.Q.value = 0.6),
       (this.windGain = t.createGain()),
       (this.windGain.gain.value = 0.05),
@@ -81,20 +81,31 @@ class Soundscape {
       a.stop(o.currentTime + e + 0.05));
   }
   bell() {
+    // the hour is still marked the same way; the bell has just been through a lot
     const t = this.ctx;
-    for (const [e, n, s] of [
-      [392, 0.1, 2.6],
-      [587, 0.05, 1.9],
-      [988, 0.022, 1.1],
+    if (!this.bellShaper) {
+      const l = t.createWaveShaper(),
+        h = new Float32Array(64);
+      for (let u = 0; u < 64; u++) {
+        const d = (u / 63) * 2 - 1;
+        h[u] = Math.tanh(d * 1.9) * 0.72;
+      }
+      ((l.curve = h), l.connect(this.master), (this.bellShaper = l));
+    }
+    const e = this.bellShaper;
+    for (const [s, r, o] of [
+      [392, 0.1, 4.4],
+      [587, 0.05, 3.1],
+      [988, 0.022, 1.9],
     ]) {
-      const r = t.createOscillator();
-      r.frequency.value = e * (1 + (Math.random() - 0.5) * 0.004);
-      const o = t.createGain();
-      (o.gain.setValueAtTime(n, t.currentTime),
-        o.gain.exponentialRampToValueAtTime(1e-4, t.currentTime + s),
-        r.connect(o).connect(this.master),
-        r.start(),
-        r.stop(t.currentTime + s + 0.1));
+      const a = t.createOscillator();
+      a.frequency.value = s * (1 + (Math.random() - 0.5) * 0.028);
+      const c = t.createGain();
+      (c.gain.setValueAtTime(r, t.currentTime),
+        c.gain.exponentialRampToValueAtTime(1e-4, t.currentTime + o),
+        a.connect(c).connect(e),
+        a.start(),
+        a.stop(t.currentTime + o + 0.1));
     }
   }
   chisel() {
@@ -127,9 +138,10 @@ class Soundscape {
     ) {
       const r = 2300 + Math.random() * 1600,
         o = 2 + Math.floor(Math.random() * 3);
+      // the birds became drones: same schedule, same slide, later waveform
       for (let a = 0; a < o; a++)
         setTimeout(
-          () => this.blip(r + Math.random() * 300, 0.09, 0.016, "sine", -160),
+          () => this.blip(r + Math.random() * 300, 0.09, 0.016, "square", -160),
           a * 130 + Math.random() * 60,
         );
     }

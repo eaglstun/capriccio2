@@ -9,21 +9,23 @@
 import { Vector3 } from "three";
 import { gameState } from "./07-citizens.js";
 import { BUILD_CATALOGUE } from "./09-catalogue.js";
+import { tv } from "./14-plates.js";
 import { rv } from "./_hoisted.js";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
 const nv = `
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10;
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  color: #2a2318; user-select: none; }
+  font-family: "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  color: #f4e9ff; user-select: none; }
 #hud * { box-sizing: border-box; }
-.panel { background: rgba(241,234,217,0.93); border: 1px solid #2a2318;
-  box-shadow: 0 1px 0 rgba(42,35,24,0.25), inset 0 0 0 3px rgba(241,234,217,0.9), inset 0 0 0 4px rgba(42,35,24,0.35);
+.panel { background: rgba(26,16,54,0.86); border: 1px solid #ff71ce;
+  box-shadow: 0 1px 0 rgba(255,113,206,0.25), inset 0 0 0 3px rgba(26,16,54,0.9), inset 0 0 0 4px rgba(255,113,206,0.35);
   pointer-events: auto; }
 #topbar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
   padding: 5px 22px 6px; text-align: center; }
-#cityname { font-size: 19px; letter-spacing: 0.34em; font-weight: 600; }
+#cityname { font-size: 19px; letter-spacing: 0.44em; font-weight: 600;
+  text-shadow: 1px 0 rgba(1,205,254,0.8), -1px 0 rgba(255,113,206,0.8); }
 #daytime { font-size: 11.5px; letter-spacing: 0.18em; font-style: italic; opacity: 0.85; margin-top: 1px;}
 #resources { position: absolute; top: 10px; left: 10px; padding: 7px 14px; font-size: 13px;
   letter-spacing: 0.06em; line-height: 1.75; }
@@ -31,65 +33,83 @@ const nv = `
 #resources .lbl { opacity: 0.75; font-size: 11px; letter-spacing: 0.14em; }
 #quals { position: absolute; top: 10px; right: 10px; padding: 7px 14px; font-size: 11px;
   letter-spacing: 0.12em; line-height: 1.9; text-align: right; }
-.qbar { display: inline-block; width: 64px; height: 5px; border: 1px solid #2a2318; margin-left: 8px;
+.qbar { display: inline-block; width: 64px; height: 5px; border: 1px solid #6ff5ea; margin-left: 8px;
   vertical-align: middle; position: relative; }
-.qbar i { position: absolute; inset: 0; right: auto; background: #2a2318; opacity: 0.75; }
+.qbar i { position: absolute; inset: 0; right: auto; background: #6ff5ea; opacity: 0.75; }
 #palette { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 0; }
 .tool { padding: 9px 15px 7px; cursor: pointer; text-align: center; border-right: none !important; }
-.tool:last-child { border-right: 1px solid #2a2318 !important; }
+.tool:last-child { border-right: 1px solid #ff71ce !important; }
 .tool svg { display: block; margin: 0 auto 3px; width: 30px; height: 26px; }
 .tool .tl { font-size: 10.5px; letter-spacing: 0.2em; }
-.tool.on { background: #2a2318; color: #f1ead9; }
-.tool.on svg * { stroke: #f1ead9 !important; fill: none; }
+.tool.on { background: #ff71ce; color: #1a1036; }
+.tool.on svg * { stroke: #1a1036 !important; fill: none; }
 #variants { position: absolute; bottom: 86px; left: 50%; transform: translateX(-50%);
   display: none; }
 #variants .var { padding: 7px 16px; cursor: pointer; display: inline-block; }
 #variants .var .vl { font-size: 12.5px; letter-spacing: 0.1em; }
 #variants .var .vh { font-size: 10.5px; font-style: italic; opacity: 0.7; margin-top: 1px; }
-#variants .var.on { background: #2a2318; color: #f1ead9; }
+#variants .var.on { background: #ff71ce; color: #1a1036; }
 #request { position: absolute; bottom: 12px; left: 12px; max-width: 340px; padding: 10px 16px;
   font-size: 12.5px; font-style: italic; line-height: 1.5; }
 #request .who { font-style: normal; font-size: 10.5px; letter-spacing: 0.16em; opacity: 0.7; margin-top: 4px; }
 #modes { position: absolute; bottom: 12px; right: 12px; display: flex; }
 .mode { padding: 9px 13px 8px; cursor: pointer; font-size: 10.5px; letter-spacing: 0.18em; border-right: none !important; }
-.mode:last-child { border-right: 1px solid #2a2318 !important; }
-.mode.on { background: #2a2318; color: #f1ead9; }
+.mode:last-child { border-right: 1px solid #ff71ce !important; }
+.mode.on { background: #ff71ce; color: #1a1036; }
 #undo { position: absolute; top: 156px; left: 10px; padding: 6px 13px; font-size: 10.5px;
   letter-spacing: 0.18em; cursor: pointer; }
 #toast { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); padding: 9px 22px;
   font-size: 13px; font-style: italic; opacity: 0; transition: opacity 0.6s; max-width: 480px; text-align: center; }
 #sectionctl { position: absolute; top: 120px; right: 10px; width: 190px; padding: 10px 14px; display: none;
   font-size: 11px; letter-spacing: 0.1em; }
-#sectionctl input[type=range] { width: 100%; accent-color: #2a2318; }
+#sectionctl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #sectionctl .btnrow { display: flex; gap: 6px; margin-top: 6px; }
-#sectionctl button, #platectl button { background: none; border: 1px solid #2a2318; font-family: inherit;
-  font-size: 10px; letter-spacing: 0.14em; padding: 4px 8px; cursor: pointer; color: #2a2318; flex: 1; }
-#sectionctl button.on, #platectl button.on { background: #2a2318; color: #f1ead9; }
+#sectionctl button, #platectl button { background: none; border: 1px solid #6ff5ea; font-family: inherit;
+  font-size: 10px; letter-spacing: 0.14em; padding: 4px 8px; cursor: pointer; color: #f4e9ff; flex: 1; }
+#sectionctl button.on, #platectl button.on { background: #ff71ce; color: #1a1036; border-color: #ff71ce; }
 #platectl { position: absolute; top: 120px; right: 10px; width: 210px; padding: 10px 14px; display: none;
   font-size: 11px; letter-spacing: 0.1em; }
-#platectl input[type=range] { width: 100%; accent-color: #2a2318; }
+#platectl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #platectl .btnrow { display: flex; gap: 6px; margin: 6px 0; }
 #platectl .engrave { width: 100%; padding: 8px; font-size: 11px; margin-top: 4px; }
+/* the folio: sixteen slots, never labelled as sixteen — the player
+   discovers the count by filling it */
+#folio-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 9px; }
+#folio-strip i { display: block; aspect-ratio: 3/2; border: 1px solid rgba(111,245,234,0.3); font-style: normal; }
+#folio-strip i.held { background: #f6e0ef; border-color: rgba(246,224,239,0.75); }
+#folio-strip i.last { border-color: #ff71ce; box-shadow: 0 0 5px rgba(255,113,206,0.6); }
 #wanderhint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 7px 18px;
   font-size: 11px; letter-spacing: 0.15em; display: none; font-style: italic; }
-#platemark { position: absolute; inset: 9px; border: 1px solid rgba(42,35,24,0.35); pointer-events: none; }
-#platemark::after { content: ''; position: absolute; inset: 3px; border: 1px solid rgba(42,35,24,0.16); }
+#platemark { position: absolute; inset: 9px; border: 1px solid rgba(255,113,206,0.35); pointer-events: none; }
+#platemark::after { content: ''; position: absolute; inset: 3px; border: 1px solid rgba(111,245,234,0.16); }
 #labels { position: absolute; inset: 0; overflow: hidden; }
 .dlabel { position: absolute; transform: translate(-50%, -50%); font-size: 13px; font-style: italic;
-  letter-spacing: 0.22em; color: #2a2318; text-shadow: 0 0 6px rgba(241,234,217,0.9), 0 0 2px rgba(241,234,217,1);
+  letter-spacing: 0.22em; color: #b8fff9; text-shadow: 0 0 6px rgba(26,16,54,0.9), 0 0 2px rgba(26,16,54,1);
   white-space: nowrap; transition: opacity 1.2s; }
 #frame { position: absolute; inset: 0; display: none; pointer-events: none; }
-#frame .bar { position: absolute; background: rgba(28,23,15,0.88); }
-#veil { position: fixed; inset: 0; background: #ece5d3; z-index: 50; display: flex; flex-direction: column;
+#frame .bar { position: absolute; background: rgba(14,7,34,0.9); }
+#veil { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column;
+  background: linear-gradient(to bottom, #241448 0%, #542a6e 46%, #c05490 78%, #ff9b6a 100%);
+  color: #f4e9ff;
   align-items: center; justify-content: center; transition: opacity 1.4s; pointer-events: auto; }
-#veil h1 { font-size: 44px; letter-spacing: 0.5em; font-weight: 500; margin: 0 0 6px 0.5em; }
+#veil h1 { font-size: 44px; letter-spacing: 0.5em; font-weight: 500; margin: 0 0 6px 0.5em;
+  text-shadow: 2px 0 rgba(1,205,254,0.85), -2px 0 rgba(255,113,206,0.85); }
 #veil .sub { font-style: italic; font-size: 15px; opacity: 0.8; letter-spacing: 0.06em; }
-#veil .rule { width: 220px; border-bottom: 1px solid #2a2318; margin: 22px 0; position: relative; }
+#veil .rule { width: 220px; border-bottom: 1px solid #ff71ce; margin: 22px 0; position: relative; }
 #veil .hint { font-size: 12px; letter-spacing: 0.14em; opacity: 0.65; line-height: 2; text-align: center; }
-#veil .begin { margin-top: 26px; border: 1px solid #2a2318; padding: 10px 38px; font-size: 13px;
-  letter-spacing: 0.3em; cursor: pointer; background: none; font-family: inherit; color: #2a2318; }
-#veil .begin:hover { background: #2a2318; color: #ece5d3; }
+#veil .begin { margin-top: 26px; border: 1px solid #6ff5ea; padding: 10px 38px; font-size: 13px;
+  letter-spacing: 0.3em; cursor: pointer; background: none; font-family: inherit; color: #f4e9ff; }
+#veil .begin:hover { background: #ff71ce; color: #1a1036; border-color: #ff71ce; }
+#epigraph { position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; pointer-events: auto; cursor: pointer;
+  font-family: "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(to bottom, #241448 0%, #542a6e 46%, #c05490 78%, #ff9b6a 100%);
+  transition: opacity 1.1s; }
+#epigraph div { font-size: 13px; letter-spacing: 0.32em; line-height: 2; text-align: center;
+  color: #f4e9ff; max-width: 84vw; opacity: 0; animation: epi-in 1.5s ease 0.25s forwards; }
+#epigraph div + div { animation-delay: 1.0s; }
+@keyframes epi-in { to { opacity: 0.62; } }
 
 @media (max-width: 1020px) {
   #quals { display: none; }
@@ -117,20 +137,20 @@ const nv = `
 }
 `,
   iv = {
-    anchor: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    anchor: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M11 24 V6 h8 v18 M8 24 h14 M9 6 h12 M11 3 h8 v3 h-8 z"/></g></svg>`,
-    span: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    span: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M2 8 h26 M2 5 h26 M4 8 v4 a4 4 0 0 0 8 0 v-4 M12 8 v4 a4 4 0 0 0 8 0 v-4 M20 8 v4 a4 4 0 0 0 8 0 v-4 M4 12 v12 M28 12 v12"/></g></svg>`,
-    rise: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    rise: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M2 24 h7 v-5 h7 v-5 h7 v-5 h5 M2 24 v-2 h5 v-5 h7 v-5 h7 v-5 h7"/></g></svg>`,
-    vault: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    vault: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M3 24 V12 a12 9 0 0 1 24 0 V24 M8 24 V14 a7 6 0 0 1 14 0 V24"/></g></svg>`,
-    carve: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    carve: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M3 3 h24 v21 h-24 z M11 24 V14 a4 4 0 0 1 8 0 V24"/>
     <path d="M6 6 l4 4 M24 6 l-4 4" stroke-dasharray="1.5 1.5"/></g></svg>`,
-    emb: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    emb: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M11 24 h8 M12 21 h6 M13 21 V13 M17 21 V13 M15 13 m-3 0 a3 4.5 0 1 1 6 0 a3 4.5 0 1 1 -6 0 M15 5 v-2"/></g></svg>`,
-    designate: `<svg viewBox="0 0 30 26"><g stroke="#2a2318" stroke-width="1.4" fill="none">
+    designate: `<svg viewBox="0 0 30 26"><g stroke="#f4e9ff" stroke-width="1.4" fill="none">
     <path d="M5 21 c4 -3 7 1 10 -1 s6 -4 10 -2 M5 21 c0 2 2 3 4 3 s16 -1 16 -4" />
     <path d="M20 4 l4 4 -10 10 -5 1 1 -5 z"/></g></svg>`,
   };
@@ -170,11 +190,11 @@ class Hud {
     t.innerHTML = `
       <div id="platemark"></div>
       <div id="labels"></div>
-      <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day I · morning</div></div>
+      <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day 001 · morning</div></div>
       <div id="resources" class="panel">
         <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span></div>
         <div><span class="num" id="r-timber">0</span> <span class="lbl">TIMBER</span></div>
-        <div><span class="num" id="r-favor">0</span> <span class="lbl">FAVOR</span></div>
+        <div><span class="num" id="r-favor">0</span> <span class="lbl">CLEARANCE</span></div>
         <div><span class="num" id="r-pop">0</span> <span class="lbl">SOULS</span></div>
         <div id="folio-line" title="No costs, no span limits — build freely."
           style="margin-top:3px; font-size:10px; letter-spacing:0.16em; opacity:0.6; cursor:pointer; font-style:italic">✦ play without resources</div>
@@ -201,19 +221,23 @@ class Hud {
         <div>LENS <input type="range" id="plate-fov" min="22" max="70" value="42"/></div>
         <div>HOUR <input type="range" id="plate-hour" min="5.6" max="20.4" value="16.2" step="0.1"/></div>
         <button class="engrave" id="plate-go">ENGRAVE THIS PLATE</button>
+        <div id="folio-strip"></div>
       </div>
       <div id="wanderhint" class="panel">W A S D walk · SHIFT hurry · ESC return</div>
       <div id="frame"><div class="bar" id="fb-t"></div><div class="bar" id="fb-b"></div><div class="bar" id="fb-l"></div><div class="bar" id="fb-r"></div></div>
       <div id="veil">
-        <h1>CAPRICCIO</h1>
-        <div class="sub">a city of arches, grown inside its own monuments</div>
+        <h1>CAPRICCIO 2</h1>
+        <div class="sub">a city of arches, at the end of humanity</div>
         <div class="rule"></div>
         <div class="hint">
           RAISE the great architecture — piers, spans, stairs, vaults.<br/>
           The citizens will find their own uses for what you leave them.<br/>
-          Bring a way, and water, to the high terrace.
+          Bring a way, and water, to the high terrace.<br/>
+          What you engrave is what remains.
         </div>
         <button class="begin">BEGIN</button>
+        <a href="/about.html" style="margin-top:16px; font-size:10px; letter-spacing:0.16em;
+          opacity:0.45; font-style:italic; color:inherit; text-decoration:none">about this city</a>
       </div>
     `;
     const e = t.querySelector("#palette"),
@@ -223,7 +247,7 @@ class Hud {
         ["rise", "RISE"],
         ["vault", "VAULT"],
         ["carve", "CARVE"],
-        ["emb", "ADORN"],
+        ["emb", "FURNISH"],
         ["designate", "INVITE"],
       ];
     for (const [m, _] of n) {
@@ -431,7 +455,7 @@ class Hud {
                   : e < 19.5
                     ? 5
                     : 6;
-    this.dayEl.textContent = `day ${rv(t)} · ${n[s]}`;
+    this.dayEl.textContent = `day ${String(t).padStart(3, "0")} · ${n[s]}`;
   }
   updateQuals(t) {
     for (const [e, n] of Object.entries(t)) {
@@ -449,9 +473,27 @@ class Hud {
       (s.classList.toggle("on", t === "x"),
       r.classList.toggle("on", t === "z"));
   }
-  showPlate(t, e) {
+  // The folio holds what the save holds: the last sixteen plates. Filled
+  // slots read as prints in a case; hover names each one. No caption, no
+  // count — the strip is discovered by filling it.
+  updateFolio(t) {
+    const e = this.root.querySelector("#folio-strip");
+    if (e) {
+      e.innerHTML = "";
+      for (let n = 0; n < 16; n++) {
+        const s = document.createElement("i"),
+          r = t[n];
+        (r &&
+          (s.classList.add("held"),
+          (s.title = `Tav. ${tv(r.n)} — ${r.caption}`),
+          n === t.length - 1 && s.classList.add("last")),
+          e.appendChild(s));
+      }
+    }
+  }
+  showPlate(t, e /* , evicted */) {
     const n = document.createElement("div");
-    n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(28,23,15,0.78);
+    n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(14,7,34,0.82);
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto`;
     const s = document.createElement("img");
     ((s.src = t),
@@ -464,7 +506,7 @@ class Hud {
       const c = document.createElement("button");
       return (
         (c.textContent = a),
-        (c.style.cssText = `background:#f1ead9;border:1px solid #2a2318;color:#2a2318;
+        (c.style.cssText = `background:#1a1036;border:1px solid #ff71ce;color:#f4e9ff;
         font-family:inherit;font-size:11px;letter-spacing:0.22em;padding:9px 22px;cursor:pointer`),
         r.appendChild(c),
         c
@@ -475,10 +517,20 @@ class Hud {
       ((a.href = t), (a.download = e), a.click());
     }),
       (o("CLOSE").onclick = () => n.remove()),
-      n.appendChild(r),
-      (n.onclick = (a) => {
-        a.target === n && n.remove();
-      }),
+      n.appendChild(r));
+    // the seventeenth plate pushes the first out. Say which one, and
+    // nothing else — the event is the explanation.
+    if (arguments[2]) {
+      const a = arguments[2],
+        c = document.createElement("div");
+      ((c.style.cssText =
+        "font-size:11px;font-style:italic;letter-spacing:0.14em;opacity:0.72;color:#f4e9ff"),
+        (c.textContent = `Tav. ${tv(a.n)} — ${a.caption} — leaves the record`),
+        n.appendChild(c));
+    }
+    ((n.onclick = (a) => {
+      a.target === n && n.remove();
+    }),
       this.root.appendChild(n));
   }
   updateFrame(t, e, n) {
