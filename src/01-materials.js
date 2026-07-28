@@ -30,6 +30,7 @@ function createStoneMaterial(i = {}) {
         (n.uniforms.uLocalGain = { value: i.gain ?? 1 }),
         (n.uniforms.uDither = { value: i.dither ? 1 : 0 }),
         (n.uniforms.uPxScale = engravingUniforms.uPxScale),
+        (n.uniforms.uBlueNoise = engravingUniforms.uBlueNoise),
         (n.uniforms.uDistrictPos = districtUniforms.uDistrictPos),
         (n.uniforms.uDistrictCol = districtUniforms.uDistrictCol),
         (n.vertexShader = n.vertexShader

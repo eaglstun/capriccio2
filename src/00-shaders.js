@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { Color, DepthTexture, LinearFilter, Matrix4, Mesh, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
+import { Color, DataTexture, DepthTexture, FloatType, LinearFilter, Matrix4, Mesh, NearestFilter, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, RedFormat, RepeatWrapping, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
 import { defineField } from "./_runtime.js";
 // --- end generated imports ---
 
@@ -69,16 +69,12 @@ float vnoise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-// 4x4 Bayer threshold (values centred in 0..1)
-float bayer4(vec2 p) {
-  vec2 q = floor(mod(p, 4.0));
-  float i = q.x + q.y * 4.0;
-  float m =
-    i ==  0.0 ?  0.0 : i ==  1.0 ?  8.0 : i ==  2.0 ?  2.0 : i ==  3.0 ? 10.0 :
-    i ==  4.0 ? 12.0 : i ==  5.0 ?  4.0 : i ==  6.0 ? 14.0 : i ==  7.0 ?  6.0 :
-    i ==  8.0 ?  3.0 : i ==  9.0 ? 11.0 : i == 10.0 ?  1.0 : i == 11.0 ?  9.0 :
-    i == 12.0 ? 15.0 : i == 13.0 ?  7.0 : i == 14.0 ? 13.0 : 5.0;
-  return (m + 0.5) / 16.0;
+// blue-noise threshold: 64x64 void-and-cluster texture, generated at load
+// (see makeBlueNoiseTexture). Aperiodic, 4096 levels, tiles seamlessly —
+// none of which a 4x4 Bayer lattice could do.
+uniform sampler2D uBlueNoise;
+float bnThresh(vec2 cell) {
+  return texture2D(uBlueNoise, (cell + 0.5) / 64.0).r;
 }
 
 void main() {
@@ -284,7 +280,7 @@ void main() {
 
   // ============ STYLE SLAB ============
   // inside the tracking band the signal drops a generation: the same
-  // strip of frame re-renders as a 1-bit ordered-dither plate. Hard
+  // strip of frame re-renders as a 1-bit blue-noise-dithered plate. Hard
   // edges on purpose — collage, not crossfade. (The band still carries
   // the VHS displacement and chroma tear from above.)
   float slab = step(trackPos, 0.085) * step(0.62, gate);
@@ -292,7 +288,10 @@ void main() {
     float sl = dot(color, vec3(0.2126, 0.7152, 0.0722));
     // Atkinson-shaped response: highlights blow, shadows crush
     sl = clamp((sl - 0.5) * 1.5 + 0.56, 0.0, 1.0);
-    float bt = bayer4(floor(gl_FragCoord.xy / 2.0));
+    float bt = bnThresh(floor(gl_FragCoord.xy / 3.0));
+    // diffusion tell: where luminance is changing, pull the threshold
+    // toward the mid so clusters bunch along edges instead of screening
+    bt = mix(bt, 0.5, clamp(fwidth(sl) * 4.0, 0.0, 0.75));
     color = sl > bt ? uPaper * 1.04 : vec3(0.17, 0.10, 0.32);
   }
 
@@ -300,6 +299,89 @@ void main() {
 }
 `;
 }
+// 64x64 blue-noise threshold map, built at load by void-and-cluster
+// (Ulichney 1993): seed a sparse random pattern, relax it by swapping the
+// tightest cluster into the largest void until stable, then rank every
+// pixel by removing clusters (dark end) and filling voids (light end).
+// Energy is a toroidally wrapped gaussian, so the texture tiles seamlessly.
+// Deterministic seed, zero shipped bytes, ~4096 threshold levels — this is
+// what replaces the 16-level Bayer lattice in both dither sites.
+function makeBlueNoiseTexture(size = 64) {
+  const N = size * size,
+    s2 = 2 * 1.9 * 1.9,
+    lut = new Float32Array(N),
+    energy = new Float32Array(N),
+    on = new Uint8Array(N),
+    rank = new Float32Array(N);
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const dx = Math.min(x, size - x),
+        dy = Math.min(y, size - y);
+      lut[y * size + x] = Math.exp(-(dx * dx + dy * dy) / s2);
+    }
+  const splat = (idx, s) => {
+    const ix = idx % size,
+      iy = (idx / size) | 0;
+    for (let dy = 0; dy < size; dy++) {
+      const ry = ((iy + dy) % size) * size,
+        ly = dy * size;
+      for (let dx = 0; dx < size; dx++)
+        energy[ry + ((ix + dx) % size)] += s * lut[ly + dx];
+    }
+  };
+  const tightest = () => {
+    let hi = -1, hv = -1;
+    for (let k = 0; k < N; k++) if (on[k] && energy[k] > hv) ((hv = energy[k]), (hi = k));
+    return hi;
+  };
+  const largestVoid = () => {
+    let lo = -1, lv = 1 / 0;
+    for (let k = 0; k < N; k++) if (!on[k] && energy[k] < lv) ((lv = energy[k]), (lo = k));
+    return lo;
+  };
+  let st = 20260728, count = 0;
+  const rnd = () => {
+    st = (st + 1831565813) | 0;
+    let e = Math.imul(st ^ (st >>> 15), 1 | st);
+    e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+    return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+  };
+  while (count < N >> 3) {
+    const k = (rnd() * N) | 0;
+    if (!on[k]) ((on[k] = 1), splat(k, 1), count++);
+  }
+  for (let it = 0; it < 768; it++) {
+    const hi = tightest();
+    ((on[hi] = 0), splat(hi, -1));
+    const lo = largestVoid();
+    ((on[lo] = 1), splat(lo, 1));
+    if (lo === hi) break;
+  }
+  const proto = on.slice();
+  for (let c = count; c > 0; ) {
+    const hi = tightest();
+    ((on[hi] = 0), splat(hi, -1), (rank[hi] = --c));
+  }
+  (on.set(proto), energy.fill(0));
+  for (let k = 0; k < N; k++) if (on[k]) splat(k, 1);
+  // beyond half-full the roles flip on their own: on a torus the energy of
+  // the zeros is a constant minus the energy of the ones, so "fill the
+  // largest void" and "break the tightest cluster of zeros" are one rule
+  for (let c = count; c < N; c++) {
+    const lo = largestVoid();
+    ((on[lo] = 1), splat(lo, 1), (rank[lo] = c));
+  }
+  const data = new Float32Array(N);
+  for (let k = 0; k < N; k++) data[k] = (rank[k] + 0.5) / N;
+  const tex = new DataTexture(data, size, size, RedFormat, FloatType);
+  ((tex.wrapS = RepeatWrapping),
+    (tex.wrapT = RepeatWrapping),
+    (tex.minFilter = NearestFilter),
+    (tex.magFilter = NearestFilter),
+    (tex.needsUpdate = !0));
+  return tex;
+}
+const blueNoiseTex = makeBlueNoiseTexture();
 class J0 {
   constructor(t, e = {}) {
     defineField(this, "renderer");
@@ -358,6 +440,7 @@ class J0 {
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
           uTime: { value: 0 },
+          uBlueNoise: { value: blueNoiseTex },
         },
         depthTest: !1,
         depthWrite: !1,
@@ -385,8 +468,8 @@ class J0 {
         n * this.ss * 0.78,
       )),
       (engravingUniforms.uPxScale.value = Math.max(
-        2,
-        Math.round(n * this.ss * 2),
+        3,
+        Math.round(n * this.ss * 3),
       )));
   }
   setDusk(t) {
@@ -467,9 +550,12 @@ const engravingUniforms = {
   uAmbSky: { value: 0.3 },
   uAmbGround: { value: 0.15 },
   uDebugView: { value: 0 },
-  // dither cell size in render-target pixels — kept at ~2 screen pixels
-  // by J0.resize so the 1-bit cells survive the supersampled downscale
+  // dither cell size in render-target pixels — kept at ~3 screen pixels
+  // by J0.resize so the 1-bit cells survive the supersampled downscale.
+  // (3, not 2: Atkinson dithered 1px cells on a 512x342 Mac; on a modern
+  // viewport 2px cells were proportionally far finer than the original)
   uPxScale: { value: 3 },
+  uBlueNoise: { value: blueNoiseTex },
 };
 // palette by district: each named quarter tints the fabric and the neon
 // inside its radius. Hue goes where the name sends it; the value stays
@@ -568,16 +654,13 @@ float eNoise(vec2 p) {
   return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
 }
 
-// 4x4 Bayer threshold for the 1-bit era (values centred in 0..1)
-float eBayer4(vec2 p) {
-  vec2 q = floor(mod(p, 4.0));
-  float i = q.x + q.y * 4.0;
-  float m =
-    i ==  0.0 ?  0.0 : i ==  1.0 ?  8.0 : i ==  2.0 ?  2.0 : i ==  3.0 ? 10.0 :
-    i ==  4.0 ? 12.0 : i ==  5.0 ?  4.0 : i ==  6.0 ? 14.0 : i ==  7.0 ?  6.0 :
-    i ==  8.0 ?  3.0 : i ==  9.0 ? 11.0 : i == 10.0 ?  1.0 : i == 11.0 ?  9.0 :
-    i == 12.0 ? 15.0 : i == 13.0 ?  7.0 : i == 14.0 ? 13.0 : 5.0;
-  return (m + 0.5) / 16.0;
+// blue-noise threshold for the 1-bit era: 64x64 void-and-cluster map
+// generated at load. Aperiodic clusters instead of a repeating lattice,
+// 4096 levels instead of 16 — the two structural reasons Bayer banded
+// and read as a halftone screen rather than a dither.
+uniform sampler2D uBlueNoise;
+float eBlueNoise(vec2 cell) {
+  return texture2D(uBlueNoise, (cell + 0.5) / 64.0).r;
 }
 
 float lineAA(float s, float duty) {
@@ -779,7 +862,7 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   }
 
   // the 1-bit era: end-of-humanity fabric (corporate panelling) renders
-  // as ordered dither with an Atkinson-shaped response — contrast
+  // as blue-noise dither with an Atkinson-shaped response — contrast
   // stretched so highlights blow out and shadows crush, the way the
   // discarded 2/8 error does in the real algorithm. Hard binary output;
   // the fabric boundary IS the style boundary. Old fabric (board-formed
@@ -787,7 +870,13 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   if (uDither > 0.5 && uCutting < 0.5) {
     float dl = dot(engraved, vec3(0.2126, 0.7152, 0.0722));
     dl = clamp((dl - 0.5) * 1.45 + 0.56, 0.0, 1.0);
-    float bt = eBayer4(floor(gl_FragCoord.xy / uPxScale));
+    float bt = eBlueNoise(floor(gl_FragCoord.xy / uPxScale));
+    // diffusion tell: error diffusion sharpens edges because the error a
+    // contour rejects lands on its neighbours. A screen can't do that, but
+    // biasing the threshold toward the mid wherever luminance is changing
+    // makes the clusters bunch along edges the same way — diffusion, not
+    // screening. fwidth is per render-target pixel; scale by the cell.
+    bt = mix(bt, 0.5, clamp(fwidth(dl) * uPxScale * 2.0, 0.0, 0.75));
     vec3 dPaper = mix(vec3(0.97), uStoneCol, 0.30);
     engraved = dl > bt ? dPaper : uInkCol * 0.92;
   }
