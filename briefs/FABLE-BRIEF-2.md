@@ -113,7 +113,7 @@ surface too.
   `dusk`.
 - Flavour text: Marcus the stonecutter can become something else. Labels and
   hints may change; **`key` values may not**.
-- Update `RENDERING.md` with what the renderer now does — it currently
+- Update `docs/RENDERING.md` with what the renderer now does — it currently
   describes the original engraving and is stale on this branch.
 
 ---

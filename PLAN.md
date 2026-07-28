@@ -65,7 +65,7 @@ shape. This is how we get the simulation: what a citizen _is_, what it wants,
 how it chooses a building.
 
 **Shortcut found: the build ships `window.CAP`**, a 33-key debug handle onto
-every subsystem. No breakpointing needed. See `SIMULATION.md`.
+every subsystem. No breakpointing needed. See `docs/SIMULATION.md`.
 
 - [x] Capture a live world object — class `T_`, 48 pockets / 24 structures
 - [x] Capture a live agent object — pooled, 132 slots / 46 active

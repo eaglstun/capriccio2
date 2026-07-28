@@ -5,7 +5,7 @@ description: >-
   time, keeping the change provably a pure identifier substitution. Use when the task is to
   make `src/` readable — "rename the world module", "give the pocket fields real names",
   "clean up 06-infill.js". It grounds every name in the existing documentation
-  (`SIMULATION.md`, `RENDERING.md`, `AUDIO.md`, `DEPENDENCIES.md`) rather than inventing
+  (`docs/SIMULATION.md`, `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/DEPENDENCIES.md`) rather than inventing
   vocabulary, applies each rename across ALL files that reference the symbol, and verifies
   reversibility after every batch. It does NOT restructure code, add imports, split files, or
   touch `public/`. For identifying three.js symbols use `capriccio-vendor-mapper`.
@@ -17,7 +17,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 `src/` is a lossless cut of the game's app section with 100% mangled
 identifiers. Your job is to make it readable **without changing what it does**.
 
-Read `src/README.md` and `DEPENDENCIES.md` before touching anything.
+Read `src/README.md` and `docs/DEPENDENCIES.md` before touching anything.
 
 ## The invariant — do not break this
 
@@ -39,20 +39,20 @@ line 25401.
 1. **A rename is global.** A symbol declared in one file is referenced in
    others — `tools/scope_graph.py` tells you exactly where. Renaming in one
    file only is the most likely way to break things.
-2. **Names come from the docs, not from imagination.** `SIMULATION.md` already
+2. **Names come from the docs, not from imagination.** `docs/SIMULATION.md` already
    establishes the vocabulary: pocket, shelter, scenic, infill, designation,
    anchor, span, rise, vault, carve, emb, plate, folio. Use it. Consistency
    with existing documentation matters more than your preferred phrasing.
 3. **Work one subsystem at a time**, verify, then move on. Do not attempt a
    whole-codebase rename in one pass.
-4. **Beware the 14 shadowed names.** `DEPENDENCIES.md` lists 2-char names that
+4. **Beware the 14 shadowed names.** `docs/DEPENDENCIES.md` lists 2-char names that
    are also declared in inner scopes (`Ch Co Fr Kt Pe Pl Qe Th bi` and
    others). A naive global find-and-replace on these WILL corrupt inner
    scopes. Check each occurrence by hand.
 5. **Never rename inside strings.** GLSL uniform names, `localStorage` keys,
-   UI copy, and `capriccio-save-v1` are load-bearing. `aTone` is a real vertex
-   attribute name; `uHatchFreq` is a real uniform. Changing them breaks the
-   game silently.
+   UI copy, and `capriccio-save-v1` are read by name at runtime. `aTone` is a
+   real vertex attribute; `uHatchFreq` is a real uniform. Rename either and the
+   game breaks silently.
 
 ## Suggested order
 

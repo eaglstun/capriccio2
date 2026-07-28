@@ -13,13 +13,23 @@ This directory holds a **downloaded production build**. There is no source.
 ## Layout
 
 ```text
-public/
-  index.html                     975 bytes, loads the bundle as type="module"
-  assets/index-DCXbw2vV.js       the entire game
+public/                   the ORIGINAL downloaded build — never edit
+  index.html
+  assets/index-DCXbw2vV.js
+src/                      the reconstruction: 18 ES modules + score + tutorial
+docs/                     SIMULATION, PROGRESSION, RENDERING, AUDIO,
+                          COMMENTS, VENDOR-MAP, DEPENDENCIES
+briefs/                   the brief each Fable pass was written from
+tools/                    split_bundle.py, scope_graph.py, jsmask.py, probe.js
+deploy/                   droplet deploy scripts
+dist/                     build output (gitignored)
+index.html  about.html    the two pages
 ```
 
-That is the whole project. No `package.json`, no `src/`, no build config, no
-git repo.
+It started as just the two files under `public/`. It is now a real project:
+`package.json`, a Vite build, a git repo, and a deployed site at
+**fable-mvp.gg**. `public/` remains the pristine original and the reference
+against which everything is verified.
 
 ## Critical facts about the bundle
 

@@ -13,10 +13,10 @@ with no source.
 | `CLAUDE.md`      | provenance, how to serve it, hard rules                             |
 | `PLAN.md`        | the phased investigation and what worked                            |
 | `FINDINGS.md`    | static analysis, save format, full building catalogue               |
-| `SIMULATION.md`  | the runtime model — pockets, agents, growth, all five stat formulas |
-| `RENDERING.md`   | how the engraving look works (triplanar hatching)                   |
-| `AUDIO.md`       | the procedural soundscape                                           |
-| `COMMENTS.md`    | every comment that survived minification — the only stated intent   |
+| `docs/SIMULATION.md`  | the runtime model — pockets, agents, growth, all five stat formulas |
+| `docs/RENDERING.md`   | how the engraving look works (triplanar hatching)                   |
+| `docs/AUDIO.md`       | the procedural soundscape                                           |
+| `docs/COMMENTS.md`    | every comment that survived minification — the only stated intent   |
 | `tools/probe.js` | `CAPX` introspection helpers                                        |
 
 **The shaders are the most readable code in the bundle.** GLSL lives in

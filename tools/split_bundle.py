@@ -252,7 +252,7 @@ ANCHORS_C = [(re.compile(p), n) for p, n in ANCHORS]
 IDENT_RX = re.compile(r"(?<![\w$])([A-Za-z_$][\w$]*)")
 
 def is_property_access(masked, start):
-    """True if the identifier at `start` is a `.prop` access.
+    r"""True if the identifier at `start` is a `.prop` access.
 
     NOT a property access when preceded by `...` — spread syntax also ends in
     a dot, and a naive `(?<![.\w$])` lookbehind silently skips every

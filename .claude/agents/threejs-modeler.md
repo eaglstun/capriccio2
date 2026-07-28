@@ -25,9 +25,9 @@ three.js version is **r180**. Do not apply r13x-era advice; several APIs moved.
 
 ## Read before modelling
 
-- `RENDERING.md` — how the engraving/neon renderer works, and what a surface
+- `docs/RENDERING.md` — how the engraving/neon renderer works, and what a surface
   needs to look right in it
-- `SIMULATION.md` — what pockets are and why geometry is load-bearing
+- `docs/SIMULATION.md` — what pockets are and why geometry is load-bearing
 - `src/03-geometry.js` — `MeshBuilder`, `newStructureParts`, `setToneAttribute`,
   primitives, `buildTree`
 - `src/04-builders.js` — the six structure builders and the `buildStructureMesh`

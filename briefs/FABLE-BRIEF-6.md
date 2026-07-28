@@ -1,6 +1,6 @@
 # Brief 6 — language drift, and what the game is now for
 
-Read `PROGRESSION.md` first. It documents how the original plays out, and the
+Read `docs/PROGRESSION.md` first. It documents how the original plays out, and the
 mechanics are frozen, so it describes ours too.
 
 ---

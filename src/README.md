@@ -135,7 +135,7 @@ Two things the splitter has to get right:
 
 Start at `05-world.js` and `06-infill.js` — between them they hold the actual
 game. `00-shaders.js` is the most readable file in the project because GLSL
-comments survived minification (see `../COMMENTS.md`).
+comments survived minification (see `../docs/COMMENTS.md`).
 
 ## Next steps
 

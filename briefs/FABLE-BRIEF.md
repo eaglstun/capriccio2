@@ -20,7 +20,7 @@ one: reskin it as vaporwave. The point is a **new look, not a new game**.
    - Even the lean path is ~630KB unpacked pre-tree-shake against a 662KB
      game. **This is the single biggest size risk in the job** and the brief
      tells Fable to measure it and report back rather than assume.
-2. **Sound effects stay hand-rolled.** `AUDIO.md` documents the existing
+2. **Sound effects stay hand-rolled.** `docs/AUDIO.md` documents the existing
    convention — pink-noise wind, physically-modelled bells, birds, chisels,
    all synthesized, zero sample files. Strudel is for _music_ only.
 3. **No new asset types at all.** No bitmaps, no video, no audio files, no
@@ -39,7 +39,7 @@ same.
 - `src/` — 18 ES modules, the game's source. **Edit here.**
 - `public/` — the original production build. **Reference only, never edit.**
 - `dist/` — build output from `yarn build`.
-- Read `RENDERING.md`, `AUDIO.md`, `SIMULATION.md`, `src/README.md` first.
+- Read `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/SIMULATION.md`, `src/README.md` first.
   They are accurate and were verified against the running game.
 
 Package manager is **yarn**, not npm.
@@ -70,7 +70,7 @@ and will break the integrity check.
 ### Where the look actually lives
 
 The renderer is already structured so a reskin is mostly re-parameterising it.
-Two passes in two frames of reference (see `RENDERING.md`):
+Two passes in two frames of reference (see `docs/RENDERING.md`):
 
 | what                                                  | where                                        |
 | ----------------------------------------------------- | -------------------------------------------- |
@@ -156,7 +156,7 @@ heavy detune, something in the 60–80 BPM range.
 - **Measure and report the bundle size delta.** If Strudel pushes the bundle
   past roughly 1MB, stop and say so rather than shipping it.
 
-**Sound effects — keep the existing system**, described in `AUDIO.md`. It is
+**Sound effects — keep the existing system**, described in `docs/AUDIO.md`. It is
 already fully procedural: pink-noise wind on a 0.07Hz gust LFO, water gain
 falling off squared with distance, a bell whose higher partials decay faster,
 birds only in daylight, chisels only while building. Retune these for the new

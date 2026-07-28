@@ -81,15 +81,16 @@ reverted:
 | `public/`          | the original production build, untouched                       |
 | `src/`             | 18 ES modules + the score and runtime shim                     |
 | `tools/`           | the splitter, the scope grapher, runtime probes                |
+| `deploy/`          | the droplet deploy scripts                                     |
 | `about.html`       | colophon and the things worth noticing                         |
-| `SIMULATION.md`    | how the game actually works — pockets, agents, growth          |
-| `PROGRESSION.md`   | how it plays out: favor tiers, the five requests, the ceilings |
-| `RENDERING.md`     | the engraving renderer, and what the reskin did to it          |
-| `AUDIO.md`         | the procedural soundscape                                      |
-| `COMMENTS.md`      | every comment that survived minification                       |
-| `VENDOR-MAP.md`    | all 48 three.js symbols, identified from evidence              |
-| `DEPENDENCIES.md`  | the module graph                                               |
-| `FABLE-BRIEF-*.md` | the briefs each visual pass was built from                     |
+| `docs/SIMULATION.md`    | how the game actually works — pockets, agents, growth          |
+| `docs/PROGRESSION.md`   | how it plays out: favor tiers, the five requests, the ceilings |
+| `docs/RENDERING.md`     | the engraving renderer, and what the reskin did to it          |
+| `docs/AUDIO.md`         | the procedural soundscape                                      |
+| `docs/COMMENTS.md`      | every comment that survived minification                       |
+| `docs/VENDOR-MAP.md`    | all 48 three.js symbols, identified from evidence              |
+| `docs/DEPENDENCIES.md`  | the module graph                                               |
+| `briefs/` | the briefs each visual pass was built from                     |
 
 ## Running it
 
