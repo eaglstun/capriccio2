@@ -9,3 +9,7 @@ dist/
 !.yarn/plugins
 !.yarn/versions
 .pnp.*
+
+# Python bytecode
+__pycache__/
+*.pyc
