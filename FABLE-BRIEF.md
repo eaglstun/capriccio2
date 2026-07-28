@@ -108,6 +108,42 @@ composition is good and is not what needs changing.
 Restraint matters more than saturation. The original's confidence comes from a
 tight palette and a lot of empty paper. Keep that discipline; change the hues.
 
+### One addition: an interstitial between title and game
+
+After the player clicks BEGIN / CONTINUE, and **before** the game view
+appears, show these two lines, then fade to the game:
+
+```text
+faint horizontal burin lines, denser toward horizon, broken by cloudy noise
+dusk warms and darkens the paper sky a touch near the sun's side
+```
+
+Reproduce that text **exactly**. Do not rewrite, extend, or "improve" it.
+
+These are real comments from the sky shader in `00-shaders.js` — notes the
+program wrote to itself about how to draw its own sky. They survived
+minification only because comments inside template literals are not stripped.
+Nobody was meant to read them. Putting them on screen is the whole idea, so
+the wording is not yours to edit.
+
+Implementation notes:
+
+- This is the one place you may touch the boot sequence in `17-bootstrap.js`.
+  Keep the change minimal: the veil-dismiss handler already exists — add a
+  step, do not restructure the flow.
+- It must be **skippable** — a click or any key goes straight through. Never
+  trap a returning player behind it. Two or three seconds unattended.
+- Style it as an epigraph: centred, quiet, wide letter-spacing, low contrast
+  against the sunset. It should read as something overheard, not as a splash
+  screen. No box, no border, no button.
+- Text only. No new assets, no webfonts.
+- It must not delay or block world construction — the game should already be
+  built behind it, exactly as it is behind the title screen today.
+
+The `//` comment markers are dropped above, on the judgement that it reads
+better as an epigraph than as source. If keeping them would look better in
+context — code-as-aesthetic is very much on-theme — that call is yours.
+
 ### Audio
 
 **Music — new, via Strudel.** Add `@strudel/core` and `@strudel/webaudio`
