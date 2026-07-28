@@ -45,10 +45,10 @@ const BUILD_CATALOGUE = {
       {
         key: "court",
         label: "Cloister Hall",
-        hint: "intimate — 14 by 20 paces",
+        hint: "intimate — 13 metres across",
       },
-      { key: "market", label: "Market Hall", hint: "roomy — 18 by 34 paces" },
-      { key: "basilica", label: "Basilica", hint: "vast — 22 by 52 paces" },
+      { key: "market", label: "Market Hall", hint: "roomy — 17 metres across" },
+      { key: "basilica", label: "Basilica", hint: "vast — 22 metres across" },
     ],
     carve: [
       {
@@ -59,14 +59,14 @@ const BUILD_CATALOGUE = {
       {
         key: "gate",
         label: "Great Gate",
-        hint: "ceremonial breach, 8 paces wide",
+        hint: "ceremonial breach, 8 metres wide",
       },
     ],
     emb: [
-      { key: "statue", label: "Statue", hint: "a gilded figure on a plinth" },
+      { key: "statue", label: "Statue", hint: "a chrome figure on a plinth" },
       { key: "fountain", label: "Fountain", hint: "water for a neighborhood" },
-      { key: "lantern", label: "Lantern", hint: "warm light after dusk" },
-      { key: "cypress", label: "Cypress", hint: "a dark green flame" },
+      { key: "lantern", label: "Lantern", hint: "cold light after dusk" },
+      { key: "cypress", label: "Cypress", hint: "the shape of one, in polymer" },
     ],
     designate: [
       { key: "dwelling", label: "Dwelling", hint: "invite homes here" },

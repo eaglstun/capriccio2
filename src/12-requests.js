@@ -16,7 +16,7 @@ import { defineField } from "./_runtime.js";
 const j_ = [
     {
       id: "reach-terrace",
-      text: "“The high terrace has been beyond us since the old stair fell. Tullia still talks of gardens up there.” — Marcus, stonecutter",
+      text: "“The high terrace has been beyond us since the old stair fell. Tullia still talks of gardens up there.” — Marcus, lattice technician",
       favor: 70,
       thanks:
         "The way up is open. Children raced to the top before the mortar dried.",
@@ -60,7 +60,7 @@ const j_ = [
     },
     {
       id: "through-wall",
-      text: "“The great wall makes a half-hour of a hundred paces. A door through it would spare old legs.” — Livia",
+      text: "“The great wall makes a half-hour of a hundred metres. A door through it would spare old legs.” — Livia",
       favor: 50,
       thanks:
         "The passage breathes cool air through the wall. Livia sits in it at noon.",
@@ -76,7 +76,7 @@ const j_ = [
       text: "“The under-arches go black after sunset. A few lanterns would make them kind.” — the night watch",
       favor: 30,
       thanks:
-        "Small lights swing under the arches now. The dark feels inhabited, not empty.",
+        "Small lights hum under the arches now. The dark feels inhabited, not empty.",
       done: (i) => {
         let t = 0;
         for (const e of i.actions)
@@ -87,12 +87,12 @@ const j_ = [
   ],
   kl = [
     "A trader asked the name of the city today. Nobody could quite agree.",
-    "The swallows have found the new arches. They approve.",
+    "The drones have found the new arches. They roost where the swallows did.",
     "Someone chalked a game board onto the plaza steps. It stays.",
     "Old men argue about which arch is oldest. All of them are wrong.",
-    "A cat has claimed the warmest stone. Construction routes around it.",
+    "A cat has claimed the warmest panel. Construction routes around it.",
     "The masons hum while they work. The vaults hum back.",
-    "Laundry lines appeared between the columns overnight, like rigging.",
+    "Cable runs appeared between the columns overnight, like laundry lines.",
     "Children have invented seventeen names for the big pier. All are rude.",
   ];
 class Requests {

@@ -332,7 +332,7 @@ async function Uh(i = !1) {
       : Ph[Us.aspect],
     e = 2e3,
     n = Math.round(e / t);
-  (fe.toast("The burin bites the copper…", 2500),
+  (fe.toast("The laser bites the substrate…", 2500),
     await new Promise((l) => setTimeout(l, 30)));
   const s = ke.snap(je, ie, e, n),
     r = gameState.plates.length + 1,

@@ -183,7 +183,7 @@ class Hud {
     t.innerHTML = `
       <div id="platemark"></div>
       <div id="labels"></div>
-      <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day I · morning</div></div>
+      <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day 001 · morning</div></div>
       <div id="resources" class="panel">
         <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span></div>
         <div><span class="num" id="r-timber">0</span> <span class="lbl">TIMBER</span></div>
@@ -444,7 +444,7 @@ class Hud {
                   : e < 19.5
                     ? 5
                     : 6;
-    this.dayEl.textContent = `day ${rv(t)} · ${n[s]}`;
+    this.dayEl.textContent = `day ${String(t).padStart(3, "0")} · ${n[s]}`;
   }
   updateQuals(t) {
     for (const [e, n] of Object.entries(t)) {
