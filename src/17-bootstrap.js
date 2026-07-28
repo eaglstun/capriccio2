@@ -416,20 +416,37 @@ function updateQualityMeters() {
     n = i.length ? i.reduce((a, c) => a + c.light, 0) / i.length : 0.5,
     s = Kt.actions.filter((a) => a.t === "emb" && a.kind === "lantern").length,
     r = clamp(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
+  // GRANDEUR is two independently capped halves — structure (0.60) and
+  // ornament (0.40) — so neither maxes the meter alone: grandeur requires a
+  // city that is both built and adorned. Cypress scores 0 (12 of the 18
+  // seeded ornaments are trees; any value lets starting scenery dominate —
+  // and a tree is the one thing here nobody built). Passage scores 0: a
+  // door is circulation, not monument; the 8m Gate is the ceremonial one.
+  // Lanterns score almost nothing because they already feed BELONGING.
   let o = 0;
   for (const [, a] of Kt.structures) {
     const c = a.action;
-    (c.t === "span" && (o += 0.14),
-      c.t === "vault" && (o += 0.12),
-      c.t === "rise" && (o += 0.08),
-      c.t === "anchor" && c.style === "giant" && (o += 0.08));
+    (c.t === "span" && (o += 0.042),
+      c.t === "vault" && (o += 0.036),
+      c.t === "rise" && (o += 0.025),
+      c.t === "anchor" && c.style === "giant" && (o += 0.032));
+  }
+  let orn = 0;
+  for (const a of Kt.actions) {
+    (a.t === "emb" &&
+      (a.kind === "statue" && (orn += 0.026),
+      a.kind === "obelisk" && (orn += 0.026),
+      a.kind === "fountain" && (orn += 0.022),
+      a.kind === "lantern" && (orn += 0.005)),
+      a.t === "carve" && a.w >= 8 && (orn += 0.022),
+      a.t === "anchor" && a.style === "column" && (orn += 0.018));
   }
   fe.updateQuals({
     ACCESS: t,
     SHELTER: e,
     LIGHT: n,
     BELONGING: r,
-    GRANDEUR: clamp(o, 0, 1),
+    GRANDEUR: clamp(o, 0, 0.6) + clamp(orn, 0, 0.4),
   });
 }
 let oc = !1;
