@@ -59,7 +59,7 @@ Keys are frozen. Labels, hints, verbs and captions are free.
 
 ## Part B — what the goal quietly becomes
 
-**A proposal, not a decision. Check before building.**
+**Approved by the user. Build it.**
 
 ### The original's goal
 
