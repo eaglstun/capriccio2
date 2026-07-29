@@ -6,9 +6,8 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { Plane, Raycaster, Vector3 } from "three";
+import { PerspectiveCamera, Plane, Raycaster, Vector3, WebGLRenderer } from "three";
 import { engravingUniforms } from "./00-shaders";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**
@@ -20,14 +19,15 @@ import { defineField } from "./_runtime";
  * convention for solid matter a section passes through.
  */
 class SectionMode {
-  constructor(t, e) {
-    defineField(this, "world");
-    defineField(this, "renderer");
-    defineField(this, "plane", new Plane(new Vector3(-1, 0, 0), 0));
-    defineField(this, "active", !1);
-    defineField(this, "axis", "x");
-    defineField(this, "offset", 0);
-    defineField(this, "flip", 1);
+  world: any;
+  renderer: WebGLRenderer;
+  plane = new Plane(new Vector3(-1, 0, 0), 0);
+  active = !1;
+  axis: "x" | "z" = "x";
+  offset = 0;
+  flip = 1;
+
+  constructor(t: any, e: WebGLRenderer) {
     ((this.world = t), (this.renderer = e));
   }
   /** Enable or disable the cut. */
@@ -65,23 +65,27 @@ class SectionMode {
  * rather than above.
  */
 class WanderMode {
-  constructor(t, e, n) {
-    defineField(this, "world");
-    defineField(this, "camera");
-    defineField(this, "dom");
-    defineField(this, "active", !1);
-    defineField(this, "vel", new Vector3());
-    defineField(this, "pos", new Vector3());
-    defineField(this, "yaw", 0);
-    defineField(this, "pitch", 0);
-    defineField(this, "keys", new Set());
-    defineField(this, "grounded", !1);
-    defineField(this, "onExit", null);
-    defineField(this, "ray", new Raycaster());
-    defineField(this, "boundMove");
-    defineField(this, "boundKey");
-    defineField(this, "boundKeyUp");
-    defineField(this, "boundLockChange");
+  world: any;
+  camera: PerspectiveCamera;
+  dom: HTMLElement;
+  active = !1;
+  vel = new Vector3();
+  pos = new Vector3();
+  yaw = 0;
+  pitch = 0;
+  /** Held key codes, e.g. "KeyW". */
+  keys = new Set<string>();
+  grounded = !1;
+  onExit: (() => void) | null = null;
+  ray = new Raycaster();
+  // listeners kept as bound fields so enter()/exit() can remove the same
+  // references they added
+  boundMove: (e: MouseEvent) => void;
+  boundKey: (e: KeyboardEvent) => void;
+  boundKeyUp: (e: KeyboardEvent) => void;
+  boundLockChange: () => void;
+
+  constructor(t: any, e: PerspectiveCamera, n: HTMLElement) {
     ((this.world = t),
       (this.camera = e),
       (this.dom = n),

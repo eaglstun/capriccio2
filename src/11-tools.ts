@@ -6,42 +6,44 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, BufferGeometry, CylinderGeometry, Mesh, Raycaster, TorusGeometry } from "three";
+import { BufferAttribute, BufferGeometry, Camera, CylinderGeometry, Mesh, Object3D, Raycaster, TorusGeometry } from "three";
 import { terrainHeightAt } from "./01-materials";
 import { setToneAttribute } from "./03-geometry";
 import { buildStructureMesh } from "./04-builders";
 import { Fl, W_, X_, gameState } from "./07-citizens";
 import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue";
 import { BuildOverlays } from "./10-overlays";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class PlacementTool {
-  constructor(t, e, n) {
-    defineField(this, "world");
-    defineField(this, "camera");
-    defineField(this, "scene");
-    defineField(this, "tool", null);
-    defineField(this, "variant", "");
-    defineField(this, "stage", 0);
-    defineField(this, "firstPoint", null);
-    defineField(this, "firstAnchor", -1);
-    defineField(this, "ghost", null);
-    defineField(this, "ghostOk", !0);
-    defineField(this, "marker");
-    defineField(this, "ray", new Raycaster());
-    defineField(this, "onCommit", null);
-    defineField(this, "onMessage", null);
-    defineField(this, "lastHover", null);
-    defineField(this, "lastGhostAt", 0);
-    defineField(this, "ghostMat");
-    defineField(this, "ghostBadMat");
-    defineField(this, "chalk");
-    // the game clock ({day, hour}), set by the bootstrap. Every committed
-    // action is stamped with the moment it was made — the Chronicle enabler.
-    // Old saves simply lack the fields; older builds ignore them. See
-    // CHRONICLE.md.
-    defineField(this, "clock", null);
+  world: any;
+  camera: Camera;
+  scene: Object3D;
+  /** The selected tool key, or null when the tool is put down. */
+  tool: string | null = null;
+  variant = "";
+  /** Multi-click progress: 0 = nothing placed yet, 1 = first point taken. */
+  stage = 0;
+  firstPoint: any = null;
+  firstAnchor = -1;
+  ghost: Mesh | null = null;
+  ghostOk = !0;
+  marker: Mesh;
+  ray = new Raycaster();
+  onCommit: ((action: any) => void) | null = null;
+  onMessage: ((line: string) => void) | null = null;
+  lastHover: any = null;
+  lastGhostAt = 0;
+  ghostMat: any;
+  ghostBadMat: any;
+  chalk: BuildOverlays;
+  // the game clock ({day, hour}), set by the bootstrap. Every committed
+  // action is stamped with the moment it was made — the Chronicle enabler.
+  // Old saves simply lack the fields; older builds ignore them. See
+  // CHRONICLE.md.
+  clock: { day: number; hour: number } | null = null;
+
+  constructor(t: any, e: Camera, n: Object3D) {
     ((this.world = t),
       (this.camera = e),
       (this.scene = n),

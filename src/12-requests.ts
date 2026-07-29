@@ -10,7 +10,6 @@ import { Vector3 } from "three";
 import { Vr } from "./01-materials";
 import { Th } from "./05-world";
 import { gameState } from "./07-citizens";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 // hand-added: the request generator derives its speaker/wording choices
 // deterministically from the request id
@@ -315,23 +314,24 @@ const GEN_KINDS = [
 ];
 
 class Requests {
+  active: any = null;
+  queue: any[];
+  onDone: ((req: any) => void) | null = null;
+  onNew: ((req: any) => void) | null = null;
+  onHint: ((line: string) => void) | null = null;
+  // A8 hint pacing: growth ticks the current ask has gone unmet, and how many
+  // of its hints have already been spoken. Deliberately NOT saved — hint
+  // state is per-session, so a reload can hear them again. Persisting it
+  // would mean a save key for a line of dialogue.
+  activeTicks = 0;
+  hintsShown = 0;
+  flavorIdx = 0;
+  // generator pacing: `lull` counts quiet growth ticks once the hand five
+  // are done, `genOffset` rotates which deficiency is looked for first
+  lull = 0;
+  genOffset = 0;
+
   constructor() {
-    defineField(this, "active", null);
-    defineField(this, "queue");
-    defineField(this, "onDone", null);
-    defineField(this, "onNew", null);
-    defineField(this, "onHint", null);
-    // A8 hint pacing: growth ticks the current ask has gone unmet, and how many
-    // of its hints have already been spoken. Deliberately NOT saved — hint
-    // state is per-session, so a reload can hear them again. Persisting it
-    // would mean a save key for a line of dialogue.
-    defineField(this, "activeTicks", 0);
-    defineField(this, "hintsShown", 0);
-    defineField(this, "flavorIdx", 0);
-    // generator pacing: `lull` counts quiet growth ticks once the hand five
-    // are done, `genOffset` rotates which deficiency is looked for first
-    defineField(this, "lull", 0);
-    defineField(this, "genOffset", 0);
     this.resync();
   }
   /**

@@ -8,16 +8,18 @@
 // --- generated imports ---
 import { BufferGeometry, Group, Line, LineBasicMaterial, LineDashedMaterial, Vector3 } from "three";
 import { terrainHeightAt } from "./01-materials";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class BuildOverlays {
-  constructor(t) {
-    defineField(this, "marks", new Group());
-    defineField(this, "live", new Group());
-    defineField(this, "dashMat");
-    defineField(this, "carveMat");
-    defineField(this, "stringMat");
+  /** Persistent setting-out scribes on carvable surfaces (A12). */
+  marks = new Group();
+  /** The guide for the tool currently in hand; cleared every placement. */
+  live = new Group();
+  dashMat: LineDashedMaterial;
+  carveMat: LineDashedMaterial;
+  stringMat: LineBasicMaterial;
+
+  constructor(t: Object3D) {
     (t.add(this.marks, this.live),
       (this.dashMat = new LineDashedMaterial({
         color: "#ff5fc8",

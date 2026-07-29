@@ -8,7 +8,6 @@
 // --- generated imports ---
 import { Vector3 } from "three";
 import { $n, isFlatGround, terrainHeightAt } from "./01-materials";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**

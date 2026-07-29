@@ -9,7 +9,6 @@
 import { BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Mesh, Object3D, OctahedronGeometry, SphereGeometry, Vector3 } from "three";
 import { hashString, r_, seededRng } from "./01-materials";
 import { Co } from "./06-infill";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**
@@ -26,20 +25,23 @@ import { defineField } from "./_runtime";
  * GC churn in the frame loop.
  */
 class Citizens {
-  constructor(t, e, n) {
-    defineField(this, "world");
-    defineField(this, "infill");
-    defineField(this, "meshes");
-    defineField(this, "agents", []);
-    defineField(this, "population", 16);
-    defineField(this, "dummy", new Object3D());
-    // the current speaker: index of the one agent voicing the active
-    // request, or -1 when nobody is asking. Derived by the caller from the
-    // request id (never stored — the save format is frozen), so a reload
-    // produces the same Marcus. See setSpeaker().
-    defineField(this, "speaker", -1);
-    defineField(this, "marker");
-    defineField(this, "speakerCol", new Color("#ff71ce"));
+  world: any;
+  infill: any;
+  /** Three silhouette variants, each an InstancedMesh. */
+  meshes: InstancedMesh[];
+  agents: any[] = [];
+  population = 16;
+  /** Scratch object for composing instance matrices; never added to a scene. */
+  dummy = new Object3D();
+  // the current speaker: index of the one agent voicing the active
+  // request, or -1 when nobody is asking. Derived by the caller from the
+  // request id (never stored — the save format is frozen), so a reload
+  // produces the same Marcus. See setSpeaker().
+  speaker = -1;
+  marker: Mesh;
+  speakerCol = new Color("#ff71ce");
+
+  constructor(t: any, e: any, n: Object3D) {
     ((this.world = t), (this.infill = e));
     // a small floating mark over the speaker's head. It shares the world's
     // glow material, so it dims to a lamp at dusk like everything else lit —

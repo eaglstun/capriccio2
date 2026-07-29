@@ -7,7 +7,6 @@
 
 // --- generated imports ---
 import { Color, DataTexture, DepthTexture, FloatType, LinearFilter, Matrix4, Mesh, NearestFilter, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, RedFormat, RepeatWrapping, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 const j0 = `
@@ -436,20 +435,22 @@ const blueNoiseTex = makeBlueNoiseTexture();
  * both — depth for edges and haze, alpha as the citizen mask.
  */
 class J0 {
-  constructor(t, e = {}) {
-    defineField(this, "renderer");
-    defineField(this, "target");
-    defineField(this, "postMat");
-    defineField(this, "postScene");
-    defineField(this, "postCam");
-    defineField(this, "ss");
-    defineField(this, "paper", new Color("#e9b8d6"));
-    defineField(this, "ink", new Color("#ff3fae"));
-    defineField(this, "fogDensity", 0.0021);
-    defineField(this, "w", 4);
-    defineField(this, "h", 4);
-    defineField(this, "lastDraws", 0);
-    defineField(this, "lastTris", 0);
+  renderer: WebGLRenderer;
+  target: WebGLRenderTarget;
+  postMat: ShaderMaterial;
+  postScene: Scene;
+  postCam: OrthographicCamera;
+  /** Supersample factor: the target is rendered this much larger than the canvas. */
+  ss: number;
+  paper = new Color("#e9b8d6");
+  ink = new Color("#ff3fae");
+  fogDensity = 0.0021;
+  w = 4;
+  h = 4;
+  lastDraws = 0;
+  lastTris = 0;
+
+  constructor(t: HTMLElement, e: { supersample?: number } = {}) {
     ((this.ss = e.supersample ?? 1.4),
       (this.renderer = new WebGLRenderer({
         antialias: !1,

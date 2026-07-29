@@ -6,32 +6,34 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, RingGeometry, SRGBColorSpace, TorusGeometry, TubeGeometry, Vector3 } from "three";
+import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, RingGeometry, Scene, SRGBColorSpace, TorusGeometry, TubeGeometry, Vector3 } from "three";
 import { Ca, Nn, Vr, f_, fr, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials";
 import { NavGraph } from "./02-nav";
 import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry";
 import { buildStructureMesh } from "./04-builders";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class World {
-  constructor(t, e) {
-    defineField(this, "scene");
-    defineField(this, "mats");
-    defineField(this, "glowMat");
-    defineField(this, "terrainMesh");
-    defineField(this, "structGroup", new Group());
-    defineField(this, "waterGroup", new Group());
-    defineField(this, "infillGroup", new Group());
-    defineField(this, "nav", new NavGraph());
-    defineField(this, "pockets", []);
-    defineField(this, "structures", new Map());
-    defineField(this, "anchors", new Map());
-    defineField(this, "waterSources", []);
-    defineField(this, "designations", []);
-    defineField(this, "actions", []);
-    defineField(this, "onStructureBuilt", null);
-    defineField(this, "desigMarks", new Map());
+  scene: Scene;
+  /** The shared material set built by 01-materials. Shape not yet typed. */
+  mats: any;
+  glowMat: ReturnType<typeof i_>;
+  terrainMesh: Mesh;
+  structGroup = new Group();
+  waterGroup = new Group();
+  infillGroup = new Group();
+  nav = new NavGraph();
+  pockets: any[] = [];
+  structures = new Map<number, any>();
+  anchors = new Map<string, any>();
+  waterSources: any[] = [];
+  designations: any[] = [];
+  /** Every committed player action, in order — the replayable record. */
+  actions: any[] = [];
+  onStructureBuilt: ((struct: any) => void) | null = null;
+  desigMarks = new Map<any, any>();
+
+  constructor(t: Scene, e: any) {
     ((this.scene = t),
       (this.mats = e),
       (this.glowMat = i_()),

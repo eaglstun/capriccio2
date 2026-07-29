@@ -6,20 +6,19 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class Soundscape {
-  constructor() {
-    defineField(this, "ctx", null);
-    defineField(this, "master");
-    defineField(this, "windGain");
-    defineField(this, "waterGain");
-    defineField(this, "birdTimer", 0);
-    defineField(this, "chiselTimer", 0);
-    defineField(this, "lastBellHour", -1);
-    defineField(this, "t", 0);
-  }
+  /** Null until the first user gesture — browsers refuse to start one before. */
+  ctx: AudioContext | null = null;
+  master: GainNode;
+  windGain: GainNode;
+  waterGain: GainNode;
+  birdTimer = 0;
+  chiselTimer = 0;
+  lastBellHour = -1;
+  /** Seconds of accumulated ambience time. */
+  t = 0;
   /**
    * Build the ambient graph. Deferred until the first user gesture, because
    * browsers will not let an AudioContext start before one.

@@ -10,15 +10,16 @@ import { BoxGeometry, CylinderGeometry, Group, Mesh, Vector3 } from "three";
 import { clamp, hashString, seededRng } from "./01-materials";
 import { Il, MeshBuilder, buildTree, setToneAttribute } from "./03-geometry";
 import { L_ } from "./05-world";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class InfillSystem {
-  constructor(t) {
-    defineField(this, "world");
-    defineField(this, "items", []);
-    defineField(this, "counters", new Map());
-    defineField(this, "capacity", 0);
+  world: any;
+  /** Every grown building, finished or still rising. */
+  items: any[] = [];
+  counters = new Map<string, number>();
+  capacity = 0;
+
+  constructor(t: any) {
     this.world = t;
   }
   /**

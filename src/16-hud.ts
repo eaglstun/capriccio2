@@ -17,7 +17,6 @@ import {
 import { BUILD_CATALOGUE } from "./09-catalogue";
 import { tv } from "./14-plates";
 import { rv } from "./_hoisted";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 const nv = `
@@ -170,29 +169,31 @@ const nv = `
     <path d="M20 4 l4 4 -10 10 -5 1 1 -5 z"/></g></svg>`,
   };
 class Hud {
-  constructor(t) {
-    defineField(this, "cb");
-    defineField(this, "root");
-    defineField(this, "toolBtns", new Map());
-    defineField(this, "modeBtns", new Map());
-    defineField(this, "varRow");
-    defineField(this, "toastEl");
-    defineField(this, "requestEl");
-    defineField(this, "labelsEl");
-    defineField(this, "sectionCtl");
-    defineField(this, "plateCtl");
-    defineField(this, "wanderHint");
-    defineField(this, "frameEl");
-    defineField(this, "veil");
-    defineField(this, "resStone");
-    defineField(this, "resSalvage");
-    defineField(this, "resStoneRate");
-    defineField(this, "resSalvageRate");
-    defineField(this, "resFavor");
-    defineField(this, "resPop");
-    defineField(this, "dayEl");
-    defineField(this, "qualBars", new Map());
-    defineField(this, "toastTimer", 0);
+  /** The callback bag the bootstrap hands in — one entry per UI affordance. */
+  cb: any;
+  root: HTMLElement;
+  toolBtns = new Map<string, HTMLElement>();
+  modeBtns = new Map<string, HTMLElement>();
+  varRow: HTMLElement;
+  toastEl: HTMLElement;
+  requestEl: HTMLElement;
+  labelsEl: HTMLElement;
+  sectionCtl: HTMLElement;
+  plateCtl: HTMLElement;
+  wanderHint: HTMLElement;
+  frameEl: HTMLElement;
+  veil: HTMLElement;
+  resStone: HTMLElement;
+  resSalvage: HTMLElement;
+  resStoneRate: HTMLElement;
+  resSalvageRate: HTMLElement;
+  resFavor: HTMLElement;
+  resPop: HTMLElement;
+  dayEl: HTMLElement;
+  qualBars = new Map<string, HTMLElement>();
+  toastTimer = 0;
+
+  constructor(t: any) {
     this.cb = t;
     const e = document.createElement("style");
     ((e.textContent = nv),

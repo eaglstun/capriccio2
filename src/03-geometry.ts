@@ -8,7 +8,6 @@
 // --- generated imports ---
 import { BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
 import { clamp, seededRng, terrainHeightAt } from "./01-materials";
-import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**
@@ -218,9 +217,11 @@ const Pl = new Matrix4(),
  * it to each call.
  */
 class MeshBuilder {
+  geoms: BufferGeometry[] = [];
+  /** Weathering 0..1, handed down to everything this builder adds. */
+  age: number;
+
   constructor(t = 0) {
-    defineField(this, "geoms", []);
-    defineField(this, "age");
     this.age = t;
   }
   /** Add a geometry at position `e`, rotated `n` about Y, tone `s`, age `r`. */
