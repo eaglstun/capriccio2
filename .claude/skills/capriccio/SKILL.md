@@ -8,17 +8,17 @@ description: Inspect and reverse-engineer CAPRICCIO, the Piranesi city-builder b
 A generated Piranesi city-builder, shipped as a minified production bundle
 with no source.
 
-| doc              | contents                                                            |
-| ---------------- | ------------------------------------------------------------------- |
-| `CLAUDE.md`      | provenance, how to serve it, hard rules                             |
-| `PLAN.md`        | the phased investigation and what worked                            |
-| `FINDINGS.md`    | static analysis, save format, full building catalogue               |
-| `docs/SIMULATION.md`  | the runtime model — pockets, agents, growth, all five stat formulas |
-| `docs/RENDERING.md`   | how the engraving look works (triplanar hatching)                   |
-| `docs/AUDIO.md`       | the procedural soundscape                                           |
-| `docs/CHARACTERS.md`  | the cast and the rules the citizen writing follows                  |
-| `docs/COMMENTS.md`    | every comment that survived minification — the only stated intent   |
-| `tools/probe.js` | `CAPX` introspection helpers                                        |
+| doc                  | contents                                                            |
+| -------------------- | ------------------------------------------------------------------- |
+| `CLAUDE.md`          | provenance, how to serve it, hard rules                             |
+| `PLAN.md`            | the phased investigation and what worked                            |
+| `FINDINGS.md`        | static analysis, save format, full building catalogue               |
+| `docs/SIMULATION.md` | the runtime model — pockets, agents, growth, all five stat formulas |
+| `docs/RENDERING.md`  | how the engraving look works (triplanar hatching)                   |
+| `docs/AUDIO.md`      | the procedural soundscape                                           |
+| `docs/CHARACTERS.md` | the cast and the rules the citizen writing follows                  |
+| `docs/COMMENTS.md`   | every comment that survived minification — the only stated intent   |
+| `tools/probe.js`     | `CAPX` introspection helpers                                        |
 
 **The shaders are the most readable code in the bundle.** GLSL lives in
 template strings and minifiers don't strip comments inside strings — the
