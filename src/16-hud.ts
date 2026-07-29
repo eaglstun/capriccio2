@@ -263,7 +263,7 @@ class Hud {
         </div>
       </div>
     `;
-    const e = t.querySelector("#palette"),
+    const e = t.querySelector<HTMLElement>("#palette"),
       n = [
         ["anchor", "ESTABLISH"],
         ["span", "SPAN"],
@@ -281,7 +281,7 @@ class Hud {
         e.appendChild(g),
         this.toolBtns.set(m, g));
     }
-    const s = t.querySelector("#modes");
+    const s = t.querySelector<HTMLElement>("#modes");
     for (const [m, _] of [
       ["build", "BUILD"],
       ["section", "SECTION"],
@@ -295,36 +295,36 @@ class Hud {
         s.appendChild(g),
         this.modeBtns.set(m, g));
     }
-    ((this.varRow = t.querySelector("#variants")),
-      (this.toastEl = t.querySelector("#toast")),
-      (this.requestEl = t.querySelector("#request")),
-      (this.labelsEl = t.querySelector("#labels")),
-      (this.sectionCtl = t.querySelector("#sectionctl")),
-      (this.plateCtl = t.querySelector("#platectl")),
-      (this.wanderHint = t.querySelector("#wanderhint")),
-      (this.frameEl = t.querySelector("#frame")),
-      (this.veil = t.querySelector("#veil")),
-      (this.resStone = t.querySelector("#r-stone")),
-      (this.resSalvage = t.querySelector("#r-salvage")),
-      (this.resStoneRate = t.querySelector("#r-stone-rate")),
-      (this.resSalvageRate = t.querySelector("#r-salvage-rate")),
-      (this.resFavor = t.querySelector("#r-favor")),
-      (this.resPop = t.querySelector("#r-pop")),
-      (this.dayEl = t.querySelector("#daytime")));
-    const r = t.querySelector("#quals");
+    ((this.varRow = t.querySelector<HTMLElement>("#variants")),
+      (this.toastEl = t.querySelector<HTMLElement>("#toast")),
+      (this.requestEl = t.querySelector<HTMLElement>("#request")),
+      (this.labelsEl = t.querySelector<HTMLElement>("#labels")),
+      (this.sectionCtl = t.querySelector<HTMLElement>("#sectionctl")),
+      (this.plateCtl = t.querySelector<HTMLElement>("#platectl")),
+      (this.wanderHint = t.querySelector<HTMLElement>("#wanderhint")),
+      (this.frameEl = t.querySelector<HTMLElement>("#frame")),
+      (this.veil = t.querySelector<HTMLElement>("#veil")),
+      (this.resStone = t.querySelector<HTMLElement>("#r-stone")),
+      (this.resSalvage = t.querySelector<HTMLElement>("#r-salvage")),
+      (this.resStoneRate = t.querySelector<HTMLElement>("#r-stone-rate")),
+      (this.resSalvageRate = t.querySelector<HTMLElement>("#r-salvage-rate")),
+      (this.resFavor = t.querySelector<HTMLElement>("#r-favor")),
+      (this.resPop = t.querySelector<HTMLElement>("#r-pop")),
+      (this.dayEl = t.querySelector<HTMLElement>("#daytime")));
+    const r = t.querySelector<HTMLElement>("#quals");
     for (const m of ["ACCESS", "SHELTER", "LIGHT", "BELONGING", "GRANDEUR"]) {
       const _ = document.createElement("div");
       ((_.innerHTML = `${m}<span class="qbar"><i style="width:30%"></i></span>`),
         r.appendChild(_),
-        this.qualBars.set(m, _.querySelector("i")));
+        this.qualBars.set(m, _.querySelector<HTMLElement>("i")));
     }
-    ((t.querySelector("#undo").onclick = () => this.cb.onUndo()),
-      (t.querySelector("#folio-line").onclick = () => this.cb.onFolio()),
+    ((t.querySelector<HTMLElement>("#undo").onclick = () => this.cb.onUndo()),
+      (t.querySelector<HTMLElement>("#folio-line").onclick = () => this.cb.onFolio()),
       // the panel is the affordance: click it and the camera goes to find
       // whoever is asking
       (this.requestEl.title = "find who is asking"),
       (this.requestEl.onclick = () => this.cb.onRequestClick?.()));
-    const o = t.querySelector("#anew-line");
+    const o = t.querySelector<HTMLElement>("#anew-line");
     let a = 0;
     o.onclick = () => {
       const m = Date.now();
@@ -338,10 +338,10 @@ class Hud {
           ((o.textContent = "⟳ begin anew"), (a = 0));
         }, 5e3));
     };
-    const c = t.querySelector("#sec-off");
+    const c = t.querySelector<HTMLInputElement>("#sec-off");
     c.oninput = () => this.cb.onSection({ offset: Number(c.value) });
-    const l = t.querySelector("#sec-x"),
-      h = t.querySelector("#sec-z");
+    const l = t.querySelector<HTMLElement>("#sec-x"),
+      h = t.querySelector<HTMLElement>("#sec-z");
     ((l.onclick = () => {
       (l.classList.add("on"),
         h.classList.remove("on"),
@@ -353,23 +353,23 @@ class Hud {
           this.cb.onSection({ axis: "z" }));
       }));
     let u = 1;
-    t.querySelector("#sec-flip").onclick = () => {
+    t.querySelector<HTMLElement>("#sec-flip").onclick = () => {
       ((u *= -1), this.cb.onSection({ flip: u }));
     };
-    for (const m of this.plateCtl.querySelectorAll("button[data-a]"))
+    for (const m of this.plateCtl.querySelectorAll<HTMLElement>("button[data-a]"))
       m.onclick = () => {
         (this.plateCtl
-          .querySelectorAll("button[data-a]")
+          .querySelectorAll<HTMLElement>("button[data-a]")
           .forEach((_) => _.classList.remove("on")),
           m.classList.add("on"),
           this.cb.onPlate({ aspect: m.dataset.a }));
       };
-    const d = t.querySelector("#plate-fov");
+    const d = t.querySelector<HTMLInputElement>("#plate-fov");
     d.oninput = () => this.cb.onPlate({ fov: Number(d.value) });
-    const f = t.querySelector("#plate-hour");
+    const f = t.querySelector<HTMLInputElement>("#plate-hour");
     ((f.oninput = () => this.cb.onPlate({ hour: Number(f.value) })),
-      (t.querySelector("#plate-go").onclick = () => this.cb.onEngrave()),
-      (t.querySelector("#veil .begin").onclick = () => {
+      (t.querySelector<HTMLElement>("#plate-go").onclick = () => this.cb.onEngrave()),
+      (t.querySelector<HTMLElement>("#veil .begin").onclick = () => {
         ((this.veil.style.opacity = "0"),
           setTimeout(() => {
             this.veil.style.display = "none";
@@ -419,7 +419,7 @@ class Hud {
       (this.frameEl.style.display = t === "plate" ? "block" : "none"));
     const e = t === "build" || t === "section";
     if (
-      ((this.root.querySelector("#palette").style.display = e
+      ((this.root.querySelector<HTMLElement>("#palette").style.display = e
         ? "flex"
         : "none"),
       !e)
@@ -491,7 +491,7 @@ class Hud {
         SALVAGE_RATE,
         SALVAGE_CAP,
       ));
-    const e = this.root.querySelector("#folio-line");
+    const e = this.root.querySelector<HTMLElement>("#folio-line");
     e &&
       (e.textContent = gameState.folio
         ? "✦ resources are off — restore them"
@@ -527,17 +527,17 @@ class Hud {
   }
   /** The five meters. Called from updateQualityMeters on a slower cadence than
    * the sim, so a computed value can lead the bar by a few seconds. */
-  updateQuals(t) {
+  updateQuals(t: Record<string, number>) {
     for (const [e, n] of Object.entries(t)) {
       const s = this.qualBars.get(e);
       s && (s.style.width = `${Math.round(n * 100)}%`);
     }
   }
   syncSection(t, e) {
-    const n = this.root.querySelector("#sec-off");
+    const n = this.root.querySelector<HTMLInputElement>("#sec-off");
     n && (n.value = String(e));
-    const s = this.root.querySelector("#sec-x"),
-      r = this.root.querySelector("#sec-z");
+    const s = this.root.querySelector<HTMLElement>("#sec-x"),
+      r = this.root.querySelector<HTMLElement>("#sec-z");
     s &&
       r &&
       (s.classList.toggle("on", t === "x"),
@@ -550,7 +550,7 @@ class Hud {
    * that plate's stored pose. Empty slots stay outlines — discovering the cap
    * by filling it is the point, so nothing announces the number. */
   updateFolio(t) {
-    const e = this.root.querySelector("#folio-strip");
+    const e = this.root.querySelector<HTMLElement>("#folio-strip");
     if (e) {
       e.innerHTML = "";
       for (let n = 0; n < 16; n++) {
@@ -570,7 +570,11 @@ class Hud {
   }
   /** The plate overlay after engraving. Past sixteen it also names the plate
    * being pushed out of the record. */
-  showPlate(t, e /* , evicted */) {
+  // NOTE: the bootstrap still passes a third argument (the evicted plate) and
+  // computes it to do so — see 17-bootstrap. This signature has ignored it
+  // since the folio stopped needing it. Declared so the call typechecks; the
+  // dead argument at the call site is a separate cleanup.
+  showPlate(t, e, _evicted?) {
     const n = document.createElement("div");
     n.style.cssText = `position:fixed;inset:0;z-index:60;background:rgba(14,7,34,0.82);
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto`;
@@ -617,13 +621,13 @@ class Hud {
     let r = 0,
       o = 0;
     (s > t ? (r = (e - n * t) / 2) : (o = (n - e / t) / 2),
-      (this.root.querySelector("#fb-t").style.cssText =
+      (this.root.querySelector<HTMLElement>("#fb-t").style.cssText =
         `top:0;left:0;right:0;height:${o}px`),
-      (this.root.querySelector("#fb-b").style.cssText =
+      (this.root.querySelector<HTMLElement>("#fb-b").style.cssText =
         `bottom:0;left:0;right:0;height:${o}px`),
-      (this.root.querySelector("#fb-l").style.cssText =
+      (this.root.querySelector<HTMLElement>("#fb-l").style.cssText =
         `top:0;bottom:0;left:0;width:${r}px`),
-      (this.root.querySelector("#fb-r").style.cssText =
+      (this.root.querySelector<HTMLElement>("#fb-r").style.cssText =
         `top:0;bottom:0;right:0;width:${r}px`));
   }
   /** Project world positions to screen and place text labels — district names,

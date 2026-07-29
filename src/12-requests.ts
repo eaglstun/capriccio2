@@ -161,7 +161,7 @@ function findCluster(world, pred) {
  * prepositional ("in the low streets"), `place` is the bare noun ("the low
  * streets") for verbs that need an object. */
 function locusOf(c) {
-  const tally = {};
+  const tally: Record<string, number> = {};
   for (const k of c.kinds) tally[k] = (tally[k] ?? 0) + 1;
   const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
   if (top === "under_arch")

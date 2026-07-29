@@ -32,6 +32,9 @@ class World {
   actions: any[] = [];
   onStructureBuilt: ((struct: any) => void) | null = null;
   desigMarks = new Map<any, any>();
+  // installed by the scenery pass, called once per frame with the clock.
+  // `declare` so the property still appears only on first assignment.
+  declare sceneTick?: (t: number) => void;
 
   constructor(t: Scene, e: any) {
     ((this.scene = t),

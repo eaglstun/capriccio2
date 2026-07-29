@@ -592,14 +592,14 @@ if (hn) {
     Ih(hn.infill ?? []),
     oi.resync(),
     os(te.hour));
-  const i = document.querySelector("#veil .begin");
+  const i = document.querySelector<HTMLElement>("#veil .begin");
   i && (i.textContent = "CONTINUE");
 } else {
   const i = [
     ["house", 6],
     ["stall", 2],
     ["garden", 1],
-  ];
+  ] as const;
   for (const [t, e] of i)
     for (let n = 0; n < e; n++) {
       const s = Kt.pockets.filter(
@@ -614,7 +614,7 @@ if (hn) {
 ei.sync();
 fe.updateFolio(gameState.plates.slice(-16));
 {
-  const i = document.querySelector("#veil"),
+  const i = document.querySelector<HTMLElement>("#veil"),
     t = document.createElement("div");
   ((t.textContent = gameState.folio
     ? "(playing without resources)"
@@ -625,7 +625,7 @@ fe.updateFolio(gameState.plates.slice(-16));
       ((gameState.folio = !0),
         (gameState.dirty = !0),
         (t.textContent = "(playing without resources)"),
-        document.querySelector("#veil .begin")?.click());
+        document.querySelector<HTMLElement>("#veil .begin")?.click());
     }),
     i.appendChild(t));
   const e = document.createElement("div");
@@ -818,7 +818,7 @@ window.CAP = {
   },
   begin() {
     ((te.paused = !1),
-      (document.querySelector("#veil").style.display = "none"));
+      (document.querySelector<HTMLElement>("#veil").style.display = "none"));
   },
   act(i) {
     return (

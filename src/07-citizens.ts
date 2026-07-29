@@ -40,6 +40,9 @@ class Citizens {
   speaker = -1;
   marker: Mesh;
   speakerCol = new Color("#ff71ce");
+  // A4 ambient life: per-agent glance targets, rebuilt with the agent list.
+  // `declare` so the property still appears only on first assignment.
+  declare look: any[];
 
   constructor(t: any, e: any, n: Object3D) {
     ((this.world = t), (this.infill = e));

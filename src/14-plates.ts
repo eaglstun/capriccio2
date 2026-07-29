@@ -58,7 +58,7 @@ function atkinsonDither(img) {
  * Tav. I, Tav. II. Keeping that convention at the end of humanity says the
  * recording survived the culture that invented it.
  */
-function renderPlateImage(i, t, e) {
+function renderPlateImage(i, t, e): Promise<string> {
   return new Promise((n) => {
     const s = new Image();
     ((s.onload = () => {
@@ -101,7 +101,7 @@ function tv(i) {
     [5, "V"],
     [4, "IV"],
     [1, "I"],
-  ];
+  ] as const;
   let e = "";
   for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
   return e || "I";

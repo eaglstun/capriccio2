@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
+import { type AttributeGPUType, BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
 import { clamp, seededRng, terrainHeightAt } from "./01-materials";
 // --- end generated imports ---
 
@@ -200,7 +200,10 @@ function Cl(i) {
     } else o.set(h.array, c);
     c += h.count * e;
   }
-  return (s !== void 0 && (a.gpuType = s), a);
+  // `s` starts at the -1 sentinel, so it is widened to number. This is a
+  // vendored copy of three's mergeAttributes — the cast keeps the vendor
+  // behaviour byte-for-byte rather than "fixing" the guard.
+  return (s !== void 0 && (a.gpuType = s as AttributeGPUType), a);
 }
 const Pl = new Matrix4(),
   Dl = new Quaternion(),
@@ -296,7 +299,18 @@ function Ri(i, t, e, n, s, r = 0) {
  * each opening. The silhouette this produces is the game's identity — see
  * FEATURES.md on why arches must stay arches.
  */
-function Hn(i, t, e, n, s = {}) {
+function Hn(
+  i,
+  t,
+  e,
+  n,
+  s: {
+    ruin?: number;
+    rng?: () => number;
+    rings?: boolean;
+    curveSeg?: number;
+  } = {},
+) {
   const r = s.ruin ?? 0,
     o = s.rng ?? seededRng(1234),
     a = s.rings !== !1,
@@ -400,7 +414,20 @@ function Hn(i, t, e, n, s = {}) {
  * `archFrac` is how much of each bay is opening rather than pier (0.72 by
  * default), and `springFrac` how high the arch springs.
  */
-function Ji(i, t, e, n, s = {}) {
+function Ji(
+  i,
+  t,
+  e,
+  n,
+  s: {
+    archFrac?: number;
+    springFrac?: number;
+    ruin?: number;
+    rng?: () => number;
+    rings?: boolean;
+    curveSeg?: number;
+  } = {},
+) {
   const r = i / n,
     o = (r * (s.archFrac ?? 0.72)) / 2,
     a = Math.min(t - o - 0.4, t * (s.springFrac ?? 0.55)),
@@ -409,7 +436,7 @@ function Ji(i, t, e, n, s = {}) {
     c.push({ cx: -i / 2 + r * (l + 0.5), r: o, springY: a });
   return Hn(i, t, e, c, s);
 }
-function g_(i, t, e, n = {}) {
+function g_(i, t, e, n: { base?: boolean; cap?: boolean } = {}) {
   const s = new MeshBuilder(),
     r = Math.min(1.2, e * 0.08),
     o = Math.min(0.9, e * 0.06);
@@ -419,7 +446,7 @@ function g_(i, t, e, n = {}) {
   const a = s.merge();
   return (Ri(a, 0, Math.min(3, e * 0.4), 0.82, 1), a);
 }
-function Ll(i, t, e, n = {}) {
+function Ll(i, t, e, n: { solid?: boolean } = {}) {
   const r = Math.max(2, Math.round(t / 0.32)),
     o = t / r,
     a = e / r,
@@ -438,7 +465,7 @@ function __(i, t = 1.05, e = 0.28) {
     n.merge()
   );
 }
-function v_(i, t, e, n = {}) {
+function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
   const s = n.curveSeg ?? 22,
     r = new Shape();
   (r.moveTo(i, 0),
@@ -612,7 +639,22 @@ function Pa(i) {
  *
  * A builder's whole contract is: take an action, return one of these.
  */
-function newStructureParts() {
+interface StructureParts {
+  pieces: Record<string, any>;
+  navPts: any[];
+  pockets: any[];
+  water: any[];
+  waterSources: any[];
+  cost: { stone: number; salvage: number };
+  /**
+   * Only the anchor builder sets this: the pier or column top that spans and
+   * stairs snap to. Absent on every other structure, which is why the world
+   * module tests for it before registering an anchor.
+   */
+  anchorTop?: [number, number, number];
+}
+
+function newStructureParts(): StructureParts {
   return {
     pieces: {},
     navPts: [],

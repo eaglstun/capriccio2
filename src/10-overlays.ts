@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferGeometry, Group, Line, LineBasicMaterial, LineDashedMaterial, Vector3 } from "three";
+import { BufferGeometry, Group, Line, LineBasicMaterial, LineDashedMaterial, Object3D, Vector3 } from "three";
 import { terrainHeightAt } from "./01-materials";
 // --- end generated imports ---
 

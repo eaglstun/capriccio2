@@ -70,7 +70,7 @@ class NavGraph {
    * need a filtered search. Tombstoned nodes (structId -999) are always
    * skipped.
    */
-  nearest(t, e = 9, n) {
+  nearest(t, e = 9, n?) {
     let s = -1,
       r = e * e;
     const o = Math.round(t.x / 10),

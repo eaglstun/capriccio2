@@ -441,16 +441,20 @@ function arrangementFor(track, stage, duskAmt, constructing) {
 }
 
 class Score {
-  constructor() {
-    this.scheduler = null;
-    this.starting = false;
-    this.key = "";
-    this.level = 0;
-    this.t = 0; // seconds since the score began — drives the arrangement
-    this.track = 1; // which of the three tracks is playing
-    this.fade = 1; // 1 = full; eased to 0 and back across a track change
-    this.xfadeTo = 0; // the track a fade is heading for, 0 = none
-  }
+  /** Strudel's Cyclist, or null before start() and after stop(). */
+  scheduler: any = null;
+  /** True while start() is awaiting the audio graph — guards double-starts. */
+  starting = false;
+  /** Arrangement fingerprint; a change here rebuilds the pattern. */
+  key = "";
+  /** Output gain, 0..1. */
+  level = 0;
+  /** Superdough's destination gain node, once the controller exists. */
+  out: any;
+  t = 0; // seconds since the score began — drives the arrangement
+  track = 1; // which of the three tracks is playing
+  fade = 1; // 1 = full; eased to 0 and back across a track change
+  xfadeTo = 0; // the track a fade is heading for, 0 = none
   async start() {
     if (this.scheduler || this.starting) return;
     this.starting = true;

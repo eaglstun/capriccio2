@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, Color, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, PlaneGeometry, Vector3 } from "three";
+import { BufferAttribute, Color, type ColorRepresentation, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, PlaneGeometry, type Side, Vector3 } from "three";
 import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders";
 // --- end generated imports ---
 
@@ -22,7 +22,18 @@ import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders";
  * concrete below 0.95, corporate panelling above), and whether this material
  * dithers to 1-bit.
  */
-function createStoneMaterial(i = {}) {
+/** The per-material knobs described above. All optional; all have defaults. */
+interface StoneMaterialOpts {
+  side?: Side;
+  stone?: ColorRepresentation;
+  jointAlpha?: number;
+  courseH?: number;
+  gain?: number;
+  dither?: boolean;
+  carvable?: boolean;
+}
+
+function createStoneMaterial(i: StoneMaterialOpts = {}) {
   const t = new MeshLambertMaterial({ color: 16777215, side: i.side ?? DoubleSide, fog: !0 }),
     e = new Color(i.stone ?? "#ead4e6");
   return (

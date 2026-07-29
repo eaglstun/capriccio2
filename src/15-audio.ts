@@ -19,6 +19,10 @@ class Soundscape {
   lastBellHour = -1;
   /** Seconds of accumulated ambience time. */
   t = 0;
+  // built lazily on the first bell and cached. `declare` so TypeScript knows
+  // the field without emitting a definition — the property must keep coming
+  // into existence on first assignment, as it does today.
+  declare bellShaper?: WaveShaperNode;
   /**
    * Build the ambient graph. Deferred until the first user gesture, because
    * browsers will not let an AudioContext start before one.
@@ -93,7 +97,7 @@ class Soundscape {
    * rather than beeps. They are square waves now, not sine — same schedule,
    * same count, same slide. They are drones.
    */
-  blip(t, e, n, s = "sine", r = 0) {
+  blip(t, e, n, s: OscillatorType = "sine", r = 0) {
     const o = this.ctx,
       a = o.createOscillator();
     ((a.type = s),

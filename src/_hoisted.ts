@@ -31,7 +31,7 @@ function rv(i) {
     [5, "V"],
     [4, "IV"],
     [1, "I"],
-  ];
+  ] as const;
   let e = "";
   for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
   return e || "I";

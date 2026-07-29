@@ -15,6 +15,25 @@ import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue";
 import { BuildOverlays } from "./10-overlays";
 // --- end generated imports ---
 
+/**
+ * The record a placement commits: exactly the shape the save stores and
+ * `applyAction` replays.
+ *
+ * The per-tool fields differ by `t` — a span carries ax/ay/az/bx/by/bz, a
+ * vault carries w/d, an anchor carries topY/style — so the real type is a
+ * discriminated union on `t`. Writing that union out is phase-2 work; until
+ * then the tool-specific fields are left open and only the fields every
+ * action has are named.
+ */
+interface PlacedAction {
+  t: string;
+  id: number;
+  /** Stamped at commit time (the Chronicle enabler). Absent on old saves. */
+  day?: number;
+  hour?: number;
+  [k: string]: any;
+}
+
 class PlacementTool {
   world: any;
   camera: Camera;
@@ -60,7 +79,7 @@ class PlacementTool {
    * puts the tool down. Always resets the multi-click state — switching tools
    * mid-placement must not leave a stale first point behind.
    */
-  setTool(t, e) {
+  setTool(t, e?) {
     ((this.tool = t),
       (this.variant = e ?? (t ? BUILD_CATALOGUE[t][0].key : "")),
       this.reset(),
@@ -180,7 +199,7 @@ class PlacementTool {
    * `applyAction` consumes, so what you preview is literally what gets
    * recorded and replayed.
    */
-  draftAction(t, e) {
+  draftAction(t, e): PlacedAction | null {
     switch (this.tool) {
       case "anchor": {
         const s =

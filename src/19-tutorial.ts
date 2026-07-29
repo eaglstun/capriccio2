@@ -110,12 +110,12 @@ function startWalkthrough() {
     <div id="tut-card"></div>
     <div id="tut-skip">✕ skip the walkthrough</div>`;
   document.body.appendChild(root);
-  const card = root.querySelector("#tut-card"),
-    ring = root.querySelector("#tut-ring"),
-    mark = root.querySelector("#tut-mark"),
-    skip = root.querySelector("#tut-skip");
+  const card = root.querySelector<HTMLElement>("#tut-card"),
+    ring = root.querySelector<HTMLElement>("#tut-ring"),
+    mark = root.querySelector<HTMLElement>("#tut-mark"),
+    skip = root.querySelector<HTMLElement>("#tut-skip");
 
-  const timers = new Set();
+  const timers = new Set<number>();
   function later(fn, ms) {
     const id = setTimeout(() => {
       timers.delete(id);
@@ -554,5 +554,5 @@ if (eligible()) {
     };
     setTimeout(wait, 400);
   };
-  document.querySelector("#veil .begin")?.addEventListener("click", arm, { once: !0 });
+  document.querySelector<HTMLElement>("#veil .begin")?.addEventListener("click", arm, { once: !0 });
 }
