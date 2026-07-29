@@ -547,7 +547,7 @@ function Rh(i, t) {
   return (a.sort((c, l) => l.size - c.size), a.slice(0, 7));
 }
 const gameState = {
-  res: { stone: 700, timber: 160, favor: 12 },
+  res: { stone: 700, salvage: 160, favor: 12 },
   playerActions: [],
   nextId: 1e3,
   plates: [],
@@ -558,17 +558,17 @@ const gameState = {
 };
 function V_(i) {
   ((gameState.res.stone = Math.min(2600, gameState.res.stone + i * 18)),
-    (gameState.res.timber = Math.min(900, gameState.res.timber + i * 6)));
+    (gameState.res.salvage = Math.min(900, gameState.res.salvage + i * 6)));
 }
 function Fl(i) {
   return gameState.folio
     ? !0
-    : gameState.res.stone >= i.stone && gameState.res.timber >= (i.timber || 0);
+    : gameState.res.stone >= i.stone && gameState.res.salvage >= (i.salvage || 0);
 }
 function W_(i) {
   gameState.folio ||
     ((gameState.res.stone -= i.stone),
-    (gameState.res.timber -= i.timber || 0),
+    (gameState.res.salvage -= i.salvage || 0),
     (gameState.dirty = !0));
 }
 function X_() {

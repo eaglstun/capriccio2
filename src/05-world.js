@@ -281,7 +281,7 @@ class World {
             return (l.translate(t.x + 1.5, a + 1.75, t.z + 1.55), l);
           })(),
         ]),
-        this.mats.timber,
+        this.mats.salvage,
       );
     ((c.castShadow = !0),
       n.add(c),
@@ -954,7 +954,7 @@ function C_(i) {
     ((mR.castShadow = !0), (mR.receiveShadow = !0), i.scene.add(mR));
     const mX = new Mesh(Nl(tox), i.mats.toxic);
     ((mX.castShadow = !1), (mX.receiveShadow = !0), i.scene.add(mX));
-    const mT = new Mesh(Nl(tclt), i.mats.timber);
+    const mT = new Mesh(Nl(tclt), i.mats.salvage);
     ((mT.castShadow = !0), (mT.receiveShadow = !0), i.scene.add(mT));
     const mF = new Mesh(Nl(fclt), i.mats.fabric);
     ((mF.castShadow = !0), i.scene.add(mF));
@@ -1247,7 +1247,7 @@ function C_(i) {
       oc = [],      // concrete → stoneOld (board-formed pour seams)
       orst = [],    // rust
       otox = [],    // the yellow-green — sludge, crust, pools
-      otim = [],    // timber
+      osal = [],    // salvage
       odark = [],   // near-black: voids, cables, stains-as-line
       ostn = [];    // the big stain ribbon, its own dark bile colour
     // a strut between two points — lattice is just repeated boxes
@@ -1388,7 +1388,7 @@ function C_(i) {
       const blk = new BoxGeometry(0.55, 0.8, 0.4);
       (blk.translate(hx, loadY + 0.55, hz), odark.push(blk));
       const pal = new BoxGeometry(1.75, 0.14, 1.35);
-      (pal.rotateY(0.4), pal.translate(hx, loadY, hz), otim.push(pal));
+      (pal.rotateY(0.4), pal.translate(hx, loadY, hz), osal.push(pal));
       for (let k = 0; k < 7; k++) {
         const bb2 = new BoxGeometry(0.5, 0.5, 0.5);
         (bb2.rotateY(0.4 + (q() - 0.5) * 0.15),
@@ -1451,10 +1451,10 @@ function C_(i) {
       // and a boat, on its side in the mud, keel to the sky
       const hull2 = new BoxGeometry(3.4, 0.9, 1.3);
       (hull2.rotateZ(1.25), hull2.rotateY(0.8),
-        hull2.translate(rx - 6, floorY + 0.55, rz + 7), otim.push(hull2));
+        hull2.translate(rx - 6, floorY + 0.55, rz + 7), osal.push(hull2));
       const keel = new BoxGeometry(3.0, 0.16, 0.16);
       (keel.rotateZ(1.25), keel.rotateY(0.8),
-        keel.translate(rx - 6.45, floorY + 0.62, rz + 7), otim.push(keel));
+        keel.translate(rx - 6.45, floorY + 0.62, rz + 7), osal.push(keel));
     }
     const mOC = new Mesh(Nl(oc), i.mats.stoneOld);
     ((mOC.castShadow = !0), (mOC.receiveShadow = !0), i.scene.add(mOC));
@@ -1462,7 +1462,7 @@ function C_(i) {
     ((mOR.castShadow = !0), (mOR.receiveShadow = !0), i.scene.add(mOR));
     const mOX = new Mesh(Nl(otox), i.mats.toxic);
     ((mOX.castShadow = !1), (mOX.receiveShadow = !0), i.scene.add(mOX));
-    const mOT = new Mesh(Nl(otim), i.mats.timber);
+    const mOT = new Mesh(Nl(osal), i.mats.salvage);
     ((mOT.castShadow = !0), i.scene.add(mOT));
     const mOD = new Mesh(Nl(odark), new MeshBasicMaterial({ color: "#241a3e", fog: !0 }));
     ((mOD.castShadow = !1), i.scene.add(mOD));

@@ -73,7 +73,7 @@ varying vec2 vToneE;`,
  * The material palette — every surface family in the world, built once.
  *
  * stone / stoneOld  end-of-humanity fabric vs first-era concrete
- * rock / timber / plaster / green / fabric
+ * rock / salvage / plaster / green / fabric
  * distant           the megastructure skyline
  * rust / verdigris / toxic   the later palette families
  * gold / window / figure / ghost / ghostBad / water
@@ -83,7 +83,10 @@ varying vec2 vToneE;`,
 function n_() {
   // style is period: the end-of-humanity fabric (corporate panelling,
   // courseH >= 0.95) renders in the 1984 1-bit dither; the older fabric
-  // (board-formed concrete, rock, timber) keeps the c.1750 burin hatching.
+  // (board-formed concrete, rock) keeps the c.1750 burin hatching. `salvage`
+  // sits between the eras: corporate panel seams (courseH >= 0.95 selects the
+  // cladding treatment — sheet dismantled and reused), but hatched, not
+  // dithered — old drawing over new material.
   // `distant` is dithered too — the megastructure skyline is the newest
   // thing on the horizon, and the far field going 1-bit doubles as
   // depth arbitration.
@@ -95,7 +98,7 @@ function n_() {
     stoneCarve = createStoneMaterial({ stone: "#ead4e6", jointAlpha: 0.34, courseH: 1.02, dither: !0, carvable: !0 }),
     t = createStoneMaterial({ stone: "#ddc2de", jointAlpha: 0.42, courseH: 0.88 }),
     e = createStoneMaterial({ stone: "#cdb9d8", jointAlpha: 0.4, courseH: 2.3 }),
-    n = createStoneMaterial({ stone: "#78ccc4", jointAlpha: 0.16, courseH: 0.42 }),
+    n = createStoneMaterial({ stone: "#78ccc4", jointAlpha: 0.2, courseH: 0.96 }),
     s = createStoneMaterial({ stone: "#f4e0f0", jointAlpha: 0.07 }),
     r = createStoneMaterial({ stone: "#4fb3a5", jointAlpha: 0 }),
     o = createStoneMaterial({ stone: "#f0619e", jointAlpha: 0 }),
@@ -192,7 +195,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
       stoneCarve,
       stoneOld: t,
       rock: e,
-      timber: n,
+      salvage: n,
       plaster: s,
       green: r,
       fabric: o,

@@ -51,7 +51,10 @@ Source lines ~25400–25900 in the local pretty-printed bundle.
 > - **Competing styles** (pass 4) — style is period, and four periods
 >   now argue over the frame with hard edges:
 >   - _c.1750_: the triplanar burin hatching, still on all old fabric
->     (board-formed concrete `stoneOld`, `rock`, `timber`, ground).
+>     (board-formed concrete `stoneOld`, `rock`, ground). `salvage`
+>     (A14, formerly `timber`) is hatched too but wears the corporate
+>     panel seams (`courseH >= 0.95`) — dismantled sheet, drawn in the
+>     old manner.
 >   - _1984_: materials flagged `dither` (`stone` — the corporate
 >     panelling fabric — and `distant`, the megastructure skyline)
 >     quantize their engraved output to 1-bit against a **64×64

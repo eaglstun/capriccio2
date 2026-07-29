@@ -460,7 +460,7 @@ function rc() {
     return;
   }
   const t = Mn.costOf(i);
-  ((gameState.res.stone += t.stone), (gameState.res.timber += t.timber));
+  ((gameState.res.stone += t.stone), (gameState.res.salvage += t.salvage));
   const e = Ne.serialize();
   (Ne.clear(),
     Kt.rebuildAll([...Ah(), ...gameState.playerActions]),

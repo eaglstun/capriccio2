@@ -347,14 +347,14 @@ class PlacementTool {
       s
     );
   }
-  /** Stone and timber an action would cost. Sandbox mode (`folio`) is free. */
+  /** Stone and salvage an action would cost. Sandbox mode (`folio`) is free. */
   costOf(t) {
-    if (t.t === "carve") return { stone: 30, timber: 10 };
-    if (t.t === "designate") return { stone: 0, timber: 0 };
+    if (t.t === "carve") return { stone: 30, salvage: 10 };
+    if (t.t === "designate") return { stone: 0, salvage: 0 };
     const e = buildStructureMesh({ ...t, id: 999998 });
     return {
       stone: Math.round(e.cost.stone),
-      timber: Math.round(e.cost.timber),
+      salvage: Math.round(e.cost.salvage),
     };
   }
   /**

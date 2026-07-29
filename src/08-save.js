@@ -64,7 +64,12 @@ function loadGame() {
     const i = localStorage.getItem(Ch);
     if (!i) return null;
     const t = JSON.parse(i);
-    return t.v !== 1 ? null : t;
+    if (t.v !== 1) return null;
+    // A14: the second resource was renamed timber -> salvage. Same field,
+    // same economy; migrate saves written before the rename.
+    if (t.res && t.res.salvage === undefined && t.res.timber !== undefined)
+      ((t.res.salvage = t.res.timber), delete t.res.timber);
+    return t;
   } catch {
     return null;
   }

@@ -38,17 +38,17 @@ logs **zero console errors**.
 Fresh-state equivalence, rebuilt vs original, measured field by field on
 separate origins so neither could see the other's save:
 
-| | original | rebuilt |
-|---|---|---|
-| structures / pockets | 24 / 48 | 24 / 48 |
-| occupied / infill | 9 / 9 | 9 / 9 |
-| nav nodes | 1331 | 1331 |
-| population | 46 | 46 |
-| agent pool | 132 (46 active) | 132 (46 active) |
-| stone / timber / favor | 700 / 160 / 12 | 700 / 160 / 12 |
-| pocket kinds | 12/34/1/1 | 12/34/1/1 |
-| draw calls / triangles | 96 / 561,016 | 96 / 561,016 |
-| opening request | reach-terrace | reach-terrace |
+|                        | original        | rebuilt                                    |
+| ---------------------- | --------------- | ------------------------------------------ |
+| structures / pockets   | 24 / 48         | 24 / 48                                    |
+| occupied / infill      | 9 / 9           | 9 / 9                                      |
+| nav nodes              | 1331            | 1331                                       |
+| population             | 46              | 46                                         |
+| agent pool             | 132 (46 active) | 132 (46 active)                            |
+| stone / timber / favor | 700 / 160 / 12  | 700 / 160 / 12 (timber now `salvage`, A14) |
+| pocket kinds           | 12/34/1/1       | 12/34/1/1                                  |
+| draw calls / triangles | 96 / 561,016    | 96 / 561,016                               |
+| opening request        | reach-terrace   | reach-terrace                              |
 
 18 modules + `_hoisted.js` + `_runtime.js`, 89 identifiers renamed including
 all 48 three.js symbols.

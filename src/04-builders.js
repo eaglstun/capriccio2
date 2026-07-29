@@ -525,7 +525,7 @@ function buildVault(i) {
       }
     }
     const qm = qc.merge();
-    (be(qm, i.x, r, i.z, h), Yt(t, "timber", qm));
+    (be(qm, i.x, r, i.z, h), Yt(t, "salvage", qm));
     const qgm = qg.merge();
     (be(qgm, i.x, r, i.z, h), Yt(t, "glow", qgm));
   }
@@ -730,7 +730,7 @@ function buildOrnament(i) {
       s.box(0.5, 0.08, 0.5, [0, 3.4, 0]),
       s.box(0.3, 0.06, 0.06, [0.1, 2.05, 0]));
     const r = s.merge();
-    (be(r, i.x, n, i.z, 0), Yt(t, "timber", r));
+    (be(r, i.x, n, i.z, 0), Yt(t, "salvage", r));
     const o = new BoxGeometry(0.1, 2.5, 0.18);
     (o.translate(i.x + 0.24, n + 2.05, i.z), Yt(t, "glow", o));
     const a = new BoxGeometry(0.34, 0.12, 0.34);
@@ -748,7 +748,7 @@ function buildOrnament(i) {
     (a.box(1.7, 0.07, 0.07, [0, 9.3, 0]),
       a.box(0.07, 0.07, 1.7, [0, 8.9, 0]));
     const c = a.merge();
-    (be(c, i.x, n, i.z, Math.PI / 4), Yt(t, "timber", c));
+    (be(c, i.x, n, i.z, Math.PI / 4), Yt(t, "salvage", c));
     const l = new BoxGeometry(0.2, 0.55, 0.2);
     (l.translate(i.x, n + 11.35, i.z), Yt(t, "glow", l));
   }

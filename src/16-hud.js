@@ -172,7 +172,7 @@ class Hud {
     defineField(this, "frameEl");
     defineField(this, "veil");
     defineField(this, "resStone");
-    defineField(this, "resTimber");
+    defineField(this, "resSalvage");
     defineField(this, "resFavor");
     defineField(this, "resPop");
     defineField(this, "dayEl");
@@ -197,7 +197,7 @@ class Hud {
       <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day 001 · morning</div></div>
       <div id="resources" class="panel">
         <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span></div>
-        <div><span class="num" id="r-timber">0</span> <span class="lbl">TIMBER</span></div>
+        <div><span class="num" id="r-salvage">0</span> <span class="lbl">SALVAGE</span></div>
         <div><span class="num" id="r-favor">0</span> <span class="lbl">CLEARANCE</span></div>
         <div><span class="num" id="r-pop">0</span> <span class="lbl">SOULS</span></div>
         <div id="folio-line" title="No costs, no span limits — build freely."
@@ -289,7 +289,7 @@ class Hud {
       (this.frameEl = t.querySelector("#frame")),
       (this.veil = t.querySelector("#veil")),
       (this.resStone = t.querySelector("#r-stone")),
-      (this.resTimber = t.querySelector("#r-timber")),
+      (this.resSalvage = t.querySelector("#r-salvage")),
       (this.resFavor = t.querySelector("#r-favor")),
       (this.resPop = t.querySelector("#r-pop")),
       (this.dayEl = t.querySelector("#daytime")));
@@ -437,13 +437,13 @@ class Hud {
   setWanderHint(t) {
     this.wanderHint.style.display = t ? "block" : "none";
   }
-  /** Stone, timber, clearance, souls. Floored for display — resources accrue as
+  /** Stone, salvage, clearance, souls. Floored for display — resources accrue as
    * floats every frame. */
   updateResources(t) {
     (gameState.folio
-      ? ((this.resStone.textContent = "∞"), (this.resTimber.textContent = "∞"))
+      ? ((this.resStone.textContent = "∞"), (this.resSalvage.textContent = "∞"))
       : ((this.resStone.textContent = String(Math.floor(gameState.res.stone))),
-        (this.resTimber.textContent = String(Math.floor(gameState.res.timber)))),
+        (this.resSalvage.textContent = String(Math.floor(gameState.res.salvage)))),
       (this.resFavor.textContent = String(Math.floor(gameState.res.favor))),
       (this.resPop.textContent = String(t)));
     const e = this.root.querySelector("#folio-line");

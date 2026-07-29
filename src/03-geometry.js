@@ -618,7 +618,7 @@ function newStructureParts() {
     pockets: [],
     water: [],
     waterSources: [],
-    cost: { stone: 0, timber: 0 },
+    cost: { stone: 0, salvage: 0 },
   };
 }
 /** Add geometry `e` to parts `i` under material `t`, installing aTone on the way. */

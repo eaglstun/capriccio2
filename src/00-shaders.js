@@ -990,7 +990,8 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   // stretched so highlights blow out and shadows crush, the way the
   // discarded 2/8 error does in the real algorithm. Hard binary output;
   // the fabric boundary IS the style boundary. Old fabric (board-formed
-  // concrete, rock, timber, ground) keeps the burin hatching.
+  // concrete, rock, ground) keeps the burin hatching, as does salvage —
+  // panel-seamed sheet, but undithered.
   if (uDither > 0.5 && uCutting < 0.5) {
     float dl = dot(engraved, vec3(0.2126, 0.7152, 0.0722));
     dl = clamp((dl - 0.5) * 1.45 + 0.56, 0.0, 1.0);

@@ -298,7 +298,7 @@ function U_(i, t, e) {
     c.translate(0, o * 0.28, r / 2 + 0.02),
     a.addRaw(c),
     a.box(s * 0.9, 0.07, 0.8, [0, o * 0.56, r / 2 - 0.5]));
-  const l = new Mesh(a.merge(), i.mats.timber);
+  const l = new Mesh(a.merge(), i.mats.salvage);
   return ((l.castShadow = !0), n.add(l), n);
 }
 /**
@@ -329,7 +329,7 @@ function N_(i, t, e, n, s, r) {
       f = new MeshBuilder(0.05);
     (f.box(l, u, h, [0, 0, 0]),
       d && f.box(l * 0.86, u * 0.85, h * 0.86, [0.1, u, -0.05]),
-      a(f.merge(), r() < 0.4 ? o.plaster : o.timber));
+      a(f.merge(), r() < 0.4 ? o.plaster : o.salvage));
     // flat shanty roof: slab, tank, dish, aerial — the gable went with the era
     const m0 = d ? u * 1.85 : u,
       m1 = l * (d ? 0.9 : 1),
@@ -337,7 +337,7 @@ function N_(i, t, e, n, s, r) {
       m = new MeshBuilder(0);
     (m.box(m1 + 0.34, 0.16 + r() * 0.1, m2 + 0.34, [d ? 0.1 : 0, m0, d ? -0.05 : 0]),
       m.box(0.7, 0.45, 0.55, [m1 * 0.24, m0 + 0.16, -m2 * 0.2]),
-      a(m.merge(), o.timber));
+      a(m.merge(), o.salvage));
     if (r() < 0.7) {
       const mt = new CylinderGeometry(0.42, 0.42, 0.85, 8);
       (mt.translate(-m1 * 0.26, m0 + 0.6, m2 * 0.18), a(mt, o.plaster));
@@ -350,7 +350,7 @@ function N_(i, t, e, n, s, r) {
         a(md, o.plaster, !1));
     }
     const ma = new BoxGeometry(0.06, 1.7, 0.06);
-    (ma.translate(-m1 * 0.34, m0 + 0.95, -m2 * 0.3), a(ma, o.timber, !1));
+    (ma.translate(-m1 * 0.34, m0 + 0.95, -m2 * 0.3), a(ma, o.salvage, !1));
     const mg = new BoxGeometry(0.14, 0.16, 0.14);
     (mg.translate(-m1 * 0.34, m0 + 1.85, -m2 * 0.3), a(mg, c, !1));
     if (r() < 0.5) {
@@ -373,7 +373,7 @@ function N_(i, t, e, n, s, r) {
     }
     if (r() < 0.4) {
       const p = new BoxGeometry(2.4, 0.03, 0.03);
-      (p.translate(l / 2 + 1.1, u * 0.8, 0), a(p, o.timber, !1));
+      (p.translate(l / 2 + 1.1, u * 0.8, 0), a(p, o.salvage, !1));
       for (let A = 0; A < 3; A++) {
         const b = new BoxGeometry(0.3, 0.4, 0.02);
         (b.translate(l / 2 + 0.5 + A * 0.7, u * 0.8 - 0.22, 0),
@@ -386,7 +386,7 @@ function N_(i, t, e, n, s, r) {
     for (const f of [-1, 1])
       for (const m of [-1, 1])
         h.box(0.14, 2.3, 0.14, [f * l * 0.45, 0, m * 0.9]);
-    (h.box(l, 0.75, 1.7, [0, 0.05, 0]), a(h.merge(), o.timber));
+    (h.box(l, 0.75, 1.7, [0, 0.05, 0]), a(h.merge(), o.salvage));
     const u = new BoxGeometry(l + 0.5, 0.08, 2.3);
     (u.rotateZ((r() - 0.5) * 0.06),
       u.rotateX(-0.18),
@@ -416,7 +416,7 @@ function N_(i, t, e, n, s, r) {
     (f.box(0.1, 2.2, 0.1, [1.8, 0, -0.9]),
       f.box(0.1, 2.2, 0.1, [1.8, 0, 0.9]),
       f.box(0.12, 0.12, 2, [1.8, 2.2, 0]),
-      a(f.merge(), o.timber));
+      a(f.merge(), o.salvage));
   } else if (s === "shrine") {
     const l = new MeshBuilder(0.15);
     (l.box(1.7, 0.5, 1.4, [0, 0, 0]),
@@ -439,7 +439,7 @@ function N_(i, t, e, n, s, r) {
     const u = new MeshBuilder(0);
     (u.box(l + 0.3, 0.22, 3.7, [0, 3, 0]),
       u.box(1.2, 0.6, 0.9, [-l * 0.2, 3.22, 0.5]),
-      a(u.merge(), o.timber));
+      a(u.merge(), o.salvage));
     const u2 = new CylinderGeometry(0.55, 0.62, 0.35, 9);
     (u2.translate(l * 0.05, 3.4, -0.5), a(u2, o.plaster, !1));
     const d = new BoxGeometry(0.5, 1.8, 0.5);

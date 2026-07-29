@@ -282,6 +282,9 @@ intent over an area and whatever pockets fall inside become eligible.
 | stone             | 728    | 610    |
 | timber            | 169    | 227    |
 
+(The second resource was `timber` when this experiment was recorded; A14
+renamed the field to `salvage` — same economy, same numbers.)
+
 13 actions produced **44 new pockets** — architecture emits habitable void at
 roughly 3.4 pockets per action. Population rose 46 → 62 with no direct
 population action taken: **people arrive because habitable space appeared.**
@@ -290,8 +293,8 @@ Water access nearly tripled (24 → 68), consistent with spans distributing it
 along their length — the aqueduct hint, "carries water along its back," is
 mechanically true.
 
-Stone was spent while timber _accrued_ — the two resources have different
-economies, and both tick as floats continuously.
+Stone was spent while timber (now salvage) _accrued_ — the two resources have
+different economies, and both tick as floats continuously.
 
 At dusk the agent census flipped from `work: 46` to `home: 53, tohome: 8,
 gather: 1`, confirming the daily routine runs off `time.hour`.
@@ -315,7 +318,7 @@ measurement.
 ### Confirmed by experiment
 
 - **`occupied` and `infill` are always equal.** Pocket "occupancy" _is_ an
-  infill building. The vernacular timber houses are the occupancy.
+  infill building. The vernacular salvage-built houses are the occupancy.
 - **Interiors do fill — they're just slower.** An earlier reading of
   `interior: 0/16` was a timing artifact, not a rule. Six `grow()` calls took
   it to 16/16.
