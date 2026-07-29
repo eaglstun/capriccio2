@@ -556,9 +556,24 @@ const gameState = {
   dirty: !1,
   folio: !1,
 };
+/** Both resources accrue on their own, per game-hour, and stop dead at a cap.
+ * No building produces them and no amount of play changes the rate — which is
+ * a pacing device, not an oversight. A9 makes the rate and the cap legible in
+ * the HUD, which imports these rather than repeating the numbers, so the two
+ * cannot drift apart. */
+const STONE_RATE = 18,
+  SALVAGE_RATE = 6,
+  STONE_CAP = 2600,
+  SALVAGE_CAP = 900;
 function V_(i) {
-  ((gameState.res.stone = Math.min(2600, gameState.res.stone + i * 18)),
-    (gameState.res.salvage = Math.min(900, gameState.res.salvage + i * 6)));
+  ((gameState.res.stone = Math.min(
+    STONE_CAP,
+    gameState.res.stone + i * STONE_RATE,
+  )),
+    (gameState.res.salvage = Math.min(
+      SALVAGE_CAP,
+      gameState.res.salvage + i * SALVAGE_RATE,
+    )));
 }
 function Fl(i) {
   return gameState.folio
@@ -583,4 +598,18 @@ function X_() {
 const Ch = "capriccio-save-v1";
 
 // --- generated exports ---
-export { Ch, Citizens, Fl, Po, Rh, V_, W_, X_, gameState };
+export {
+  Ch,
+  Citizens,
+  Fl,
+  Po,
+  Rh,
+  SALVAGE_CAP,
+  SALVAGE_RATE,
+  STONE_CAP,
+  STONE_RATE,
+  V_,
+  W_,
+  X_,
+  gameState,
+};

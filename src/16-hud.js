@@ -7,7 +7,13 @@
 
 // --- generated imports ---
 import { Vector3 } from "three";
-import { gameState } from "./07-citizens.js";
+import {
+  SALVAGE_CAP,
+  SALVAGE_RATE,
+  STONE_CAP,
+  STONE_RATE,
+  gameState,
+} from "./07-citizens.js";
 import { BUILD_CATALOGUE } from "./09-catalogue.js";
 import { tv } from "./14-plates.js";
 import { rv } from "./_hoisted.js";
@@ -31,6 +37,11 @@ const nv = `
   letter-spacing: 0.06em; line-height: 1.75; }
 #resources .num { display: inline-block; min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
 #resources .lbl { opacity: 0.75; font-size: 11px; letter-spacing: 0.14em; }
+/* A9: the accrual rate, and the cap once it is close enough to matter. Quiet
+   enough to ignore while building, present enough to answer "where does stone
+   come from" without a player going to look for a mine. */
+#resources .rate { opacity: 0.45; font-size: 9.5px; letter-spacing: 0.1em; margin-left: 7px; }
+#resources .rate.full { opacity: 0.7; }
 #quals { position: absolute; top: 10px; right: 10px; padding: 7px 14px; font-size: 11px;
   letter-spacing: 0.12em; line-height: 1.9; text-align: right; }
 .qbar { display: inline-block; width: 64px; height: 5px; border: 1px solid #6ff5ea; margin-left: 8px;
@@ -130,6 +141,8 @@ const nv = `
 @media (max-width: 640px) {
   #request { display: none !important; }
   #topbar { display: none; }
+  /* the rate note is the first thing to go when the panel gets tight */
+  #resources .rate { display: none; }
   .tool svg { width: 20px; height: 18px; }
   #platemark { inset: 5px; }
   /* stack: modes row sits above the full-width scrollable palette */
@@ -173,6 +186,8 @@ class Hud {
     defineField(this, "veil");
     defineField(this, "resStone");
     defineField(this, "resSalvage");
+    defineField(this, "resStoneRate");
+    defineField(this, "resSalvageRate");
     defineField(this, "resFavor");
     defineField(this, "resPop");
     defineField(this, "dayEl");
@@ -196,8 +211,8 @@ class Hud {
       <div id="labels"></div>
       <div id="topbar" class="panel"><div id="cityname">CAPRICCIO</div><div id="daytime">day 001 · morning</div></div>
       <div id="resources" class="panel">
-        <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span></div>
-        <div><span class="num" id="r-salvage">0</span> <span class="lbl">SALVAGE</span></div>
+        <div><span class="num" id="r-stone">0</span> <span class="lbl">STONE</span><span class="rate" id="r-stone-rate"></span></div>
+        <div><span class="num" id="r-salvage">0</span> <span class="lbl">SALVAGE</span><span class="rate" id="r-salvage-rate"></span></div>
         <div><span class="num" id="r-favor">0</span> <span class="lbl">CLEARANCE</span></div>
         <div><span class="num" id="r-pop">0</span> <span class="lbl">SOULS</span></div>
         <div id="folio-line" title="No costs, no span limits — build freely."
@@ -290,6 +305,8 @@ class Hud {
       (this.veil = t.querySelector("#veil")),
       (this.resStone = t.querySelector("#r-stone")),
       (this.resSalvage = t.querySelector("#r-salvage")),
+      (this.resStoneRate = t.querySelector("#r-stone-rate")),
+      (this.resSalvageRate = t.querySelector("#r-salvage-rate")),
       (this.resFavor = t.querySelector("#r-favor")),
       (this.resPop = t.querySelector("#r-pop")),
       (this.dayEl = t.querySelector("#daytime")));
@@ -437,6 +454,26 @@ class Hud {
   setWanderHint(t) {
     this.wanderHint.style.display = t ? "block" : "none";
   }
+  /** A9: the small grey note after STONE and SALVAGE. It answers the question a
+   * player actually asks — "where does more come from" — by saying the rate out
+   * loud, and it names the cap only once stockpiling is close enough to be a
+   * real decision. At the cap the rate is dropped entirely, because accrual has
+   * genuinely stopped and showing "+18/hr" there would be a lie. Silent in
+   * folio mode, where there are no resources to have a rate. */
+  setRate(el, have, rate, cap) {
+    if (!el) return;
+    if (gameState.folio) {
+      ((el.textContent = ""), el.classList.remove("full"));
+      return;
+    }
+    const atCap = have >= cap;
+    ((el.textContent = atCap
+      ? `full · ${cap}`
+      : have >= cap * 0.85
+        ? `+${rate}/hr · max ${cap}`
+        : `+${rate}/hr`),
+      el.classList.toggle("full", atCap));
+  }
   /** Stone, salvage, clearance, souls. Floored for display — resources accrue as
    * floats every frame. */
   updateResources(t) {
@@ -446,6 +483,13 @@ class Hud {
         (this.resSalvage.textContent = String(Math.floor(gameState.res.salvage)))),
       (this.resFavor.textContent = String(Math.floor(gameState.res.favor))),
       (this.resPop.textContent = String(t)));
+    (this.setRate(this.resStoneRate, gameState.res.stone, STONE_RATE, STONE_CAP),
+      this.setRate(
+        this.resSalvageRate,
+        gameState.res.salvage,
+        SALVAGE_RATE,
+        SALVAGE_CAP,
+      ));
     const e = this.root.querySelector("#folio-line");
     e &&
       (e.textContent = gameState.folio
