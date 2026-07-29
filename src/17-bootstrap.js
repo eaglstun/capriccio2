@@ -652,6 +652,12 @@ oi.onDone = (i) => {
 oi.onNew = (i) => {
   (fe.setRequest(i.text), syncSpeaker());
 };
+// A8: a hint speaks as a citizen, through the same channel the thanks lines
+// use, and is left up longer than a build toast because it is meant to be read
+// rather than glanced at. The ask itself stays in the request box untouched.
+oi.onHint = (i) => {
+  fe.toast(i, 11e3);
+};
 oi.active && (fe.setRequest(oi.active.text), syncSpeaker());
 Kt.onStructureBuilt = () => {};
 let Ns = performance.now(),

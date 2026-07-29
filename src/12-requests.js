@@ -35,6 +35,27 @@ const j_ = [
       favor: 90,
       thanks:
         "Water crosses the void on stone legs. Tullia planted the first bed the same evening.",
+      // A8. This is the hardest thing in the game and nothing used to help with
+      // it: the shortest leg of the crossing is 34 units and the longest 142,
+      // against a max span of 55 below 60 clearance — so it cannot be done in
+      // one reach at any clearance a player is likely to hold, and nothing said
+      // so. The first line gestures at what carries water, the second at legs
+      // standing in the gorge. Neither names a tool or a button; the point is
+      // to provoke "I could put a pier IN the canyon", not to hand over a
+      // recipe. Counted in growth ticks (~2.2s each), so the first arrives
+      // after roughly two and a half minutes of the ask going unmet — long
+      // enough to have tried and failed, which is when a hint is welcome
+      // rather than insulting.
+      hints: [
+        {
+          after: 68,
+          text: "“They keep offering to carry it up in pails. Water does not climb — it lies down and travels, if something long enough carries it.” — Tullia",
+        },
+        {
+          after: 164,
+          text: "“The old crossing did not leap the gorge. It stood in it — legs in the dark, one short reach to the next.” — Marcus, lattice technician",
+        },
+      ],
       done: (i) => {
         for (const t of i.waterSources)
           if (t.y > 14 && t.x < 40 && t.z < -40) return !0;
@@ -299,6 +320,13 @@ class Requests {
     defineField(this, "queue");
     defineField(this, "onDone", null);
     defineField(this, "onNew", null);
+    defineField(this, "onHint", null);
+    // A8 hint pacing: growth ticks the current ask has gone unmet, and how many
+    // of its hints have already been spoken. Deliberately NOT saved — hint
+    // state is per-session, so a reload can hear them again. Persisting it
+    // would mean a save key for a line of dialogue.
+    defineField(this, "activeTicks", 0);
+    defineField(this, "hintsShown", 0);
     defineField(this, "flavorIdx", 0);
     // generator pacing: `lull` counts quiet growth ticks once the hand five
     // are done, `genOffset` rotates which deficiency is looked for first
@@ -317,7 +345,9 @@ class Requests {
    */
   resync() {
     ((this.queue = j_.filter((t) => !gameState.doneRequests.has(t.id))),
-      (this.active = this.queue[0] ?? null));
+      (this.active = this.queue[0] ?? null),
+      (this.activeTicks = 0),
+      (this.hintsShown = 0));
   }
   /**
    * Test whether the active request is satisfied; if so pay out and advance.
@@ -344,12 +374,24 @@ class Requests {
         this.onDone?.(n),
         (this.active = this.queue[0] ?? null),
         (this.lull = 0),
+        (this.activeTicks = 0),
+        (this.hintsShown = 0),
         this.active)
       ) {
         const s = this.active;
         setTimeout(() => this.onNew?.(s), 9e3);
       }
       return;
+    }
+    // A8: the ask is still unmet. Count how long it has been so, and let the
+    // request speak again if it carries hints and enough has gone by. One at a
+    // time, in order, and only as many as it defines — never a loop.
+    if (this.active) {
+      this.activeTicks++;
+      const s = this.active.hints?.[this.hintsShown];
+      s &&
+        this.activeTicks >= s.after &&
+        (this.hintsShown++, this.onHint?.(s.text));
     }
     // the mid-game: once the hand five are finished and nothing is being
     // asked, let the city sit quiet for ~30s of ticks, then look for a real
