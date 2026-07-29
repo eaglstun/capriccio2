@@ -58,11 +58,11 @@ size publicly; use the local line numbers only for navigation.
 
 ## Local servers — and a destructive footgun
 
-| port | serves | what it is |
-|---|---|---|
-| 8123 | `public/` | **the original game.** Pristine reference build |
-| 8124 | `dist/` | the current build — **changes whenever anything runs `yarn build`** |
-| 8125 | `public/` | original again, separate origin for fresh-vs-fresh comparison |
+| port | serves    | what it is                                                          |
+| ---- | --------- | ------------------------------------------------------------------- |
+| 8123 | `public/` | **the original game.** Pristine reference build                     |
+| 8124 | `dist/`   | the current build — **changes whenever anything runs `yarn build`** |
+| 8125 | `public/` | original again, separate origin for fresh-vs-fresh comparison       |
 
 **`?fresh` deletes the save on load.** It is a real feature of the game
 (`localStorage.removeItem` at bundle line 30736), not a dev flag. Saves are
@@ -111,23 +111,37 @@ The `type="module"` script tag means **the bundle will be refused by the
 browser if served with the wrong MIME type** — it must come back as
 `text/javascript`. Python's `http.server` gets this right.
 
-## `src/` is a reading copy, not a build
+## `src/` is the build source, and it is TypeScript
 
-`src/` holds the app section cut into 18 files by `tools/split_bundle.py`. It
-is a **lossless partition** — nothing renamed, nothing reordered, verified by
-byte-identical reassembly.
+`src/` began as the app section cut into 18 files by `tools/split_bundle.py` —
+a lossless partition verified by byte-identical reassembly. It is no longer
+any of those things, and three separate changes took it further away:
 
-It is now a real ES module tree — 18 modules, 89 identifiers renamed (all 48
-three.js symbols included), every local import verified against an actual
-export.
+1. The **vaporwave reskin** hand-edited `00`–`17`.
+2. **`18-music.ts` and `19-tutorial.ts`** were written from scratch; they were
+   never in the bundle.
+3. The **TypeScript conversion** renamed every module `.js` → `.ts`, replaced
+   all 137 `defineField(this, ...)` calls with real class fields, and added
+   annotations the splitter cannot emit.
 
-**It has still never been run.** No bundler config, `three` is not installed,
-and the boot sequence has not been exercised. Resolving is not executing. Do
-not describe `src/` as working until something has actually run it.
+**Never run `python3 tools/split_bundle.py --write`.** It would overwrite the
+whole tree with regenerated JavaScript and destroy the reskin, the score, the
+tutorial and the types in one go — and then report PASS, because it would be
+verifying the regenerated files against the original exactly as designed. The
+marker file `src/.hand-edited` makes it refuse. Do not delete it.
 
-`public/` remains the only runnable copy. If you change how the split works,
-re-run `python3 tools/split_bundle.py --write` — it aborts rather than emit a
-partition it cannot verify. See `src/README.md`.
+`src/` **is what builds and ships.** `three` is installed, Vite builds it, and
+the result is deployed at fable-mvp.gg. `yarn typecheck` runs `tsc --noEmit`
+and is currently clean.
+
+TypeScript settings are **deliberately permissive** — `strict: false`,
+`noImplicitAny: false`. That was phase 1: make it compile as real TypeScript
+and pick up three.js's types, not annotate 10,000 lines of extracted bundle
+code. Tightening those flags module by module is phase 2. Do not add
+annotations to satisfy a flag that is still off.
+
+`public/` remains the pristine reference — the artifact as Mollick deployed it,
+and still the thing to verify against. See `src/README.md`.
 
 ## Working method
 

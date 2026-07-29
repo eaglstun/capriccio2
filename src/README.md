@@ -1,5 +1,12 @@
 # src/ — the app section, cut into readable files
 
+> **This tree is TypeScript.** Every module is `.ts`, checked by
+> `yarn typecheck` (`tsc --noEmit`, currently **0 errors**) and transpiled by
+> esbuild inside Vite. Much of the history below describes the `.js` tree it
+> was converted from; that history is still true of how the code got here, but
+> the filenames in it are one extension out of date. See
+> **"The TypeScript conversion"** near the bottom.
+
 ## What this is
 
 A **reversible reconstruction** of the game code from
@@ -14,13 +21,14 @@ order. What IS applied, all of it mechanically and all of it undoable:
 **byte-identical** to the original app section. That is what makes editing
 code nobody can read safe: "looks right" becomes "provably the same program".
 
-Regenerate at any time:
+**That reversibility is historical now — do not try to use it.** Two things
+have broken it, in order: the vaporwave reskin hand-edited `00`–`17` (see
+`DO-NOT-REGENERATE.md`), and the TypeScript conversion renamed every module and
+added type annotations the splitter cannot emit. `split_bundle.py --write`
+would overwrite the entire tree with regenerated JavaScript. The marker file
+`src/.hand-edited` makes it refuse; leave it there.
 
-```sh
-python3 tools/split_bundle.py --write
-```
-
-The tool fails loudly rather than silently producing garbage: it verifies that
+Historically the tool failed loudly rather than silently producing garbage: it verified that
 concatenating these files in `manifest.json` order reproduces the original app
 section **byte for byte**, and it aborts if any anchor stops matching.
 
@@ -67,8 +75,10 @@ it has not been re-measured against `public/`. The rows that _are_ stable —
 structures, pockets, nav nodes, population, pocket kinds — held exactly on every
 sample and remain the verification figures worth trusting.
 
-18 modules + `_hoisted.js` + `_runtime.js`, 89 identifiers renamed including
-all 48 three.js symbols.
+18 modules + `_hoisted.ts`, plus `18-music.ts` and `19-tutorial.ts` which are
+hand-written and were never in the bundle. 89 identifiers renamed including all
+48 three.js symbols. `_runtime.ts` is no longer imported by anything — the
+class-field rewrite it was waiting for has happened.
 
 `public/` is still the reference copy — the artifact as Mollick deployed it.
 `dist/` is the reconstruction.
@@ -162,14 +172,73 @@ green and behaviourally identical. What remains is quality, not correctness:
 1. **Rename locals.** The top-level surface is named but method bodies are
    still `t`/`e`/`n`. This needs real per-function scope analysis — a parser,
    not a regex. Biggest readability win left by far.
-2. **Rewrite class fields.** Replace the 124 `defineField(this, ...)` calls
-   with real class-field syntax, then delete `_runtime.js`.
+2. ~~**Rewrite class fields.**~~ **Done.** All 137 `defineField(this, ...)`
+   call sites (not 124 — the old count was low) across 15 classes are real
+   class fields. `_runtime.ts` is unreferenced and can be deleted whenever
+   someone is comfortable doing it.
 3. **Fold `_hoisted.js` back** once `16-hud` and `17-bootstrap` no longer form
    a cycle — likely after bootstrap is split into declarations and init.
 4. **Rename the remaining ~79 top-level symbols**, including the 14 shadowed
    ones (each needs manual verification).
 5. **Behavioural diffing beyond fresh state** — replay an action log through
    both builds and compare, rather than only comparing world genesis.
+
+## The TypeScript conversion
+
+The tree was `.js` until it was converted in one pass. What that involved, and
+what it deliberately did not:
+
+**Settings are permissive on purpose.** `tsconfig.json` has `strict: false` and
+`noImplicitAny: false`. The point of phase 1 was to make the tree compile as
+real TypeScript and pick up three.js's types for free, not to annotate 10,000
+lines of extracted bundle code. Turning those flags on, module by module, is
+phase 2. **Do not add annotations to satisfy a flag that is still off.**
+
+**Class fields were the whole job.** 849 of the initial errors were one
+problem: TypeScript cannot see a property installed by `Object.defineProperty`,
+which is what the `defineField` shim did, so every read of one was an error.
+Converting the 137 call sites to real fields took it to 151 in a single pass.
+`useDefineForClassFields: true` makes that a semantics-preserving change — it
+is `[[Define]]`, exactly what the shim did.
+
+Three fields use `declare` rather than a plain declaration — `World.sceneTick`,
+`Citizens.look`, `Soundscape.bellShaper`. Those were never `defineField`ed;
+they are assigned lazily and did not exist as own properties before first
+assignment. `declare` emits nothing, so that stays true. **Do not "tidy" them
+into ordinary fields** — that would newly define them as `undefined`.
+
+**Two named types carry real contracts.** `StructureParts` in `03-geometry`
+(what every builder returns; `anchorTop` is optional because only anchors set
+it, which is why the world module tests for it) and `PlacedAction` in
+`11-tools` (the record a placement commits — the shape the save stores). The
+per-tool action union is genuinely a discriminated union on `t` and is left
+open; writing it out is phase-2 work.
+
+### Verified against the pre-conversion build
+
+Not "it looked fine". The `main` build and the TypeScript build were both
+loaded with the same 1,941-byte save on separate origins, and driven through
+the same sequence — load, place a pier, undo:
+
+|            | main (pre-conversion) | typescript         |
+| ---------- | --------------------- | ------------------ |
+| structures | 26 → 27 → 26          | 26 → 27 → 26       |
+| nav nodes  | 1332 → 1333 → 1332    | 1332 → 1333 → 1332 |
+| pockets    | 52 → 52 → 53          | 52 → 52 → 53       |
+| anchors    | 4 → 5 → 4             | 4 → 5 → 4          |
+
+Identical, including the quirk: **undo does not restore the pocket count.**
+`undo` runs `rebuildAll`, which clears `pockets` and replays the action list —
+but the boot-time `seedGroundPockets` calls are not part of that list and are
+not replayed. Pre-existing, reproduced exactly on both builds, untouched here.
+
+### One finding, left unfixed on purpose
+
+`16-hud`'s `showPlate(t, e /* , evicted */)` has its third parameter commented
+out, but `17-bootstrap:513` still passes a third argument — and lines 511–512
+compute it to do so. Dead work feeding a parameter nobody reads. The signature
+now declares it optional so the call typechecks; **the call site was left
+alone**, because deleting live code is not a conversion's job.
 
 ## Regenerating the analysis
 
