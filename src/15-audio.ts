@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { defineField } from "./_runtime.js";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class Soundscape {

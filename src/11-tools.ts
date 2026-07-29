@@ -7,13 +7,13 @@
 
 // --- generated imports ---
 import { BufferAttribute, BufferGeometry, CylinderGeometry, Mesh, Raycaster, TorusGeometry } from "three";
-import { terrainHeightAt } from "./01-materials.js";
-import { setToneAttribute } from "./03-geometry.js";
-import { buildStructureMesh } from "./04-builders.js";
-import { Fl, W_, X_, gameState } from "./07-citizens.js";
-import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue.js";
-import { BuildOverlays } from "./10-overlays.js";
-import { defineField } from "./_runtime.js";
+import { terrainHeightAt } from "./01-materials";
+import { setToneAttribute } from "./03-geometry";
+import { buildStructureMesh } from "./04-builders";
+import { Fl, W_, X_, gameState } from "./07-citizens";
+import { BUILD_CATALOGUE, VAULT_FOOTPRINTS } from "./09-catalogue";
+import { BuildOverlays } from "./10-overlays";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class PlacementTool {

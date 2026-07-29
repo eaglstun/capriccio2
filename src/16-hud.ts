@@ -13,11 +13,11 @@ import {
   STONE_CAP,
   STONE_RATE,
   gameState,
-} from "./07-citizens.js";
-import { BUILD_CATALOGUE } from "./09-catalogue.js";
-import { tv } from "./14-plates.js";
-import { rv } from "./_hoisted.js";
-import { defineField } from "./_runtime.js";
+} from "./07-citizens";
+import { BUILD_CATALOGUE } from "./09-catalogue";
+import { tv } from "./14-plates";
+import { rv } from "./_hoisted";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 const nv = `

@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { Ch, gameState } from "./07-citizens.js";
+import { Ch, gameState } from "./07-citizens";
 // --- end generated imports ---
 
 /**

@@ -7,11 +7,11 @@
 
 // --- generated imports ---
 import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CylinderGeometry, DoubleSide, Group, InstancedMesh, Line, LineDashedMaterial, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, RingGeometry, SRGBColorSpace, TorusGeometry, TubeGeometry, Vector3 } from "three";
-import { Ca, Nn, Vr, f_, fr, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials.js";
-import { NavGraph } from "./02-nav.js";
-import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry.js";
-import { buildStructureMesh } from "./04-builders.js";
-import { defineField } from "./_runtime.js";
+import { Ca, Nn, Vr, f_, fr, i_, isFlatGround, seededRng, terrainHeightAt } from "./01-materials";
+import { NavGraph } from "./02-nav";
+import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry";
+import { buildStructureMesh } from "./04-builders";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class World {

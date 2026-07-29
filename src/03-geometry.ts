@@ -7,8 +7,8 @@
 
 // --- generated imports ---
 import { BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
-import { clamp, seededRng, terrainHeightAt } from "./01-materials.js";
-import { defineField } from "./_runtime.js";
+import { clamp, seededRng, terrainHeightAt } from "./01-materials";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**

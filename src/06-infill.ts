@@ -7,10 +7,10 @@
 
 // --- generated imports ---
 import { BoxGeometry, CylinderGeometry, Group, Mesh, Vector3 } from "three";
-import { clamp, hashString, seededRng } from "./01-materials.js";
-import { Il, MeshBuilder, buildTree, setToneAttribute } from "./03-geometry.js";
-import { L_ } from "./05-world.js";
-import { defineField } from "./_runtime.js";
+import { clamp, hashString, seededRng } from "./01-materials";
+import { Il, MeshBuilder, buildTree, setToneAttribute } from "./03-geometry";
+import { L_ } from "./05-world";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class InfillSystem {

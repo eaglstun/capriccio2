@@ -7,7 +7,7 @@
 
 // --- generated imports ---
 import { BufferAttribute, Color, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, PlaneGeometry, Vector3 } from "three";
-import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders.js";
+import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders";
 // --- end generated imports ---
 
 /**

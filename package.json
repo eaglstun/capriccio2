@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@strudel/core": "^1.2.6",
@@ -14,6 +15,8 @@
     "three": "0.180.0"
   },
   "devDependencies": {
+    "@types/three": "0.180.0",
+    "typescript": "^5.6.0",
     "vite": "^5.4.0"
   },
   "packageManager": "yarn@4.17.0"

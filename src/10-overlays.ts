@@ -7,8 +7,8 @@
 
 // --- generated imports ---
 import { BufferGeometry, Group, Line, LineBasicMaterial, LineDashedMaterial, Vector3 } from "three";
-import { terrainHeightAt } from "./01-materials.js";
-import { defineField } from "./_runtime.js";
+import { terrainHeightAt } from "./01-materials";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 class BuildOverlays {

@@ -7,8 +7,8 @@
 
 // --- generated imports ---
 import { Vector3 } from "three";
-import { $n, isFlatGround, terrainHeightAt } from "./01-materials.js";
-import { defineField } from "./_runtime.js";
+import { $n, isFlatGround, terrainHeightAt } from "./01-materials";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**
@@ -24,10 +24,10 @@ import { defineField } from "./_runtime.js";
  * the array — see `removeStruct`.
  */
 class NavGraph {
-  constructor() {
-    defineField(this, "nodes", []);
-    defineField(this, "cell", new Map());
-  }
+  /** Every node ever added. Never spliced — indices are external references. */
+  nodes = [];
+  /** Spatial hash: 10-unit cell key -> node indices in that cell. */
+  cell = new Map();
   /** Spatial-hash bucket for a world (x, z). 10-unit cells. */
   key(t, e) {
     return `${Math.round(t / 10)},${Math.round(e / 10)}`;
@@ -206,10 +206,9 @@ class NavGraph {
  * and shows up immediately with 46 citizens repathing.
  */
 class p_ {
-  constructor() {
-    defineField(this, "ids", []);
-    defineField(this, "ks", []);
-  }
+  /** Parallel arrays: node ids, and their priorities. */
+  ids = [];
+  ks = [];
   get size() {
     return this.ids.length;
   }

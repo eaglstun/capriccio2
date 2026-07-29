@@ -8,19 +8,19 @@
 // --- generated imports ---
 import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders.js";
-import { Aa, Nn, Vr, clamp, hashString, lerp, n_, terrainHeightAt } from "./01-materials.js";
-import { Ah, C_, P_, World } from "./05-world.js";
-import { InfillSystem } from "./06-infill.js";
-import { Citizens, Rh, V_, gameState } from "./07-citizens.js";
-import { loadGame, saveGame } from "./08-save.js";
-import { PlacementTool } from "./11-tools.js";
-import { Requests } from "./12-requests.js";
-import { Ph, SectionMode, WanderMode } from "./13-modes.js";
-import { renderPlateImage } from "./14-plates.js";
-import { Soundscape } from "./15-audio.js";
-import { Hud } from "./16-hud.js";
-import { score } from "./18-music.js";
+import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders";
+import { Aa, Nn, Vr, clamp, hashString, lerp, n_, terrainHeightAt } from "./01-materials";
+import { Ah, C_, P_, World } from "./05-world";
+import { InfillSystem } from "./06-infill";
+import { Citizens, Rh, V_, gameState } from "./07-citizens";
+import { loadGame, saveGame } from "./08-save";
+import { PlacementTool } from "./11-tools";
+import { Requests } from "./12-requests";
+import { Ph, SectionMode, WanderMode } from "./13-modes";
+import { renderPlateImage } from "./14-plates";
+import { Soundscape } from "./15-audio";
+import { Hud } from "./16-hud";
+import { score } from "./18-music";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),

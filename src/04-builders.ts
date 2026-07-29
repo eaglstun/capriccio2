@@ -7,8 +7,8 @@
 
 // --- generated imports ---
 import { BoxGeometry, ConeGeometry, CylinderGeometry } from "three";
-import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials.js";
-import { Hn, Ji, Ll, MeshBuilder, Pa, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, newStructureParts, setToneAttribute, v_ } from "./03-geometry.js";
+import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials";
+import { Hn, Ji, Ll, MeshBuilder, Pa, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, newStructureParts, setToneAttribute, v_ } from "./03-geometry";
 // --- end generated imports ---
 
 /**

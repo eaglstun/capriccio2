@@ -7,8 +7,8 @@
 
 // --- generated imports ---
 import { Plane, Raycaster, Vector3 } from "three";
-import { engravingUniforms } from "./00-shaders.js";
-import { defineField } from "./_runtime.js";
+import { engravingUniforms } from "./00-shaders";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 /**

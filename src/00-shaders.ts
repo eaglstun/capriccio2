@@ -7,7 +7,7 @@
 
 // --- generated imports ---
 import { Color, DataTexture, DepthTexture, FloatType, LinearFilter, Matrix4, Mesh, NearestFilter, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, RedFormat, RepeatWrapping, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
-import { defineField } from "./_runtime.js";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 
 const j0 = `

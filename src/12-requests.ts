@@ -7,14 +7,14 @@
 
 // --- generated imports ---
 import { Vector3 } from "three";
-import { Vr } from "./01-materials.js";
-import { Th } from "./05-world.js";
-import { gameState } from "./07-citizens.js";
-import { defineField } from "./_runtime.js";
+import { Vr } from "./01-materials";
+import { Th } from "./05-world";
+import { gameState } from "./07-citizens";
+import { defineField } from "./_runtime";
 // --- end generated imports ---
 // hand-added: the request generator derives its speaker/wording choices
 // deterministically from the request id
-import { hashString } from "./01-materials.js";
+import { hashString } from "./01-materials";
 
 const j_ = [
     {
