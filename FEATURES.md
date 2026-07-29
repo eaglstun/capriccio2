@@ -60,7 +60,7 @@ items on the old frozen list were never about compatibility at all. Sort them:
 
 - **`applyAction` and the pocket model must stay deterministic.** This was
   never about old saves. The save IS an action log, so if replay is not
-  deterministic then saving and reloading gives you a *different city* — the
+  deterministic then saving and reloading gives you a _different city_ — the
   feature breaks against itself, today, with no history involved.
 - **Every builder must keep seeding from the action id.** Same reason.
 - **Structure envelopes still govern pockets.** Changing a footprint changes
@@ -75,7 +75,7 @@ items on the old frozen list were never about compatibility at all. Sort them:
 ### The verification numbers still apply
 
 A fresh city should still report **24 structures, 48 pockets, 1331 navNodes,
-46 pop, kinds 12/34/1/1** unless a change is *meant* to move them. They are the
+46 pop, kinds 12/34/1/1** unless a change is _meant_ to move them. They are the
 cheapest signal that something drifted by accident, and that is worth keeping
 whether or not anyone has a save.
 
@@ -223,7 +223,7 @@ as a 1-bit dithered plate** (the "style slab").
 
 A real VHS tracking error is a **timing** fault. The luma and chroma carriers
 drift out of alignment, so the colour channels smear horizontally against each
-other. That is what the artefact actually looks like. A halftone is a *printing*
+other. That is what the artefact actually looks like. A halftone is a _printing_
 artefact and belongs to a different medium entirely — inside a video-tape band
 it reads as two unrelated ideas stacked.
 
@@ -352,7 +352,7 @@ would muddy both.
 - **Check it at night**, when the citizens are near-black shapes and their
   outline is most of what you can see of them.
 - Do not let the citizen outline glow brighter than the neon; they should read
-  as *different*, not as *important*.
+  as _different_, not as _important_.
 
 #### Verify
 
@@ -365,8 +365,8 @@ export is unaffected.
 The second request is the hardest thing in the game and nothing helps the
 player with it.
 
-> *"No water climbs so high. The spring across the great void mocks us every
-> dry summer."* — Tullia
+> _"No water climbs so high. The spring across the great void mocks us every
+> dry summer."_ — Tullia
 
 To satisfy it the player must get a water source above y=14 on the far side of
 the canyon. That means: know that **aqueducts carry water** and an ordinary
@@ -374,11 +374,11 @@ bridge does not, find the spring, and cross the void.
 
 Measured, the distances are unforgiving:
 
-| from | to | distance |
-|---|---|---|
+| from                  | to                      | distance      |
+| --------------------- | ----------------------- | ------------- |
 | spring pool (126, −6) | high terrace (−28, −86) | **174 units** |
-| spring pool | massif rim (92, −10) | 34 |
-| massif rim | high terrace | **142** |
+| spring pool           | massif rim (92, −10)    | 34            |
+| massif rim            | high terrace            | **142**       |
 
 Max span is **55** under 60 clearance, **95** at 60+, **150** at 150+. So even
 the shortest leg of the crossing cannot be done in one span at any clearance
@@ -397,7 +397,7 @@ intermediate piers**, and nothing in the game says so.
 - It should not repeat endlessly. Once, or at most twice.
 
 Keep the discovery. The hint should make the player think "oh — I could put a
-pier *in* the canyon", not hand them a recipe.
+pier _in_ the canyon", not hand them a recipe.
 
 ### A9. Stone is invisible, not scarce
 
@@ -452,7 +452,7 @@ around the perimeter to close the gap between ground and skyline. Hills are
 cheaper — they need no extra resolution in the playable area and can be a
 coarse merged mesh, scene-only and never in `structGroup`.
 
-Keep it *low*. The city should still feel like it sits on a plain; the point is
+Keep it _low_. The city should still feel like it sits on a plain; the point is
 that the plain has an edge you cannot see over, not that it is ringed by
 mountains.
 
@@ -473,9 +473,9 @@ not, and the player has to learn it by clicking and being refused.
 
 **The actual rule**, from `draftAction`:
 
-| carvable | not carvable |
-|---|---|
-| `wall` structures | spans, vaults, stairs |
+| carvable                             | not carvable                          |
+| ------------------------------------ | ------------------------------------- |
+| `wall` structures                    | spans, vaults, stairs                 |
 | `giant` piers **not already carved** | ordinary piers, columns, all ornament |
 
 Note the second row — a giant pier can take exactly one carve, and after that
@@ -489,7 +489,7 @@ the existing guide is lying by omission. Fix that as part of this.
 
 The dither already means something — it separates the end-of-humanity fabric
 from the first-era concrete (`courseH >= 0.95` vs below). Carvability is
-*orthogonal* to that: a player-built wall and a player-built vault are the same
+_orthogonal_ to that: a player-built wall and a player-built vault are the same
 era and the same material, and only one takes a carve.
 
 So this needs a third signal that does not fight the era split.
@@ -527,15 +527,15 @@ Cells are **512px wide**, text is centred at x=256, and **nothing measures
 anything**. Every headline is drawn at a fixed `bold 52px Georgia` and hoped
 for. Measured against the real font:
 
-| headline | width | |
-|---|---|---|
+| headline            | width     |                  |
+| ------------------- | --------- | ---------------- |
 | EVERYDAY LOW PRICES | **688px** | overflows by 176 |
-| MIRAMAR ESTATES | **558px** | overflows by 46 |
-| GRAND OPENING | 492px | fits, barely |
-| OPEN 24 HOURS | 462px | fits |
-| AZURE COAST | 399px | fits |
-| VISTAPHONE | 379px | fits |
-| SUNMIST | 266px | fits |
+| MIRAMAR ESTATES     | **558px** | overflows by 46  |
+| GRAND OPENING       | 492px     | fits, barely     |
+| OPEN 24 HOURS       | 462px     | fits             |
+| AZURE COAST         | 399px     | fits             |
+| VISTAPHONE          | 379px     | fits             |
+| SUNMIST             | 266px     | fits             |
 
 All seven sub-lines fit (258–392px).
 
@@ -604,7 +604,7 @@ object, the HUD id.
 Also update `docs/PROGRESSION.md` and the how-to-play page, which both name it.
 
 The material is separately `mats.timber` in code. Rename that too while in
-there — and if the surfaces it draws still read as *planks* rather than as
+there — and if the surfaces it draws still read as _planks_ rather than as
 salvaged sheet, that is worth fixing at the same time, since the word and the
 look should agree.
 
@@ -614,11 +614,12 @@ More agent states — pairs stopping to talk at gathering points, someone
 lingering at a fire, queues at a stall. Currently the loop is home → work →
 gather → home. This is presentation, not simulation, so it stays out of the
 frozen systems.
+
 ### A5. Two more score tracks — driving, and strange
 
 The existing score is one loop: **Am9 – Fmaj9 – Cmaj9 – Gadd9** (i–VI–III–VII in
 A minor) at ~67bpm, drums entering at 0:30, one borrowed Dadd9 late. It is good
-and it is the *calm* end of the range. Two more, and **neither may be more
+and it is the _calm_ end of the range. Two more, and **neither may be more
 tranquil than what exists.** More bass, more drums, and weird is welcome — it is
 vaporwave.
 
@@ -661,15 +662,15 @@ the theory reference's substitution and borrowed-chord material:
 
 So constrain pitch material to the mode and let Strudel vary everything else:
 
-| technique | where |
-|---|---|
-| `chooseCycles(...)` | which chord fills bars 2–4 of track 3 |
-| `.degradeBy(0.2)` | hats, so the pattern breathes instead of ticking |
-| `.undegradeBy` | paired with the above for fills |
-| `.euclid(5,8)` / `(3,8)` | a shaker or rim that never lands square |
-| `.someCyclesBy(0.15, fn)` | an occasional whole-cycle variation |
+| technique                      | where                                                  |
+| ------------------------------ | ------------------------------------------------------ |
+| `chooseCycles(...)`            | which chord fills bars 2–4 of track 3                  |
+| `.degradeBy(0.2)`              | hats, so the pattern breathes instead of ticking       |
+| `.undegradeBy`                 | paired with the above for fills                        |
+| `.euclid(5,8)` / `(3,8)`       | a shaker or rim that never lands square                |
+| `.someCyclesBy(0.15, fn)`      | an occasional whole-cycle variation                    |
 | `irand` + `.scale("A:dorian")` | a counter-melody that is always in key, never the same |
-| `perlin` | slow filter and detune drift — the tape sag |
+| `perlin`                       | slow filter and detune drift — the tape sag            |
 
 Track 2 should be **mostly fixed with generative edges** (hats, fills). Track 3
 should be **generative at its core** (the harmony itself moves).
@@ -704,12 +705,16 @@ a pattern that throws at scheduler time fails silently to the eye. Report the
 bundle delta; three tracks of pattern code should be a few KB, not another
 dependency.
 
-
 ---
 
 ## Tier B — each needs one narrow unfreeze
 
-### B1. Night — APPROVED, unfreeze the day loop
+### B1. Night — SHIPPED in `db32dc7`
+
+**Status: built.** Everything under "The work" below is in the code: the clock
+runs 5.6 → 29.6 (`DAY_END`), `os()` has its night branch, the post pass takes
+`uNight` through `ke.setNight()`, the dark hours run at `NIGHT_RATE = 2.5`, and
+`CAP.skip` wraps on `DAY_END`. The plan is kept below as the record of why.
 
 **Decision: the day loop may be changed.** It is the only unfreeze granted; the
 rest of the frozen list still stands.
@@ -787,21 +792,26 @@ range of `hour` and the lighting derived from it may change.
 Watch a full cycle and confirm: the streets empty, the birds stop, the signs and
 fires carry the scene, and the sun comes back.
 
-### B2. GRANDEUR counts ornament — DECIDED, build it
+### B2. GRANDEUR counts ornament — SHIPPED in `d1d9ae3`
+
+**Status: built.** The formula in `17-bootstrap.js` matches the design below
+weight for weight, both caps included; cypress and passage are absent from both
+loops, so they score zero as intended. The plan is kept below as the record of
+why. See the corrected verify figure at the end of this section.
 
 **Decision: add ornament terms.** Keep the meter a count; make decoration count
 toward it.
 
 #### The trap this has to avoid
 
-Naively adding ornament makes the problem *worse*. Measured on a fresh city:
+Naively adding ornament makes the problem _worse_. Measured on a fresh city:
 
 - GRANDEUR already starts at **0.34** — the seeded ruins contain one span, one
   vault and one giant pier
 - Headroom is 0.66, which is **about five player spans**
 - The seeded ruins contain **18 ornaments, and 12 of them are cypresses**
 
-So giving every ornament a flat value would push the *starting* score up and cut
+So giving every ornament a flat value would push the _starting_ score up and cut
 the remaining headroom — saturating sooner, not later. The fix has to rebalance
 the structural weights at the same time.
 
@@ -833,14 +843,14 @@ ornament at all.
 
 Modelled against real cities:
 
-| city | GRANDEUR |
-|---|---|
-| fresh, seeded ruins only | **0.20** (today: 0.34) |
-| a 13-action city | **0.38** (today: 0.88) |
-| mid game, built and adorned | 0.79 |
-| 14 spans, no ornament at all | 0.60 — the structural cap |
-| plaza full of ornament, no architecture | 0.51 |
-| large city, both | **1.00** |
+| city                                    | GRANDEUR                  |
+| --------------------------------------- | ------------------------- |
+| fresh, seeded ruins only                | **0.20** (today: 0.34)    |
+| a 13-action city                        | **0.38** (today: 0.88)    |
+| mid game, built and adorned             | 0.79                      |
+| 14 spans, no ornament at all            | 0.60 — the structural cap |
+| plaza full of ornament, no architecture | 0.51                      |
+| large city, both                        | **1.00**                  |
 
 The second row is the one that matters. A thirteen-action city currently reads
 **0.88** — effectively finished. Under this it reads **0.38**, with the rest of
@@ -853,7 +863,7 @@ the game still ahead of it.
   a straight argument for it: grandeur is built magnificence, and a tree is the
   one thing in the world nobody built.
 - **Passage: 0.** A door through a wall is circulation, not monument. The
-  *Great Gate* is the ceremonial one and it scores.
+  _Great Gate_ is the ceremonial one and it scores.
 
 **Lanterns score only 0.005** because they already feed BELONGING at 0.05 each.
 Paying them fully into both meters would let one cheap object drive half the HUD.
@@ -875,8 +885,14 @@ This is the **only** one of the five formulas being touched. ACCESS, SHELTER,
 LIGHT and BELONGING stay byte-identical, and so does everything else on the
 frozen list.
 
-Verify: fresh city reports GRANDEUR ≈ 0.27 with all other meters unchanged at
+Verify: fresh city reports GRANDEUR ≈ 0.20 with all other meters unchanged at
 the same clock hour, and structures / pockets / navNodes / pop unchanged.
+
+An earlier draft of this line said **0.27**, which the stated weights cannot
+produce — the design table above says 0.20 for the seeded ruins, and that is the
+right figure. Measured on a fresh city from the shipped code: **GRANDEUR
+0.196**, structure half 0.110, ornament half 0.086, against ACCESS 1.0,
+SHELTER 0.111, LIGHT 0.900, BELONGING 0.545.
 
 ### B3. New building types
 

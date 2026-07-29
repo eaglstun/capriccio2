@@ -47,8 +47,25 @@ separate origins so neither could see the other's save:
 | agent pool             | 132 (46 active) | 132 (46 active)                            |
 | stone / timber / favor | 700 / 160 / 12  | 700 / 160 / 12 (timber now `salvage`, A14) |
 | pocket kinds           | 12/34/1/1       | 12/34/1/1                                  |
-| draw calls / triangles | 96 / 561,016    | 96 / 561,016                               |
+| draw calls / triangles | 96 / 561,016    | no longer comparable — see below           |
 | opening request        | reach-terrace   | reach-terrace                              |
+
+Every row above still holds except the draw-call one, which has stopped being a
+useful check for two separate reasons.
+
+The rebuilt scene genuinely draws more than the original did: the apron hills
+(A11) and the billboards (A13) added geometry the original never had, so a
+divergence here is now expected rather than a symptom.
+
+More importantly the figure is **not stable between samples**. Draw calls are
+counted after frustum culling, so they move with the camera. Three fresh cities,
+each with zero player actions, measured 146, 150 and 179 draws at 597,742–599,210
+triangles. It cannot be an equality check against a single number.
+
+The `96 / 561,016` in the original column is left as recorded when it was taken;
+it has not been re-measured against `public/`. The rows that _are_ stable —
+structures, pockets, nav nodes, population, pocket kinds — held exactly on every
+sample and remain the verification figures worth trusting.
 
 18 modules + `_hoisted.js` + `_runtime.js`, 89 identifiers renamed including
 all 48 three.js symbols.
