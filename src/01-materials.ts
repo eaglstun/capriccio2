@@ -205,7 +205,13 @@ function n_() {
       polygonOffset: !0,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
-    });
+    }),
+    // the brazier's coal bed. Deliberately NOT the glow material: glow rolls
+    // the neon lottery per 7m cell — pink, mercury, acid — and a fire must
+    // never come up cyan. One warm colour, driven by the clock like glow is
+    // (see os() in 17-bootstrap), with a slow flicker the neon does not get.
+    ember = new MeshBasicMaterial({ color: "#ff9840", fog: !1 });
+  ember.toneMapped = !1;
   return (
     // citizens mark themselves in the intermediate target's spare alpha:
     // the figure material writes 0.5 where everything else writes 1.0.
@@ -276,6 +282,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
       ghost: u,
       ghostBad: d,
       water: f,
+      ember,
     }
   );
 }

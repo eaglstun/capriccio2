@@ -45,6 +45,7 @@ import { Soundscape } from "./15-audio";
 import { Hud } from "./16-hud";
 import { score } from "./18-music";
 import { Chronicle } from "./20-chronicle";
+import { EmberSystem } from "./22-embers";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),
@@ -87,6 +88,8 @@ for (const i of Ah()) Kt.applyAction(i);
 Kt.seedGroundPockets(-18, 30, 14, 12, 34);
 Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77);
 C_(Kt);
+// the braziers' sparks. Render-only — reads the action list, writes pixels
+const emberFx = new EmberSystem(je);
 const ov = P_(Kt),
   Ne = new InfillSystem(Kt),
   ei = new Citizens(Kt, Ne, je),
@@ -189,6 +192,16 @@ function os(i) {
   const a = Kt.glowMat,
     c = 0.3 + duskAmt * 1.5 + dawnAmt * 0.9 + nightAmt * 1.5;
   a.color.setRGB(1.05 * c + 0.12, 0.42 * c + 0.06, 0.85 * c + 0.12);
+  // the coal bed keeps its own clock: dimmer through the day, lifting hard
+  // at night like the neon does, but warm — and with a slow two-sine
+  // flicker no neon tube gets. os() runs every tick, so the flicker lives
+  // here rather than in a shader.
+  const emberMat = Kt.mats.ember;
+  if (emberMat) {
+    const fl = 0.9 + 0.1 * Math.sin(Aa.value * 9.3) * Math.sin(Aa.value * 23.7),
+      ek = (0.55 + duskAmt * 0.5 + nightAmt * 1.05) * fl;
+    emberMat.color.setRGB(ek + 0.25, 0.42 * ek + 0.08, 0.1 * ek + 0.02);
+  }
 }
 os(te.hour);
 let fn = "build",
@@ -591,7 +604,11 @@ function updateQualityMeters() {
     t = i.length ? i.filter((a) => a.navNode >= 0).length / i.length : 0.3,
     e = i.length ? i.reduce((a, c) => a + c.shelter, 0) / i.length : 0.3,
     n = i.length ? i.reduce((a, c) => a + c.light, 0) / i.length : 0.5,
-    s = Kt.actions.filter((a) => a.t === "emb" && a.kind === "lantern").length,
+    // the brazier counts beside the lantern here: a fire someone keeps fed
+    // is at least the neighbour a lamp is (brief 10, and the same weight)
+    s = Kt.actions.filter(
+      (a) => a.t === "emb" && (a.kind === "lantern" || a.kind === "brazier"),
+    ).length,
     r = clamp(bi.length * 0.18 + s * 0.05 + Ne.items.length * 0.015, 0, 1);
   // GRANDEUR is two independently capped halves — structure (0.60) and
   // ornament (0.40) — so neither maxes the meter alone: grandeur requires a
@@ -614,7 +631,11 @@ function updateQualityMeters() {
       (a.kind === "statue" && (orn += 0.026),
       a.kind === "obelisk" && (orn += 0.026),
       a.kind === "fountain" && (orn += 0.022),
-      a.kind === "lantern" && (orn += 0.005)),
+      a.kind === "lantern" && (orn += 0.005),
+      // brazier scores like the lantern: it already feeds BELONGING.
+      // Fallen column and game board score 0 by the cypress's rule —
+      // grandeur belongs to things somebody raised
+      a.kind === "brazier" && (orn += 0.005)),
       a.t === "carve" && a.w >= 8 && (orn += 0.022),
       a.t === "anchor" && a.style === "column" && (orn += 0.018));
   }
@@ -774,6 +795,9 @@ function Nh(i) {
       };
     (Lh.update(t, Vv), score.update(t, Vv));
   }
+  // outside the pause gate so fires keep sparking through the chronicle and
+  // the start veil. Render-only: it reads the action list and writes pixels
+  emberFx.update(t, Kt, ie, ke.postMat.uniforms.uNight.value);
   if (Sf) {
     Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur);
     const n = Sf.k,
@@ -861,6 +885,9 @@ window.CAP = {
   undo: rc,
   doSave: ac,
   chronicle,
+  // the brazier particle system — render-only; exposed so its budget can be
+  // checked from the console (CAP.embers.count())
+  embers: emberFx,
   /**
    * The round-trip test CHRONICLE.md calls non-optional: snapshot the city,
    * scrub to before the first stone and back to the present, exit, and assert

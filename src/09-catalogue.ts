@@ -6,7 +6,7 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 /**
- * Every buildable thing, by tool. Seven categories, 22 entries.
+ * Every buildable thing, by tool. Seven categories, 25 entries.
  *
  * `key` is LOAD-BEARING and frozen — it is what the save stores and what
  * `chooseKind` and the builders switch on. Changing one orphans every save
@@ -88,6 +88,24 @@ const BUILD_CATALOGUE = {
         key: "cypress",
         label: "Cypress",
         hint: "the shape of one, in polymer",
+      },
+      // B3: the three later additions. The brazier is the lantern's answer —
+      // the only warm light anyone can place against all that neon. The other
+      // two are deliberately not lights: one horizontal, one underfoot.
+      {
+        key: "brazier",
+        label: "Brazier",
+        hint: "the one warm light after dark",
+      },
+      {
+        key: "fallen",
+        label: "Fallen Column",
+        hint: "arrives already fallen",
+      },
+      {
+        key: "board",
+        label: "Game Board",
+        hint: "chalked onto the paving — it stays",
       },
     ],
     designate: [
