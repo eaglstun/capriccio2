@@ -84,6 +84,16 @@ const nv = `
 #platectl input[type=range] { width: 100%; accent-color: #ff71ce; }
 #platectl .btnrow { display: flex; gap: 6px; margin: 6px 0; }
 #platectl .engrave { width: 100%; padding: 8px; font-size: 11px; margin-top: 4px; }
+/* the Chronicle: entered from the folio, because they are one idea — the
+   folio is what you chose to keep, the Chronicle is everything that
+   happened. The strip stays visible while scrubbed so the player can see
+   what a seventeenth plate would push out at the moment they take it. */
+#chron-open { width: 100%; padding: 6px; font-size: 10px; margin-top: 8px; }
+#chronpanel { display: none; margin-top: 8px; padding-top: 7px;
+  border-top: 1px solid rgba(111,245,234,0.3); }
+#chronpanel .cap { font-style: italic; font-size: 10.5px; letter-spacing: 0.08em;
+  opacity: 0.85; min-height: 14px; margin-bottom: 2px; }
+#chronpanel input[type=range] { width: 100%; accent-color: #6ff5ea; }
 /* the folio: sixteen slots, never labelled as sixteen — the player
    discovers the count by filling it */
 #folio-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 9px; }
@@ -242,6 +252,16 @@ class Hud {
         <div>HOUR <input type="range" id="plate-hour" min="5.6" max="20.4" value="16.2" step="0.1"/></div>
         <button class="engrave" id="plate-go">ENGRAVE THIS PLATE</button>
         <div id="folio-strip"></div>
+        <button id="chron-open" title="Everything that happened, in order.">OPEN THE CHRONICLE</button>
+        <div id="chronpanel">
+          <div class="cap" id="chron-caption"></div>
+          <input type="range" id="chron-scrub" min="0" max="1" value="1" step="1"/>
+          <div class="btnrow">
+            <button id="chron-play">PLAY</button>
+            <button id="chron-speed">×1</button>
+            <button id="chron-return">RETURN</button>
+          </div>
+        </div>
       </div>
       <div id="wanderhint" class="panel">W A S D walk · SHIFT hurry · ESC return</div>
       <div id="frame"><div class="bar" id="fb-t"></div><div class="bar" id="fb-b"></div><div class="bar" id="fb-l"></div><div class="bar" id="fb-r"></div></div>
@@ -369,10 +389,20 @@ class Hud {
       };
     const d = t.querySelector<HTMLInputElement>("#plate-fov");
     d.oninput = () => this.cb.onPlate({ fov: Number(d.value) });
-    const f = t.querySelector<HTMLInputElement>("#plate-hour");
+    const f = t.querySelector<HTMLInputElement>("#plate-hour"),
+      cs = t.querySelector<HTMLInputElement>("#chron-scrub");
     ((f.oninput = () => this.cb.onPlate({ hour: Number(f.value) })),
       (t.querySelector<HTMLElement>("#plate-go").onclick = () =>
         this.cb.onEngrave()),
+      (t.querySelector<HTMLElement>("#chron-open").onclick = () =>
+        this.cb.onChronicle?.(!0)),
+      (t.querySelector<HTMLElement>("#chron-return").onclick = () =>
+        this.cb.onChronicle?.(!1)),
+      (t.querySelector<HTMLElement>("#chron-play").onclick = () =>
+        this.cb.onChroniclePlay?.()),
+      (t.querySelector<HTMLElement>("#chron-speed").onclick = () =>
+        this.cb.onChronicleSpeed?.()),
+      (cs.oninput = () => this.cb.onChronicleScrub?.(Number(cs.value))),
       (t.querySelector<HTMLElement>("#veil .begin").onclick = () => {
         ((this.veil.style.opacity = "0"),
           setTimeout(() => {
@@ -578,6 +608,37 @@ class Hud {
           e.appendChild(s));
       }
     }
+  }
+  /** Open or shut the Chronicle section of the plate panel. While it is open
+   * the engrave button re-labels itself — a plate taken from inside is a
+   * reconstruction, and the button should say it is taking a moment, not a
+   * view. The folio strip above stays visible throughout: the player must be
+   * able to see what a seventeenth plate would push out. */
+  setChronicle(open: boolean, length = 0) {
+    const p = this.root.querySelector<HTMLElement>("#chronpanel"),
+      b = this.root.querySelector<HTMLElement>("#chron-open"),
+      g = this.root.querySelector<HTMLElement>("#plate-go");
+    ((p.style.display = open ? "block" : "none"),
+      (b.style.display = open ? "none" : "block"),
+      (g.textContent = open ? "ENGRAVE THIS MOMENT" : "ENGRAVE THIS PLATE"));
+    if (open) {
+      const s = this.root.querySelector<HTMLInputElement>("#chron-scrub");
+      ((s.max = String(length)), (s.value = String(length)));
+    }
+  }
+  /** Reflect the Chronicle position. The slider is left alone mid-drag —
+   * writing to it while the player holds the thumb would snap it back to the
+   * last COALESCED position and fight the hand. */
+  syncChronicle(index, caption, playing, speedLabel) {
+    const s = this.root.querySelector<HTMLInputElement>("#chron-scrub");
+    document.activeElement !== s && (s.value = String(index));
+    ((this.root.querySelector<HTMLElement>("#chron-caption").textContent =
+      caption),
+      (this.root.querySelector<HTMLElement>("#chron-play").textContent = playing
+        ? "PAUSE"
+        : "PLAY"),
+      (this.root.querySelector<HTMLElement>("#chron-speed").textContent =
+        speedLabel));
   }
   /** The plate overlay after engraving. Past sixteen it also names the plate
    * being pushed out of the record. */

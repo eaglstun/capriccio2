@@ -45,6 +45,7 @@ import { Soundscape } from "./15-audio";
 import { Hud } from "./16-hud";
 import { score } from "./18-music";
 import { Chronicle } from "./20-chronicle";
+import { ChronicleView } from "./21-chronicle-fx";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),
@@ -272,6 +273,11 @@ const Or = { pos: new Vector3(), target: new Vector3() },
         i.hour && ((te.hour = i.hour), os(i.hour)));
     },
     onEngrave: () => Uh(),
+    // the Chronicle: entered from the folio, because they are one idea
+    onChronicle: (open) => (open ? openChronicle() : closeChronicle()),
+    onChronicleScrub: (k) => chronicleView.requestScrub(k),
+    onChroniclePlay: () => chronicleView.togglePlay(),
+    onChronicleSpeed: () => chronicleView.cycleSpeed(),
     onBegin: () => {
       te.paused = !1;
       // interstitial: the sky shader's own notes to itself, shown once,
@@ -353,7 +359,9 @@ function av(i) {
 }
 function cv(i) {
   if (
-    (fn === "wander" && i !== "wander" && ni.active && ni.exit(),
+    // leaving PLATE always returns from the past first
+    (i !== "plate" && closeChronicle(),
+    fn === "wander" && i !== "wander" && ni.active && ni.exit(),
     (fn = i),
     Mn.setTool(null),
     i === "section")
@@ -447,6 +455,11 @@ us.domElement.addEventListener("pointermove", (i) => {
 window.addEventListener("keydown", (i) => {
   if (i.code === "Escape") {
     if (fn === "wander") return;
+    if (chronicle.active) {
+      // exiting returns to the present, always
+      closeChronicle();
+      return;
+    }
     (Mn.setTool(null), fe.pickTool(null));
   }
   ((i.ctrlKey || i.metaKey) && i.code === "KeyZ" && rc(),
@@ -481,6 +494,12 @@ Mn.onCommit = (i) => {
  * would be far more fragile than replaying a shorter log.
  */
 function rc() {
+  if (chronicle.active) {
+    // popping the log mid-replay would leave the Chronicle's index pointing
+    // into a history that no longer exists. One door at a time.
+    fe.toast("Return to the present first.");
+    return;
+  }
   const i = gameState.playerActions.pop();
   if (!i) {
     fe.toast("Nothing to undo.");
@@ -545,6 +564,49 @@ const chronicle = new Chronicle({
     oc = on;
   },
 });
+/**
+ * The view half: the replay grade on the post shader, the Chronicle-only
+ * composer chain, playback, coalesced scrubbing, and the dust. Everything in
+ * it is render-only — the engine above is the only thing that touches state.
+ */
+const chronicleView = new ChronicleView({
+  ke,
+  scene: je,
+  camera: ie,
+  chronicle,
+  world: Kt,
+  actionAt: (k) => gameState.playerActions[k - 1] ?? null,
+  focusFallback: () => Te.target,
+});
+chronicleView.onSync = () =>
+  fe.syncChronicle(
+    chronicle.index,
+    chronicle.captionAt(chronicle.index),
+    chronicleView.playing,
+    chronicleView.speedLabel,
+  );
+// set by Uh when a plate is engraved from inside the visit — see closeChronicle
+let chronPlateTaken = !1;
+function openChronicle() {
+  if (chronicle.active) return;
+  if (!gameState.playerActions.length) {
+    fe.toast("The chronicle begins with your first stone.");
+    return;
+  }
+  (chronicle.enter(),
+    chronicleView.opened(),
+    fe.setChronicle(!0, chronicle.length),
+    chronicleView.onSync());
+}
+function closeChronicle() {
+  if (!chronicle.active) return;
+  (chronicleView.closing(), chronicle.exit());
+  // a plate engraved inside the visit is a real edit, but exit() restored the
+  // dirty flag to its entry value — re-mark it, or the plate would sit
+  // unsaved until some unrelated event happened to dirty the game.
+  chronPlateTaken && ((gameState.dirty = !0), (chronPlateTaken = !1));
+  (chronicleView.closed(), fe.setChronicle(!1));
+}
 async function Uh(i = !1) {
   const t = i
       ? (Qe.clientWidth || 3) / Math.max(Qe.clientHeight, 2)
@@ -555,14 +617,25 @@ async function Uh(i = !1) {
     await new Promise((l) => setTimeout(l, 30)));
   const s = ke.snap(je, ie, e, n),
     r = gameState.plates.length + 1,
-    a = `${bi.length ? bi[0].name : gameState.cityName} · day ${te.day}`,
+    // engraved from inside the Chronicle, a plate is a RECONSTRUCTION: it
+    // shows the city as it stood then, so it must claim the historical
+    // moment — the action's own day where stamped, an ordinal where not —
+    // never the present day, and it must say quietly what it is. It is
+    // captioned with the city's name, not a district's: districts are
+    // derived from the present and the past cannot borrow them.
+    past = chronicle.active,
+    a = past
+      ? `${gameState.cityName} · ${chronicle.captionAt(chronicle.index)} · reconstruction`
+      : `${bi.length ? bi[0].name : gameState.cityName} · day ${te.day}`,
     c = await renderPlateImage(s, a, r);
-  gameState.plates.push({
+  const plate = {
     cam: [...ie.position.toArray(), ...Te.target.toArray()],
     hour: te.hour,
     caption: a,
     n: r,
-  });
+  } as any;
+  past && ((plate.recon = !0), (chronPlateTaken = !0));
+  gameState.plates.push(plate);
   // the save keeps plates.slice(-16); past sixteen, each new plate pushes
   // the oldest out of the record. Show which one.
   const l =
@@ -733,7 +806,13 @@ function Nh(i) {
     ((Aa.value += t),
     ov(Aa.value),
     Kt.sceneTick && Kt.sceneTick(Aa.value),
-    !te.paused)
+    // the Chronicle stands outside time: while it is open the clock, the
+    // resource accrual, the infill growth, the request checks and the
+    // meters all hold still. This is a state-safety line, not a flourish —
+    // Ne.grow would build vernacular into a replayed city and oi.check
+    // would complete requests against a past that is not the present,
+    // and doneRequests survives the visit.
+    !te.paused && !chronicle.active)
   ) {
     // the dark hours run at NIGHT_RATE — a full day is ~11.7 real minutes,
     // ~2.3 of them night — and the day turns over at the 29.6 → 5.6 wrap
@@ -762,6 +841,11 @@ function Nh(i) {
         setDistricts(bi),
         updateQualityMeters(),
         gameState.dirty && ac()));
+  }
+  // the soundscape and the score keep playing INSIDE the Chronicle — they
+  // only read the sim, and the city's music over its own bones is right —
+  // but they hear whatever world is currently standing.
+  if (!te.paused) {
     const e = ie.position,
       Vv = {
         dusk: ke.postMat.uniforms.uDusk.value,
@@ -774,6 +858,9 @@ function Nh(i) {
       };
     (Lh.update(t, Vv), score.update(t, Vv));
   }
+  // the Chronicle's own frame: the uChronicle ramp (both directions), the
+  // coalesced scrub application, playback stepping, and the dust.
+  chronicleView.frame(t * 1e3);
   if (Sf) {
     Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur);
     const n = Sf.k,
@@ -805,13 +892,15 @@ function cc() {
   const i = performance.now();
   (Nh(i - Ns),
     (Ns = i),
-    ke.render(je, ie),
+    // outside the Chronicle this is exactly ke.render; inside, the same
+    // engraved frame continues into the Chronicle-only composer chain
+    chronicleView.render(je, ie),
     document.hidden || requestAnimationFrame(cc));
 }
 function lc() {
   if (document.hidden) {
     const i = performance.now();
-    (Nh(i - Ns), (Ns = i), ke.render(je, ie), setTimeout(lc, 500));
+    (Nh(i - Ns), (Ns = i), chronicleView.render(je, ie), setTimeout(lc, 500));
   }
 }
 document.addEventListener("visibilitychange", () => {
@@ -861,6 +950,11 @@ window.CAP = {
   undo: rc,
   doSave: ac,
   chronicle,
+  // the UI/view layer over the engine: open/close as the folio button would,
+  // and the view object itself for playback and speed
+  chronicleView,
+  chronicleOpen: openChronicle,
+  chronicleClose: closeChronicle,
   /**
    * The round-trip test CHRONICLE.md calls non-optional: snapshot the city,
    * scrub to before the first stone and back to the present, exit, and assert
