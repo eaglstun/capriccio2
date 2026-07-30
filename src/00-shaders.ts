@@ -78,6 +78,7 @@ uniform float uVignette;
 uniform float uGrain;
 uniform float uLineWeight;
 uniform float uTime;
+uniform float uChronicle;
 
 float readDepth(vec2 uv) { return texture2D(tDepth, uv).x; }
 
@@ -114,7 +115,10 @@ void main() {
   // VHS tracking: a slow-rolling displacement bar, latent most of the time
   float trackPos = fract(vUv.y + uTime * 0.023);
   float bar = smoothstep(0.0, 0.03, trackPos) * (1.0 - smoothstep(0.03, 0.10, trackPos));
-  float gate = smoothstep(0.58, 0.74, vnoise(vec2(uTime * 0.19, 4.7)));
+  // in the Chronicle the tape drops a generation: the tracking band's gate
+  // opens more often, so the fault the look already owns simply worsens
+  float gate = smoothstep(0.58 - uChronicle * 0.24, 0.74 - uChronicle * 0.24,
+                          vnoise(vec2(uTime * 0.19, 4.7)));
   float jag = hash21(vec2(floor(vUv.y * 140.0), floor(uTime * 11.0))) - 0.5;
   float tear = bar * gate;
   vec2 suv = vUv + vec2(tear * (0.006 + 0.012 * jag), 0.0);
@@ -345,9 +349,20 @@ void main() {
   tint = mix(tint, vec3(0.90, 0.93, 1.06), uNight * 0.45);
   color *= tint;
 
-  // vignette
+  // ============ CHRONICLE ============
+  // the replay grade: the past is a copy of a copy. Chroma drains, the
+  // blacks lift and the whites dim — a generation lost to tape — and the
+  // grain and scanlines climb. Ramped 0..1 by the bootstrap on enter and
+  // exit; identically zero in normal play, so this whole block is inert.
+  float lumC = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  color = mix(color, vec3(lumC), uChronicle * 0.5);
+  color = mix(color, color * 0.82 + vec3(0.085, 0.078, 0.10), uChronicle);
+  color *= 1.0 + (g1 - 0.5) * 0.12 * uChronicle;
+  color *= 1.0 - (scan * 0.5 + 0.5) * 0.06 * uChronicle;
+
+  // vignette — the Chronicle closes it in a touch
   vec2 vc = vUv - 0.5;
-  float vig = 1.0 - dot(vc, vc) * uVignette;
+  float vig = 1.0 - dot(vc, vc) * (uVignette + uChronicle * 0.42);
   color *= vig;
 
   gl_FragColor = vec4(color, 1.0);
@@ -523,6 +538,7 @@ class J0 {
           uGrain: { value: 1 },
           uLineWeight: { value: 1 },
           uTime: { value: 0 },
+          uChronicle: { value: 0 },
         },
         depthTest: !1,
         depthWrite: !1,
@@ -573,13 +589,22 @@ class J0 {
   setSunDir(t) {
     this.postMat.uniforms.uSunDir.value.copy(t);
   }
+  /** Chronicle factor 0..1 — the replay grade. The past is a lower-generation
+   * copy: chroma drains, grain climbs, the tracking band misbehaves more.
+   * Ramped by the bootstrap on enter/exit; zero in normal play. */
+  setChronicle(t) {
+    this.postMat.uniforms.uChronicle.value = t;
+  }
   /** The paper colour, which is also the clear colour and the sky. */
   setPaper(t) {
     (this.postMat.uniforms.uPaper.value.copy(t),
       this.renderer.setClearColor(t, 1));
   }
-  /** Render the scene to the offscreen target, then run the post pass to screen. */
-  render(t, e) {
+  /** Update the per-frame camera/time uniforms and render the scene into the
+   * offscreen target, leaving the post quad unrendered. The Chronicle's
+   * composer path calls this and then runs the engraved frame through its own
+   * chain in place of the plain blit below. */
+  renderScene(t, e) {
     const n = this.postMat.uniforms;
     ((n.uTime.value = performance.now() * 0.001),
       (n.uCameraNear.value = e.near),
@@ -591,7 +616,11 @@ class J0 {
       this.renderer.render(t, e),
       (this.lastDraws = this.renderer.info.render.calls),
       (this.lastTris = this.renderer.info.render.triangles),
-      this.renderer.setRenderTarget(null),
+      this.renderer.setRenderTarget(null));
+  }
+  /** Render the scene to the offscreen target, then run the post pass to screen. */
+  render(t, e) {
+    (this.renderScene(t, e),
       this.renderer.render(this.postScene, this.postCam));
   }
   /**
@@ -615,8 +644,12 @@ class J0 {
         minFilter: LinearFilter,
         magFilter: LinearFilter,
       }),
-      u = this.postMat.uniforms;
-    ((u.uCameraNear.value = e.near),
+      u = this.postMat.uniforms,
+      // a plate is a plate: the Chronicle's replay grade never reaches the
+      // print. Zeroed for the capture, restored after.
+      chronPrev = u.uChronicle.value;
+    ((u.uChronicle.value = 0),
+      (u.uCameraNear.value = e.near),
       (u.uCameraFar.value = e.far),
       u.uInvProjection.value.copy(e.projectionMatrixInverse),
       u.uCameraWorld.value.copy(e.matrixWorld),
@@ -640,6 +673,7 @@ class J0 {
       m.putImageData(_, 0, 0),
       (e.aspect = a),
       e.updateProjectionMatrix(),
+      (u.uChronicle.value = chronPrev),
       this.resize(r, o),
       f.toDataURL("image/png")
     );
