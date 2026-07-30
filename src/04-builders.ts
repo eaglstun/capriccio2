@@ -688,12 +688,22 @@ function buildWall(i) {
   return ((t.cost.stone = Math.round(a * i.h * 0.11)), t);
 }
 /**
- * Everything FURNISH places — statue, fountain, lantern, cypress — plus the
- * seeded-only obelisk.
+ * Everything FURNISH places — statue, fountain, lantern, cypress, and the B3
+ * three: brazier, fallen column, game board — plus the seeded-only obelisk.
  *
  * The most numerous structure type in the world: 18 of the 24 seeded ruins are
  * ornament, and 12 of those are cypresses. Fountains register a water source;
  * lanterns attach glow geometry, which feeds BELONGING and a little GRANDEUR.
+ *
+ * What the new three emit, decided deliberately:
+ * - brazier: a `hearth` pocket (people come to sit at a fire), a count in
+ *   BELONGING beside the lantern, and the same near-nothing GRANDEUR. Its
+ *   pocket's high `light` is how it feeds the LIGHT meter — through use,
+ *   when someone lives beside it, never as a free statistic.
+ * - fallen column: nothing. It is scenery you chose, exactly as the cypress
+ *   is — grandeur belongs to things somebody raised, not things that fell.
+ * - game board: a `gameboard` pocket. Life gathers where the game is; any
+ *   BELONGING it earns arrives through the infill it attracts.
  */
 function buildOrnament(i) {
   const t = newStructureParts(),
@@ -762,6 +772,136 @@ function buildOrnament(i) {
     (o.translate(i.x + 0.24, n + 2.05, i.z), Yt(t, "glow", o));
     const a = new BoxGeometry(0.34, 0.12, 0.34);
     (a.translate(i.x, n + 3.44, i.z), Yt(t, "glow", a));
+  } else if (i.kind === "brazier") {
+    // a standing fire in a salvaged drum. Everything else that lights the
+    // dark here is cold — sodium, mercury, neon; this is the warm one.
+    // Sheet metal on a tripod, burning something nobody asks about.
+    const rot = e() * Math.PI * 2,
+      s = new MeshBuilder(0.4);
+    for (let c = 0; c < 3; c++) {
+      const la = rot + (c / 3) * Math.PI * 2,
+        leg = new BoxGeometry(0.09, 0.74, 0.09);
+      (leg.translate(0, 0.37, 0),
+        leg.rotateZ(0.24),
+        leg.rotateY(la),
+        leg.translate(Math.sin(la) * 0.3, 0, Math.cos(la) * 0.3),
+        s.addRaw(leg));
+    }
+    (s.cylinder(0.44, 0.72, [0, 0.52, 0], 10, 1, 0.52),
+      s.cylinder(0.56, 0.07, [0, 1.24, 0], 10, 1, 0.56),
+      s.box(1.05, 0.05, 0.07, [0, 1.26, 0], rot + 0.35),
+      s.box(1.05, 0.05, 0.07, [0, 1.26, 0], rot + 0.35 + Math.PI / 2));
+    const r = s.merge();
+    (be(r, i.x, n, i.z, 0), Yt(t, "salvage", r));
+    // the fire itself: coals heaped proud of the rim, vent slits mid-drum.
+    // "ember" is its own material — warm, and never the neon lottery.
+    const em = new MeshBuilder(0);
+    (em.cylinder(0.4, 0.13, [0, 1.28, 0], 10, 1, 0.3),
+      em.cylinder(0.22, 0.09, [0.06, 1.41, -0.04], 8, 1, 0.13));
+    for (let c = 0; c < 3; c++) {
+      const va = rot + 0.5 + (c / 3) * Math.PI * 2;
+      em.box(
+        0.17,
+        0.07,
+        0.035,
+        [Math.sin(va) * 0.465, 0.72, Math.cos(va) * 0.465],
+        va,
+      );
+    }
+    const eg = em.merge();
+    (be(eg, i.x, n, i.z, 0),
+      Yt(t, "ember", eg),
+      // people come and sit at a fire: a small pocket beside it, lit well.
+      // This is how the brazier feeds LIGHT — through the pocket, when it
+      // is lived in, never as a free statistic.
+      t.pockets.push({
+        kind: "hearth",
+        pos: [i.x + Math.sin(rot) * 2.4, n, i.z + Math.cos(rot) * 2.4],
+        rotY: rot,
+        area: 5,
+        height: 2.4,
+        shelter: 0.15,
+        light: 0.85,
+        scenic: 0.7,
+      }),
+      (t.cost.salvage = 6));
+  } else if (i.kind === "fallen") {
+    // it arrives already fallen: a stump where it broke, drums along the
+    // fall line, the capital face-down past the last of them. The one
+    // ornament that lies down — and it emits nothing at all, like the
+    // cypress: grandeur belongs to things somebody raised.
+    const rot = e() * Math.PI * 2,
+      s = new MeshBuilder(0.55),
+      r0 = 0.52 + e() * 0.16;
+    s.cylinder(r0 * 1.06, 0.5 + e() * 0.55, [0, 0, 0], 10);
+    let d = 1.15 + r0;
+    const segs = 2 + Math.floor(e() * 2);
+    for (let c = 0; c < segs; c++) {
+      const len = 1.5 + e() * 1.4,
+        drift = (e() - 0.5) * (0.35 + c * 0.55),
+        seg = new CylinderGeometry(r0, r0, len, 10);
+      (seg.rotateX(Math.PI / 2),
+        seg.rotateY((e() - 0.5) * 0.5),
+        seg.translate(drift, r0 * 0.9, d + len / 2),
+        s.addRaw(seg));
+      d += len + 0.16 + e() * 0.35;
+    }
+    const cap = new BoxGeometry(r0 * 2.3, 0.5, r0 * 2.3);
+    (cap.rotateZ(0.16),
+      cap.rotateY(e() * Math.PI),
+      cap.translate((e() - 0.5) * 1.1, 0.26, d + 0.4),
+      s.addRaw(cap));
+    const m = s.merge();
+    (Ri(m, 0, 1.3, 0.82, 1), be(m, i.x, n, i.z, rot), Yt(t, "stoneOld", m));
+  } else if (i.kind === "board") {
+    // the children's chalk game, made permanent — the ambient line already
+    // knows it stays. A slab barely proud of the paving, lines in plaster
+    // where the chalk was, and a game abandoned mid-move.
+    const rot = e() * Math.PI * 2,
+      s = new MeshBuilder(0.2);
+    s.box(2.9, 0.14, 2.9, [0, 0, 0]);
+    const r = s.merge();
+    (be(r, i.x, n, i.z, rot), Yt(t, "stone", r));
+    const ln = new MeshBuilder(0);
+    for (let c = 0; c <= 4; c++) {
+      const o = -1.24 + (c * 2.48) / 4;
+      (ln.box(2.53, 0.025, 0.055, [0, 0.14, o]),
+        ln.box(0.055, 0.025, 2.53, [o, 0.14, 0]));
+    }
+    const lg = ln.merge();
+    (be(lg, i.x, n, i.z, rot), Yt(t, "plaster", lg));
+    // counters, two sides, no winner recorded
+    const pa = new MeshBuilder(0),
+      pb = new MeshBuilder(0),
+      used = new Set();
+    for (let c = 0, np = 5 + Math.floor(e() * 4); c < np; c++) {
+      const cell = Math.floor(e() * 16);
+      if (used.has(cell)) continue;
+      used.add(cell);
+      (c % 2 ? pa : pb).cylinder(
+        0.11,
+        0.1,
+        [-0.93 + (cell % 4) * 0.62, 0.14, -0.93 + Math.floor(cell / 4) * 0.62],
+        7,
+      );
+    }
+    const ga = pa.merge(),
+      gb = pb.merge();
+    (be(ga, i.x, n, i.z, rot),
+      be(gb, i.x, n, i.z, rot),
+      Yt(t, "rust", ga),
+      Yt(t, "verdigris", gb),
+      // life gathers where the game is: a pocket at the board's edge.
+      t.pockets.push({
+        kind: "gameboard",
+        pos: [i.x + Math.sin(rot) * 2.6, n, i.z + Math.cos(rot) * 2.6],
+        rotY: rot,
+        area: 5,
+        height: 2.2,
+        shelter: 0.05,
+        light: 0.55,
+        scenic: 0.8,
+      }));
   } else if (i.kind === "obelisk") {
     const s = new MeshBuilder(0.1);
     (s.box(2.4, 1.1, 2.4, [0, 0, 0]),
@@ -778,7 +918,8 @@ function buildOrnament(i) {
     const l = new BoxGeometry(0.2, 0.55, 0.2);
     (l.translate(i.x, n + 11.35, i.z), Yt(t, "glow", l));
   }
-  return ((t.cost.stone = 4), t);
+  // the brazier is mostly sheet metal — its cost leans on salvage instead
+  return ((t.cost.stone = i.kind === "brazier" ? 2 : 4), t);
 }
 /**
  * The dispatcher: action type -> builder.

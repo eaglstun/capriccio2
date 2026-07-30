@@ -184,8 +184,8 @@ class World {
               ? this.mats.stoneCarve
               : this.mats[a],
         u = new Mesh(l, h);
-      ((u.castShadow = a !== "water" && a !== "glow"),
-        (u.receiveShadow = a !== "glow" && a !== "water"),
+      ((u.castShadow = a !== "water" && a !== "glow" && a !== "ember"),
+        (u.receiveShadow = a !== "glow" && a !== "water" && a !== "ember"),
         (u.userData.structId = t.id),
         (u.userData.matKey = a),
         s.push(u),
