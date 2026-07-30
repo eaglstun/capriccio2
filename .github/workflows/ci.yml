@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Corepack activates the yarn version pinned in package.json's
+      # `packageManager` field (4.17.0). Never `npm install` here — it would
+      # create a competing package-lock.json.
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      # --immutable fails if yarn.lock would need to change, which catches a
+      # dependency added without committing the lockfile.
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Format check
+        run: yarn format:check
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Build
+        run: yarn build

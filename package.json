@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postinstall": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@strudel/core": "^1.2.6",

@@ -1,0 +1,27 @@
+#!/bin/sh
+# Fast local mirror of .github/workflows/ci.yml — catches formatting and type
+# errors before they cost you a round-trip to GitHub.
+#
+# Enable with:  git config core.hooksPath .githooks
+# Bypass once with:  git commit --no-verify
+#
+# Deliberately does NOT run `yarn build`; CI covers that. This hook is meant to
+# stay under a couple of seconds.
+
+set -e
+
+# Only the staged files Prettier actually knows how to parse. --diff-filter=d
+# drops deletions, which would otherwise be passed as nonexistent paths.
+STAGED=$(git diff --cached --name-only --diff-filter=d \
+  | grep -E '\.(ts|js|json|md|html|css)$' || true)
+
+if [ -n "$STAGED" ]; then
+  # --ignore-unknown so a path covered by .prettierignore is skipped, not fatal.
+  echo "$STAGED" | xargs yarn prettier --check --ignore-unknown || {
+    echo
+    echo "Formatting check failed. Fix with:  yarn format"
+    exit 1
+  }
+fi
+
+yarn typecheck
