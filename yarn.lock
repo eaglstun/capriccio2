@@ -478,8 +478,12 @@ __metadata:
     "@strudel/core": "npm:^1.2.6"
     "@strudel/webaudio": "npm:^1.3.0"
     "@types/three": "npm:0.180.0"
+    jolt-physics: "npm:^1.1.0"
+    postprocessing: "npm:^6.39.4"
     prettier: "npm:^3.9.6"
     three: "npm:0.180.0"
+    three-gpu-pathtracer: "npm:^0.0.24"
+    three-nebula: "npm:^11.1.2"
     typescript: "npm:^5.6.0"
     vite: "npm:^5.4.0"
   languageName: unknown
@@ -645,6 +649,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jolt-physics@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "jolt-physics@npm:1.1.0"
+  checksum: 10c0/9a3b26bc53751d4d5a2bd0575c4fa324423857d8dd113bfe364be7f1d5c2be5bb27d0d47dfe6d17ce0e9326ffa4d9a2b601b5c4931f15109c161a4ef6d8c3849
+  languageName: node
+  linkType: hard
+
 "meshoptimizer@npm:~0.22.0":
   version: 0.22.0
   resolution: "meshoptimizer@npm:0.22.0"
@@ -737,6 +748,15 @@ __metadata:
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/ed714e635b330bb42666ecdd0c0b4f30224ded15b0b0052d6bc2b92832f2cf17d1c1141359453f96f0a84f8fbf4c405a74df187f559163b8f31131b2535455aa
+  languageName: node
+  linkType: hard
+
+"postprocessing@npm:^6.39.4":
+  version: 6.39.4
+  resolution: "postprocessing@npm:6.39.4"
+  peerDependencies:
+    three: ">= 0.168.0 < 0.186.0"
+  checksum: 10c0/5adec143dfda0d35784a7d23b7b64e53ffc60c44570ef84dcd0ad815f1091e655d8ee39fd5398cdff3fc492a486e15487b86192291099e9947ee731cca74a60c
   languageName: node
   linkType: hard
 
@@ -889,6 +909,26 @@ __metadata:
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
   checksum: 10c0/1311f6be85a8157ac4c9147bae43e13923d2a1aae15e4aa1bd5239e4e03d2cf53cfe103dde7f35832fbb4c938b042856bc8e9a0afd29abd05e2d1608788c4fea
+  languageName: node
+  linkType: hard
+
+"three-gpu-pathtracer@npm:^0.0.24":
+  version: 0.0.24
+  resolution: "three-gpu-pathtracer@npm:0.0.24"
+  peerDependencies:
+    three: ">=0.180.0"
+    three-mesh-bvh: ">=0.7.4"
+    xatlas-web: ^0.1.0
+  checksum: 10c0/cd2823dccf13c1266ac8f5f0ca044772a63fd94b4675c2db461bb26abed099c4ae1550a4ca73cc8c587919b80dbc981170f7498984b265538a00d3c1542b259f
+  languageName: node
+  linkType: hard
+
+"three-nebula@npm:^11.1.2":
+  version: 11.1.2
+  resolution: "three-nebula@npm:11.1.2"
+  peerDependencies:
+    three: ">=0.122.0 <1.0.0"
+  checksum: 10c0/58b8d46995de33ae0f164317a07df85332ec1a75bb91efec3b9fc2ef389cc5a16bdb06af709eca2372e08f1630dc5658ec2c03946b333c6ef637a05603dfedee
   languageName: node
   linkType: hard
 

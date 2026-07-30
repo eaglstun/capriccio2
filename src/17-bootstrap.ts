@@ -44,6 +44,7 @@ import { renderPlateImage } from "./14-plates";
 import { Soundscape } from "./15-audio";
 import { Hud } from "./16-hud";
 import { score } from "./18-music";
+import { Chronicle } from "./20-chronicle";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),
@@ -488,13 +489,27 @@ function rc() {
   const t = Mn.costOf(i);
   ((gameState.res.stone += t.stone), (gameState.res.salvage += t.salvage));
   const e = Ne.serialize();
-  (Ne.clear(),
-    Kt.rebuildAll([...Ah(), ...gameState.playerActions]),
-    Kt.seedGroundPockets(-18, 30, 14, 12, 34),
-    Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77),
+  (rebuildFromActions([...Ah(), ...gameState.playerActions]),
     Ih(e),
     ei.sync(),
     fe.toast("Unbuilt. The stone returns to the yard."));
+}
+/**
+ * Clear and rebuild the world from `actions`, ground pockets included.
+ *
+ * Infill is cleared but deliberately NOT restored — that is the caller's, and
+ * the two callers want different things. UNDO restores it immediately; the
+ * Chronicle leaves it out for the whole replay and puts it back only on exit.
+ *
+ * Both seeded ground-pocket calls belong to this sequence. Rebuilding without
+ * them leaves the terrain with no pockets to grow into, so they must not drift
+ * apart from the rebuild.
+ */
+function rebuildFromActions(actions) {
+  (Ne.clear(),
+    Kt.rebuildAll(actions),
+    Kt.seedGroundPockets(-18, 30, 14, 12, 34),
+    Kt.seedGroundPockets(-24, -80, 12, 10, 30, 77));
 }
 function Ih(i) {
   Ne.restore(i, (t) => {
@@ -512,6 +527,24 @@ function Ih(i) {
       : null;
   });
 }
+/**
+ * The Chronicle. Given the rebuild sequence above, it owns only the safety:
+ * one infill snapshot on entry, autosave suppressed for the visit, and the
+ * player's action log read but never written.
+ */
+const chronicle = new Chronicle({
+  state: gameState,
+  seedActions: Ah,
+  rebuild: rebuildFromActions,
+  restoreInfill: Ih,
+  serializeInfill: () => Ne.serialize(),
+  citizens: ei,
+  // `oc` is the same flag "start anew" uses to stop a queued autosave from
+  // rewriting a save that is on its way out.
+  setSaveSuppressed: (on) => {
+    oc = on;
+  },
+});
 async function Uh(i = !1) {
   const t = i
       ? (Qe.clientWidth || 3) / Math.max(Qe.clientHeight, 2)
@@ -827,6 +860,42 @@ window.CAP = {
   section: Qn,
   undo: rc,
   doSave: ac,
+  chronicle,
+  /**
+   * The round-trip test CHRONICLE.md calls non-optional: snapshot the city,
+   * scrub to before the first stone and back to the present, exit, and assert
+   * nothing moved.
+   *
+   * Compares only city state. `draws`/`tris` are per-frame render counters and
+   * `districts` is recomputed on an 8-second timer, so including them would
+   * fail for reasons that have nothing to do with the replay.
+   */
+  chronicleRoundTrip() {
+    const cityState = () => {
+      const kinds = {};
+      for (const p of Kt.pockets) kinds[p.kind] = (kinds[p.kind] ?? 0) + 1;
+      const s = this.status();
+      return {
+        structures: s.structures,
+        pockets: s.pockets,
+        occupied: s.occupied,
+        infill: s.infill,
+        navNodes: s.navNodes,
+        pop: s.pop,
+        res: s.res,
+        actions: gameState.playerActions.length,
+        kinds,
+      };
+    };
+    const before = cityState();
+    (chronicle.enter(),
+      chronicle.scrubTo(0),
+      chronicle.scrubTo(chronicle.length),
+      chronicle.exit());
+    const after = cityState(),
+      ok = JSON.stringify(before) === JSON.stringify(after);
+    return { ok, before, after };
+  },
   engrave(i = !0) {
     return Uh(i);
   },

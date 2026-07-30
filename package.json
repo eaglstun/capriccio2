@@ -15,7 +15,11 @@
   "dependencies": {
     "@strudel/core": "^1.2.6",
     "@strudel/webaudio": "^1.3.0",
-    "three": "0.180.0"
+    "jolt-physics": "^1.1.0",
+    "postprocessing": "^6.39.4",
+    "three": "0.180.0",
+    "three-gpu-pathtracer": "^0.0.24",
+    "three-nebula": "^11.1.2"
   },
   "devDependencies": {
     "@types/three": "0.180.0",
