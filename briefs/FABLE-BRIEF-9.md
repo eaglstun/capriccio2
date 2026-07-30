@@ -27,7 +27,7 @@ brief is what to build next, and it assumes that document has been read.
 
 ## What already exists — do not rebuild it
 
-**The replay engine shipped** in commit `0999045`. It is verified against a real
+**The replay engine shipped** in commit `b8b1307`. It is verified against a real
 city in the browser, not asserted. Build on it; do not reimplement it.
 
 `src/20-chronicle.ts` exports a `Chronicle` class, live at

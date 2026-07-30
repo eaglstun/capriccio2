@@ -192,7 +192,7 @@ and identity must be deterministic so a reloaded city has the same Marcus.
 
 ### A1. The Chronicle — moved to its own plan, now IN PROGRESS
 
-**The replay engine shipped in `0999045`** — `enter` / `scrubTo` / `exit` /
+**The replay engine shipped in `b8b1307`** — `enter` / `scrubTo` / `exit` /
 `captionAt`, live at `window.CAP.chronicle`, verified in the browser rather than
 asserted. Two properties were measured: `playerActions` is only ever sliced, and
 autosave is suppressed for the whole visit (the corruption vector was never the
