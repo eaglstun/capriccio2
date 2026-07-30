@@ -1,14 +1,32 @@
 # Feature plan — the next round
 
 Written from `docs/PROGRESSION.md`, which traced how the game actually plays
-out. Nothing here is committed to yet; the point is to decide what to build and,
-more importantly, **what to unfreeze**.
+out. The point was to decide what to build and, more importantly, **what to
+unfreeze**.
+
+**Status: nearly all of it shipped.** This is now a record rather than a plan.
+Every item carries the commit that built it, following the convention B1 and B2
+already used. What is actually outstanding:
+
+| item                      | state                                                     |
+| ------------------------- | --------------------------------------------------------- |
+| **A10 gamepad**           | **not started** — the only untouched item on the list     |
+| **A3 folio**              | shipped in part; the contact-sheet export was not built   |
+| **A1 Chronicle**          | in progress — engine shipped, the rest is `FABLE-BRIEF-9` |
+| **B3 new building types** | never scoped past a paragraph                             |
+
+Everything else below is built. The plans are kept as the record of why, which
+is the same thing B1 and B2 do.
 
 ---
 
-## What is actually weak
+## What was actually weak
 
 Evidence, not opinion. All of this came out of reading the progression.
+
+**Read as the original diagnosis, not as current state.** Of the five below, 1
+and 2 were fixed (`39d7fb7`, `d1d9ae3`), 3 was fixed (`db32dc7`), 4 was fixed in
+part (`792390d`), and 5 is what the Chronicle is answering now.
 
 **1. The mid-game is empty.** There are exactly five requests. They pay 300
 clearance between them, and then they are gone forever. After that the only
@@ -79,7 +97,7 @@ pop, kinds 12/34/1/1** unless a change is _meant_ to move them. They are the
 cheapest signal that something drifted by accident, and that is worth keeping
 whether or not anyone has a save.
 
-## A0. The named citizens do not exist — and the tutorial sends you to find them ⭐ do first
+## A0. The named citizens do not exist — and the tutorial sends you to find them — SHIPPED in `fbca02f`
 
 **This is a bug, found in play.** In tutorial beat 6 the card says _"Marcus is
 asking for a way up to the high terrace."_ The player goes looking for Marcus.
@@ -172,7 +190,19 @@ and identity must be deterministic so a reloaded city has the same Marcus.
 
 ## Tier A — additive, nothing needs unfreezing
 
-### A1. The Chronicle — moved to its own plan
+### A1. The Chronicle — moved to its own plan, now IN PROGRESS
+
+**The replay engine shipped in `0999045`** — `enter` / `scrubTo` / `exit` /
+`captionAt`, live at `window.CAP.chronicle`, verified in the browser rather than
+asserted. Two properties were measured: `playerActions` is only ever sliced, and
+autosave is suppressed for the whole visit (the corruption vector was never the
+action log, it was `saveGame` persisting live infill mid-scrub).
+
+The scrub UI and engraving from the past are specced in
+**`briefs/FABLE-BRIEF-9.md`** (`6c48a8b`) and are being built.
+
+The enabler below was taken and is no longer pending: actions carry `day`/`hour`
+as of `b87a06b`.
 
 Specced separately in **`CHRONICLE.md`**, because it turned out to carry a
 mechanic rather than being a viewer: the folio is what you chose to keep, the
@@ -188,7 +218,7 @@ Two things were verified while speccing it and both belong here:
 `CHRONICLE.md` contains a time-critical enabler — stamping `day`/`hour` onto new
 actions — that is worth taking even if the rest is deferred.
 
-### A2. Procedural requests — fill the mid-game
+### A2. Procedural requests — fill the mid-game — SHIPPED in `39d7fb7`
 
 After the five hand-authored requests are done, generate more from world state:
 "nobody in the Sodium Quarter can reach water", "the high terrace has no light
@@ -201,17 +231,22 @@ frozen.
 The tone must hold — the existing five are quiet and specific and named. A
 generator that produces "BUILD 3 VAULTS" would be worse than nothing.
 
-### A3. The folio as an artifact
+### A3. The folio as an artifact — SHIPPED IN PART in `792390d`
 
 Plates already store the camera pose. So:
 
-- Click a slot to return the camera to exactly that view
-- Compare then/now from an identical position
-- Export the set as a contact sheet
+- Click a slot to return the camera to exactly that view — **built**
+- Compare then/now from an identical position — **built**, falls out of the
+  above
+- Export the set as a contact sheet — **not built**
 
 Cheap, and it makes the sixteen mean something between engraving them.
 
-### A6. The tracking band: RGB separation, not dither
+The contact sheet is the outstanding piece: there is no `contactSheet` anywhere
+in `src/`. It is worth reconsidering alongside the Chronicle rather than on its
+own, since both are about seeing the record as a whole.
+
+### A6. The tracking band: RGB separation, not dither — SHIPPED in `5fc869a`
 
 The slow band that rolls down the screen currently does two things — it
 displaces the image sideways (correct, keep it) and then **re-renders that strip
@@ -282,7 +317,7 @@ edge, the luminance curve, the `bnThresh` lookup and the two-tone assignment.
 mid-roll in daylight and at night**. It is intermittent — gated on noise — so a
 screenshot at an arbitrary moment will usually miss it. Drive `uTime` or wait.
 
-### A7. Citizens get their own outline colour
+### A7. Citizens get their own outline colour — SHIPPED in `876f047`
 
 The neon rim light currently treats every surface the same — hot pink near, cyan
 far, whether it is a wall, a wrecked car or a person. **Give the citizens their
@@ -359,7 +394,7 @@ muddy both.
 outlined distinctly in daylight and at night — plus one plate confirming the
 export is unaffected.
 
-### A8. A hint after Tullia asks for water
+### A8. A hint after Tullia asks for water — SHIPPED in `1bbf4c0`
 
 The second request is the hardest thing in the game and nothing helps the player
 with it.
@@ -397,7 +432,7 @@ piers**, and nothing in the game says so.
 Keep the discovery. The hint should make the player think "oh — I could put a
 pier _in_ the canyon", not hand them a recipe.
 
-### A9. Stone is invisible, not scarce
+### A9. Stone is invisible, not scarce — SHIPPED in `3d80390`
 
 **Found in play: "I couldn't figure out how to get more stone."**
 
@@ -419,7 +454,7 @@ a mechanic that does not exist.
 Do **not** add a stone-producing building. The scarcity is a pacing device that
 works; only its legibility is broken.
 
-### A10. Gamepad support
+### A10. Gamepad support — NOT STARTED
 
 Add Web Gamepad API support for the main view.
 
@@ -436,7 +471,7 @@ prompts, no UI, nothing that appears for players without a pad.
 Mouse and keyboard must keep working identically at all times; a connected pad
 adds a path, it never takes one away.
 
-### A11. The world reads as floating
+### A11. The world reads as floating — SHIPPED in `4250a75`
 
 Two related complaints, one cause.
 
@@ -463,7 +498,7 @@ Do this one **after** the horizon — the horizon is the thing that actually
 bothers the eye, and clamping the camera without extending the ground would just
 hide one symptom of the same gap.
 
-### A12. You cannot tell what is carvable
+### A12. You cannot tell what is carvable — SHIPPED in `3809ce2`
 
 Walls and vaults are both the new-era fabric, so both render in the same 1-bit
 dither. Nothing distinguishes a surface that accepts a CARVE from one that does
@@ -514,7 +549,7 @@ gives.
 - A giant pier that has already been carved must stop reading as carvable — the
   state is per-structure, not per-type.
 
-### A13. Billboard text clips, and every sign is the same typeface
+### A13. Billboard text clips, and every sign is the same typeface — SHIPPED in `c061dbf`
 
 **Two problems in the same place** — the runtime canvas atlas at the end of `C_`
 in `05-world.js`.
@@ -570,7 +605,7 @@ game runs on machines that will not all have the same fonts. A missing font
 silently falls back to the default and the variety quietly disappears, which is
 exactly the kind of thing that will not show up on the machine it was built on.
 
-### A14. TIMBER is the wrong word
+### A14. TIMBER is the wrong word — SHIPPED in `1eb2cf8`
 
 The second resource is still called **TIMBER**, which is a word for a material
 nobody in this city uses. The buildings it pays for are corrugated sheet, tarps,
@@ -606,14 +641,14 @@ The material is separately `mats.timber` in code. Rename that too while in there
 sheet, that is worth fixing at the same time, since the word and the look should
 agree.
 
-### A4. Ambient life
+### A4. Ambient life — SHIPPED in `a0fcbb1`
 
 More agent states — pairs stopping to talk at gathering points, someone
 lingering at a fire, queues at a stall. Currently the loop is home → work →
 gather → home. This is presentation, not simulation, so it stays out of the
 frozen systems.
 
-### A5. Two more score tracks — driving, and strange
+### A5. Two more score tracks — driving, and strange — SHIPPED in `f59ec7b`
 
 The existing score is one loop: **Am9 – Fmaj9 – Cmaj9 – Gadd9** (i–VI–III–VII in
 A minor) at ~67bpm, drums entering at 0:30, one borrowed Dadd9 late. It is good
@@ -893,30 +928,40 @@ right figure. Measured on a fresh city from the shipped code: **GRANDEUR
 0.196**, structure half 0.110, ornament half 0.086, against ACCESS 1.0, SHELTER
 0.111, LIGHT 0.900, BELONGING 0.545.
 
-### B3. New building types
+### B3. New building types — NOT STARTED
 
 Adding catalogue entries is safe as long as existing keys are untouched and
 envelopes for existing types do not change. New keys, new geometry, new hints.
 
 ---
 
-## Suggested sequence
+## Suggested sequence — worked through
 
-1. **A0 Named citizens** — a real bug, found in play, and everything it needs
-   exists
-2. **A1 Chronicle** — highest payoff per unit of risk, needs no permission
-3. **B1 Night** — one narrow, well-understood unfreeze, large visual payoff
-4. **A2 Procedural requests** — fixes the real design flaw
-5. **A3 Folio** — cheap, makes the goal legible
-6. Then reconsider B2 with the game in a better state
+The original order, with what actually happened:
+
+1. ~~**A0 Named citizens**~~ — built, `fbca02f`
+2. **A1 Chronicle** — in progress; engine done, UI specced in `FABLE-BRIEF-9`
+3. ~~**B1 Night**~~ — built, `db32dc7`. The unfreeze was granted and used
+4. ~~**A2 Procedural requests**~~ — built, `39d7fb7`
+5. ~~**A3 Folio**~~ — built in part, `792390d`; contact-sheet export outstanding
+6. ~~Then reconsider B2~~ — reconsidered and built, `d1d9ae3`
+
+**What is left after the Chronicle:** A10 gamepad, the A3 contact sheet, and B3
+new building types. That is the whole remaining backlog from this document.
 
 ---
 
-## Open questions for you
+## Open questions — answered
 
-1. **Do we unfreeze the day loop for night?** (I would say yes.)
-2. **Do we touch GRANDEUR?** (I would say not yet.)
-3. Is the Chronicle interesting to you, or is it a toy? It is the one I would
-   build first, but it is a _viewer_, not a mechanic — it adds nothing to play.
-4. Should procedural requests keep paying clearance, or become something else
-   once the named five are done?
+1. ~~**Do we unfreeze the day loop for night?**~~ **Yes**, and it shipped
+   (`db32dc7`). It was the only unfreeze granted.
+2. ~~**Do we touch GRANDEUR?**~~ Deferred at the time, then **yes** — shipped in
+   `d1d9ae3`, measured at 0.196 on a fresh city against the designed 0.20.
+3. ~~**Is the Chronicle interesting, or is it a toy?**~~ **Interesting**, and
+   the framing in the question turned out to be wrong: specced properly it
+   carries a mechanic rather than being a viewer, because engraving from the
+   past still costs one of the sixteen. That is what `CHRONICLE.md` exists to
+   argue.
+4. **Should procedural requests keep paying clearance?** Still open. A2 shipped
+   paying clearance; whether that is right once the named five are done has not
+   been revisited.
