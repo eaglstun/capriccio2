@@ -29,9 +29,9 @@ This is the design insight the whole game rests on.
 
 You never place a house. You place _architecture_ — walls, vaults, arches,
 piers. The architecture **emits pockets**: habitable voids with measured
-qualities. Citizens then move into pockets. That's the mechanical
-implementation of the title screen's promise, _"the citizens will find their
-own uses for what you leave them."_
+qualities. Citizens then move into pockets. That's the mechanical implementation
+of the title screen's promise, _"the citizens will find their own uses for what
+you leave them."_
 
 A pocket:
 
@@ -106,8 +106,7 @@ An agent:
 }
 ```
 
-Methods: `spawnPoints`, `workPoints`, `gatherPoints`, `sync`, `goto`,
-`update`.
+Methods: `spawnPoints`, `workPoints`, `gatherPoints`, `sync`, `goto`, `update`.
 
 At day 1, 09:38, the census was **work: 40, towork: 6** — a morning commute,
 mid-flow. The state machine is a daily routine driven by `CAP.time.hour`.
@@ -127,18 +126,18 @@ registerPocket  emitGroundPockets  seedGroundPockets
 addDesignationMark  clearDesignationMarks  raycastTargets  waterDistAt
 ```
 
-Collections at start: `pockets` 48, `structures` 24, `anchors` 3,
-`waterSources` 4, `designations` 0, `actions` 24.
+Collections at start: `pockets` 48, `structures` 24, `anchors` 3, `waterSources`
+4, `designations` 0, `actions` 24.
 
 ### The starting ruins are seeded actions, not player actions
 
 `world.actions` holds 24 entries but `state.playerActions` holds **0**. The
-pre-existing Piranesian ruin is itself expressed as actions, seeded at world
-gen — but it is deliberately kept out of the player log.
+pre-existing Piranesian ruin is itself expressed as actions, seeded at world gen
+— but it is deliberately kept out of the player log.
 
-That's what makes the event-sourced save work: on load the game seeds the
-ruins fresh, then replays only _your_ actions on top. The save stays small and
-the ruins stay canonical.
+That's what makes the event-sourced save work: on load the game seeds the ruins
+fresh, then replays only _your_ actions on top. The save stays small and the
+ruins stay canonical.
 
 Starting structure mix: `emb` 18, `anchor` 3, `wall` 1, `vault` 1, `span` 1.
 
@@ -156,11 +155,11 @@ Starting structure mix: `emb` 18, `anchor` 3, `wall` 1, `vault` 1, `span` 1.
 }
 ```
 
-Two things worth noting. **`age`** is a per-structure weathering parameter —
-the ruins render as ruins because they carry an age value, which means
-player-built structures presumably start near 0 and could weather over time.
-And **`openings`** being an array on the wall itself confirms CARVE is
-subtractive editing of an existing structure, not a new object.
+Two things worth noting. **`age`** is a per-structure weathering parameter — the
+ruins render as ruins because they carry an age value, which means player-built
+structures presumably start near 0 and could weather over time. And
+**`openings`** being an array on the wall itself confirms CARVE is subtractive
+editing of an existing structure, not a new object.
 
 ---
 
@@ -185,8 +184,8 @@ These are the citizen petitions shown bottom-left, attributed to named people:
 > talks of gardens up there."_ — Marcus, stonecutter
 
 Completing one pays **favor** (`onDone` fires a toast with `+N favor`).
-`doneRequests` is a Set persisted in the save. The title screen's _"Bring a
-way, and water, to the high terrace"_ is the opening request.
+`doneRequests` is a Set persisted in the save. The title screen's _"Bring a way,
+and water, to the high terrace"_ is the opening request.
 
 ---
 
@@ -211,8 +210,8 @@ GRANDEUR  = clamp(Σ over structures:
                 anchor, style 'giant'   → +0.08, 0, 1)
 ```
 
-Verification run (13-action city, 19 occupied, 1 district, 4 lanterns,
-19 infill, 36 structures):
+Verification run (13-action city, 19 occupied, 1 district, 4 lanterns, 19
+infill, 36 structures):
 
 | meter     | predicted | bar |     |
 | --------- | --------- | --- | --- |
@@ -224,32 +223,32 @@ Verification run (13-action city, 19 occupied, 1 district, 4 lanterns,
 
 ### What this reveals about the design
 
-**Three meters score inhabitation, two score construction.** ACCESS, SHELTER
-and LIGHT read only _occupied_ pockets — quality nobody lives in counts for
-nothing. You are scored on what people chose to inhabit, not on what you
-built. That asymmetry is the whole game.
+**Three meters score inhabitation, two score construction.** ACCESS, SHELTER and
+LIGHT read only _occupied_ pockets — quality nobody lives in counts for nothing.
+You are scored on what people chose to inhabit, not on what you built. That
+asymmetry is the whole game.
 
-**GRANDEUR ignores most of what you can build.** Only spans, vaults, stairs,
-and _giant_ piers count. Ordinary piers, columns, statues, fountains,
-cypresses, passages and gates contribute exactly zero. It rewards
-**structure**, never ornament — and it caps at 1.0, so roughly seven spans
-maxes it permanently. It is the shallowest of the five.
+**GRANDEUR ignores most of what you can build.** Only spans, vaults, stairs, and
+_giant_ piers count. Ordinary piers, columns, statues, fountains, cypresses,
+passages and gates contribute exactly zero. It rewards **structure**, never
+ornament — and it caps at 1.0, so roughly seven spans maxes it permanently. It
+is the shallowest of the five.
 
-**BELONGING is the only meter fed by ornament**, via lanterns at 0.05 each,
-and it is dominated by `districts × 0.18` — so earning a new district name is
-worth about 3.6 lanterns or 12 infill houses.
+**BELONGING is the only meter fed by ornament**, via lanterns at 0.05 each, and
+it is dominated by `districts × 0.18` — so earning a new district name is worth
+about 3.6 lanterns or 12 infill houses.
 
-**`scenic` is tracked per-pocket but feeds no meter.** It is computed and
-stored for every pocket and never displayed. Either it drives infill site
-selection or it is vestigial.
+**`scenic` is tracked per-pocket but feeds no meter.** It is computed and stored
+for every pocket and never displayed. Either it drives infill site selection or
+it is vestigial.
 
 ### The meters update only on player action
 
 `lv()` runs on action, not on a timer and not on the clock. `CAP.grow()` and
 `CAP.skip()` change the underlying values without refreshing the bars — during
 one test the true shelter mean moved 25.2 → 38.9 while SHELTER stayed pinned
-at 25. After a page load the bars sit at a default **30** until the first
-action fires. **When measuring, compute the value; never trust the bar.**
+at 25. After a page load the bars sit at a default **30** until the first action
+fires. **When measuring, compute the value; never trust the bar.**
 
 ## Complete action schema
 
@@ -282,8 +281,8 @@ intent over an area and whatever pockets fall inside become eligible.
 | stone             | 728    | 610    |
 | timber            | 169    | 227    |
 
-(The second resource was `timber` when this experiment was recorded; A14
-renamed the field to `salvage` — same economy, same numbers.)
+(The second resource was `timber` when this experiment was recorded; A14 renamed
+the field to `salvage` — same economy, same numbers.)
 
 13 actions produced **44 new pockets** — architecture emits habitable void at
 roughly 3.4 pockets per action. Population rose 46 → 62 with no direct
@@ -296,8 +295,9 @@ mechanically true.
 Stone was spent while timber (now salvage) _accrued_ — the two resources have
 different economies, and both tick as floats continuously.
 
-At dusk the agent census flipped from `work: 46` to `home: 53, tohome: 8,
-gather: 1`, confirming the daily routine runs off `time.hour`.
+At dusk the agent census flipped from `work: 46` to
+`home: 53, tohome: 8, gather: 1`, confirming the daily routine runs off
+`time.hour`.
 
 ## Driving the game from `CAP`
 
@@ -320,14 +320,14 @@ measurement.
 - **`occupied` and `infill` are always equal.** Pocket "occupancy" _is_ an
   infill building. The vernacular salvage-built houses are the occupancy.
 - **Interiors do fill — they're just slower.** An earlier reading of
-  `interior: 0/16` was a timing artifact, not a rule. Six `grow()` calls took
-  it to 16/16.
-- **Population caps at 132**, exactly the agent-pool size. It is a hard
-  ceiling, not just an allocation detail.
+  `interior: 0/16` was a timing artifact, not a rule. Six `grow()` calls took it
+  to 16/16.
+- **Population caps at 132**, exactly the agent-pool size. It is a hard ceiling,
+  not just an allocation detail.
 - **One `vault` action emitted +5 pockets** and +1 structure.
 - **Districts are emergent and re-derive as the city changes** —
-  `["The Lantern Quarter"]` → `["The Candle Quarter", "The Cistern Quarter"]`
-  → `["The Lantern Quarter", "The Cistern Quarter"]` across successive growth.
+  `["The Lantern Quarter"]` → `["The Candle Quarter", "The Cistern Quarter"]` →
+  `["The Lantern Quarter", "The Cistern Quarter"]` across successive growth.
   Named from nearby embellishments.
 
 ### HUD meters lag
@@ -339,10 +339,10 @@ The formula (mean over occupied × 100) is confirmed repeatedly:
 | 11.2 / 90.0 | 11 / 90 |
 | 27.3 / 80.1 | 27 / 80 |
 
-But the bars **do not update on `grow()` or `skip()`**. During six growth
-steps the computed shelter mean moved 25.2 → 38.9 while SHELTER stayed pinned
-at 25, then later caught up. The meters are sampled on a slower cadence than
-the simulation. When measuring, trust the computed value, not the bar.
+But the bars **do not update on `grow()` or `skip()`**. During six growth steps
+the computed shelter mean moved 25.2 → 38.9 while SHELTER stayed pinned at 25,
+then later caught up. The meters are sampled on a slower cadence than the
+simulation. When measuring, trust the computed value, not the bar.
 
 ## Plates — the etching mechanic (source, line 30690)
 
@@ -354,9 +354,10 @@ it as `capriccio-plate-NN.png`. While it works it toasts:
 A burin is the engraving tool Piranesi actually cut copper with. The caption is
 `${district name || cityName} · day N`, and taking a plate awards **+6 favor**.
 
-Stored per plate: `{ cam: [...camera position, ...orbit target], hour, caption, n }`
-— the camera pose, not the image. Plates are replayable viewpoints. Only the
-last 16 survive into the save (`plates.slice(-16)`).
+Stored per plate:
+`{ cam: [...camera position, ...orbit target], hour, caption, n }` — the camera
+pose, not the image. Plates are replayable viewpoints. Only the last 16 survive
+into the save (`plates.slice(-16)`).
 
 So the game's screenshot button is diegetic: you are Piranesi, publishing
 etchings of your own imaginary city, and the game pays you in favor for doing
@@ -380,15 +381,15 @@ score = shelter × 1.2
 build only if score > 1.6
 ```
 
-**Designation is by far the strongest term at +2.4** — more than shelter,
-light and scenic combined. INVITE is the most powerful verb in the game: it is
-the player's direct steering wheel on where the city grows. Everything else is
+**Designation is by far the strongest term at +2.4** — more than shelter, light
+and scenic combined. INVITE is the most powerful verb in the game: it is the
+player's direct steering wheel on where the city grows. Everything else is
 influence; designation is instruction.
 
-The `neighbours` term (up to +0.8) makes growth _clumpy_ — new building
-prefers to sit near existing building — which is what produces districts
-rather than an even scatter. Proximity to the centre at `(−18, 28)` carries
-+1.4, so the city pulls inward.
+The `neighbours` term (up to +0.8) makes growth _clumpy_ — new building prefers
+to sit near existing building — which is what produces districts rather than an
+even scatter. Proximity to the centre at `(−18, 28)` carries +1.4, so the city
+pulls inward.
 
 The **1.6 threshold** means genuinely poor sites are never built on at all.
 Growth stalls rather than sprawling into bad ground.
@@ -398,11 +399,11 @@ Growth stalls rather than sprawling into bad ground.
 `scenic` never reaches a HUD meter, but it is not vestigial. It has two jobs:
 
 1. **+0.4 weight in `pickPocket`** — pretty pockets get built on sooner.
-2. **`gatherPoints()`**: every pocket with `scenic > 0.7` becomes a
-   destination citizens congregate at (alongside `gathering` designations).
+2. **`gatherPoints()`**: every pocket with `scenic > 0.7` becomes a destination
+   citizens congregate at (alongside `gathering` designations).
 
-So scenic quality decides where people _hang out_. It is a real mechanic that
-is simply never surfaced in the UI.
+So scenic quality decides where people _hang out_. It is a real mechanic that is
+simply never surfaced in the UI.
 
 ## Population — exact formula
 
@@ -415,8 +416,8 @@ population      = min(132, 14 + infill.capacity)
 Verified live: 10 completed houses → capacity 48 → population 62. ✅
 
 **Only houses add capacity.** Stalls, gardens and shrines contribute exactly
-zero. And since the agent pool caps at 132, **28 completed houses maxes the
-city permanently** — every house after that is decoration.
+zero. And since the agent pool caps at 132, **28 completed houses maxes the city
+permanently** — every house after that is decoration.
 
 ## Infill construction
 
@@ -426,19 +427,18 @@ city permanently** — every house after that is decoration.
 - **At most 2 buildings may be under construction at once.**
 - Growth is also gated on demand: it stops unless demand exceeds
   `items.length × 0.9`.
-- `chooseKind()` maps designation → building:
-  `garden→garden`, `trade→stall`, `dwelling→house`, `gathering→shrine`.
-  Undesignated pockets get a kind from a **hash of `structId:idx`** — so it is
-  deterministic, which is exactly what the event-sourced save requires. A
-  `niche` always becomes a shrine.
+- `chooseKind()` maps designation → building: `garden→garden`, `trade→stall`,
+  `dwelling→house`, `gathering→shrine`. Undesignated pockets get a kind from a
+  **hash of `structId:idx`** — so it is deterministic, which is exactly what the
+  event-sourced save requires. A `niche` always becomes a shrine.
 
 ### Gardens create water
 
 When a `garden` finishes, its position is pushed onto `world.waterSources`.
-Since `pickPocket` rewards `waterDist < 45` with +0.9, **a garden irrigates
-its neighbourhood and makes the surrounding pockets more attractive to build
-on.** That is a genuine positive feedback loop, and the only one found so far
-where one infill building changes the terms for the next.
+Since `pickPocket` rewards `waterDist < 45` with +0.9, **a garden irrigates its
+neighbourhood and makes the surrounding pockets more attractive to build on.**
+That is a genuine positive feedback loop, and the only one found so far where
+one infill building changes the terms for the next.
 
 ## Formerly open, now answered
 
@@ -453,14 +453,14 @@ almost certainly "has the folio view been opened / unlocked."
 
 Four fields per building. No geometry, no transform — the mesh is regenerated
 from `kind` and the pocket it sits in. Combined with the deterministic
-`chooseKind` hash, that is all the state needed to rebuild the city's
-vernacular fabric exactly.
+`chooseKind` hash, that is all the state needed to rebuild the city's vernacular
+fabric exactly.
 
-**`age` never applies to player structures.** Seeded ruins carry
-`age` 0.4–0.6; every player-built structure has `age: null`. Nothing weathers
-over time — the parameter exists solely to make the _starting_ ruins look
-ruined. Your architecture stays permanently crisp against their decay, which
-is a deliberate and rather pointed visual contrast.
+**`age` never applies to player structures.** Seeded ruins carry `age` 0.4–0.6;
+every player-built structure has `age: null`. Nothing weathers over time — the
+parameter exists solely to make the _starting_ ruins look ruined. Your
+architecture stays permanently crisp against their decay, which is a deliberate
+and rather pointed visual contrast.
 
 **`agent.kind` is vestigial.** Null across all 132 slots in every state
 observed. Cut feature.

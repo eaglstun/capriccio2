@@ -40,7 +40,11 @@ const BUILD_CATALOGUE = {
         label: "Aqueduct",
         hint: "carries the water main on its back",
       },
-      { key: "arcade", label: "Gallery", hint: "a covered crossing on columns" },
+      {
+        key: "arcade",
+        label: "Gallery",
+        hint: "a covered crossing on columns",
+      },
     ],
     rise: [
       { key: "direct", label: "Stair", hint: "the shortest honest climb" },
@@ -80,7 +84,11 @@ const BUILD_CATALOGUE = {
       { key: "statue", label: "Statue", hint: "a chrome figure on a plinth" },
       { key: "fountain", label: "Fountain", hint: "water for a neighborhood" },
       { key: "lantern", label: "Lantern", hint: "cold light after dusk" },
-      { key: "cypress", label: "Cypress", hint: "the shape of one, in polymer" },
+      {
+        key: "cypress",
+        label: "Cypress",
+        hint: "the shape of one, in polymer",
+      },
     ],
     designate: [
       { key: "dwelling", label: "Dwelling", hint: "invite homes here" },

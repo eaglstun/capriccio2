@@ -6,7 +6,20 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { type AttributeGPUType, BoxGeometry, BufferAttribute, BufferGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, Quaternion, Shape, Vector3 } from "three";
+import {
+  type AttributeGPUType,
+  BoxGeometry,
+  BufferAttribute,
+  BufferGeometry,
+  ConeGeometry,
+  CylinderGeometry,
+  ExtrudeGeometry,
+  Matrix4,
+  Path,
+  Quaternion,
+  Shape,
+  Vector3,
+} from "three";
 import { clamp, seededRng, terrainHeightAt } from "./01-materials";
 // --- end generated imports ---
 
@@ -379,7 +392,10 @@ function Hn(
     }
   if (!a || !n.length)
     return rods.length
-      ? ec([u, ...rods].map((f) => (f.index ? f.toNonIndexed() : f)), !1)
+      ? ec(
+          [u, ...rods].map((f) => (f.index ? f.toNonIndexed() : f)),
+          !1,
+        )
       : u;
   const d = [u, ...rods];
   for (const f of n) {
@@ -391,7 +407,11 @@ function Hn(
       g.lineTo(-f.r, 0),
       g.absarc(0, 0, f.r, Math.PI, 0, !0),
       g.closePath());
-    const p = new ExtrudeGeometry(g, { depth: _, bevelEnabled: !1, curveSegments: 20 });
+    const p = new ExtrudeGeometry(g, {
+      depth: _,
+      bevelEnabled: !1,
+      curveSegments: 20,
+    });
     (p.translate(f.cx, f.springY, -_ / 2), d.push(p));
     for (const b of [-1, 1]) {
       // flat bearing pad where the rib lands — a poured joint, not an impost
@@ -473,7 +493,11 @@ function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
     r.lineTo(-(i - t), 0),
     r.absarc(0, 0, i - t, Math.PI, 0, !0),
     r.closePath());
-  const o = new ExtrudeGeometry(r, { depth: e, bevelEnabled: !1, curveSegments: s });
+  const o = new ExtrudeGeometry(r, {
+    depth: e,
+    bevelEnabled: !1,
+    curveSegments: s,
+  });
   if ((o.rotateY(Math.PI / 2), n.ribs !== !1 && e > 7)) {
     const a = [o],
       c = Math.max(2, Math.round(e / 5.5));
@@ -486,7 +510,11 @@ function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
         d.lineTo(-i + 0.1, 0),
         d.absarc(0, 0, i - 0.1, Math.PI, 0, !0),
         d.closePath());
-      const f = new ExtrudeGeometry(d, { depth: 1.1, bevelEnabled: !1, curveSegments: 18 });
+      const f = new ExtrudeGeometry(d, {
+        depth: 1.1,
+        bevelEnabled: !1,
+        curveSegments: 18,
+      });
       (f.rotateY(Math.PI / 2),
         f.translate(Math.min(u, e - 1.1), 0, 0),
         a.push(f));
@@ -564,7 +592,11 @@ function x_(i, t, e) {
     const d = c[Math.floor(t() * c.length)],
       f = 0.5 + t() * 0.9;
     for (let m = 0; m < 2 + Math.floor(t() * 2); m++) {
-      const _ = new ConeGeometry(0.26 * f * (0.7 + t() * 0.6), (0.7 + t() * 0.9) * f, 5);
+      const _ = new ConeGeometry(
+        0.26 * f * (0.7 + t() * 0.6),
+        (0.7 + t() * 0.9) * f,
+        5,
+      );
       (_.rotateZ((t() - 0.5) * 0.9),
         _.rotateX((t() - 0.5) * 0.5),
         _.translate(
@@ -617,14 +649,24 @@ function Pa(i) {
         rod = new BoxGeometry(0.045, rl, 0.045);
       (rod.rotateZ((i() - 0.5) * 1.2),
         rod.rotateX((i() - 0.5) * 0.7),
-        rod.translate((i() - 0.5) * sw * 0.8, 0.3 + rl * 0.3, (i() - 0.5) * sd * 0.7),
+        rod.translate(
+          (i() - 0.5) * sw * 0.8,
+          0.3 + rl * 0.3,
+          (i() - 0.5) * sd * 0.7,
+        ),
         t.addRaw(rod));
     }
   } else
     e < 0.85
       ? (t.box(0.9, 0.3, 0.9, [0, 0, 0], i()),
         t.box(0.7, 0.35, 0.7, [0.05, 0.3, 0.05], i()))
-      : (t.box(0.7 + i() * 1.4, 0.4 + i() * 0.8, 0.6 + i() * 1, [0, 0, 0], i() * Math.PI),
+      : (t.box(
+          0.7 + i() * 1.4,
+          0.4 + i() * 0.8,
+          0.6 + i() * 1,
+          [0, 0, 0],
+          i() * Math.PI,
+        ),
         t.box(0.5, 0.5, 0.45, [0.3, 0.2, -0.2], i()));
   const n = t.merge();
   return (Ri(n, 0, 1.2, 0.86, 1), n);
@@ -827,4 +869,25 @@ function buildAnchor(i) {
 }
 
 // --- generated exports ---
-export { Cl, Hn, Il, Ji, Ll, MeshBuilder, Pa, Pl, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, ec, newStructureParts, setToneAttribute, v_ };
+export {
+  Cl,
+  Hn,
+  Il,
+  Ji,
+  Ll,
+  MeshBuilder,
+  Pa,
+  Pl,
+  Ri,
+  Ur,
+  Yt,
+  __,
+  be,
+  buildAnchor,
+  buildTree,
+  dn,
+  ec,
+  newStructureParts,
+  setToneAttribute,
+  v_,
+};

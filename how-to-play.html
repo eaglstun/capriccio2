@@ -1,209 +1,518 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>CAPRICCIO 2 — how to play</title>
-<meta name="description" content="How to play CAPRICCIO 2: the controls, the seven tools, the five meters, and why your city stops growing." />
-<meta property="og:title" content="CAPRICCIO 2 — how to play" />
-<meta property="og:description" content="You raise the architecture. The citizens decide what it becomes." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E" />
-<style>
-  :root {
-    --ink:#1a1036; --deep:#241448; --violet:#542a6e; --mauve:#c05490;
-    --pink:#ff71ce; --cyan:#6ff5ea; --pale:#b8fff9; --paper:#f4e9ff; --amber:#ff9b6a;
-  }
-  * { box-sizing:border-box; }
-  html,body { margin:0; padding:0; }
-  body {
-    min-height:100%;
-    background:
-      radial-gradient(120% 80% at 50% 100%, rgba(255,155,106,.28) 0%, rgba(255,113,206,.14) 38%, transparent 72%),
-      linear-gradient(#1a1036 0%, #241448 42%, #3a1c56 78%, #6b2f63 100%);
-    color:var(--paper);
-    font-family:"Avenir Next","Futura","Century Gothic","Helvetica Neue",Arial,sans-serif;
-    font-size:16px; line-height:1.62; letter-spacing:.012em;
-    padding:0 24px 96px;
-  }
-  body::after {
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:9;
-    background:repeating-linear-gradient(180deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px);
-    mix-blend-mode:multiply;
-  }
-  main { max-width:680px; margin:0 auto; position:relative; z-index:1; }
-  header { padding:80px 0 8px; text-align:center; }
-  h1 {
-    margin:0; font-size:clamp(26px,5.6vw,40px); font-weight:600;
-    letter-spacing:.3em; text-indent:.3em; color:var(--paper);
-    text-shadow:2px 0 rgba(1,205,254,.85), -2px 0 rgba(255,113,206,.85);
-  }
-  .sub { margin:.7em 0 0; font-style:italic; color:var(--pale); letter-spacing:.04em; opacity:.92; }
-  .rule { width:150px; height:1px; margin:32px auto 0;
-          background:linear-gradient(90deg,transparent,var(--mauve),transparent); }
-  h2 { margin:52px 0 14px; font-size:12px; font-weight:600;
-       letter-spacing:.26em; text-transform:uppercase; color:var(--cyan); }
-  h3 { margin:30px 0 8px; font-size:15px; font-weight:600; color:var(--paper); letter-spacing:.03em; }
-  p { margin:0 0 16px; color:#e6d8f4; }
-  em { color:var(--pale); font-style:italic; }
-  strong { color:var(--paper); font-weight:600; }
-  a { color:var(--pink); text-decoration:none; border-bottom:1px solid rgba(255,113,206,.4); }
-  a:hover { border-bottom-color:var(--pink); }
-  .lede { font-size:18px; line-height:1.55; color:var(--paper); }
-  table { width:100%; border-collapse:collapse; margin:0 0 18px; font-size:15px; }
-  td, th { text-align:left; padding:7px 12px 7px 0; vertical-align:top;
-           border-bottom:1px solid rgba(192,84,144,.18); }
-  th { color:var(--cyan); font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; }
-  td:first-child { white-space:nowrap; color:var(--pale); }
-  kbd {
-    display:inline-block; padding:1px 7px; margin:0 1px;
-    border:1px solid rgba(111,245,234,.45); border-radius:3px;
-    background:rgba(26,16,54,.6); color:var(--pale);
-    font-family:inherit; font-size:12px; letter-spacing:.06em;
-  }
-  .note { border-left:2px solid var(--mauve); padding:2px 0 2px 18px;
-          margin:24px 0; color:var(--pale); font-style:italic; }
-  .tool { color:var(--pink); font-weight:600; letter-spacing:.1em; }
-  footer { margin-top:64px; padding-top:24px; border-top:1px solid rgba(192,84,144,.3);
-           font-size:13px; color:#b9a6d0; text-align:center; }
-  .play { display:inline-block; margin-top:30px; padding:11px 30px;
-          border:1px solid var(--pink); color:var(--paper); letter-spacing:.26em;
-          font-size:13px; border-bottom-width:1px; }
-  .play:hover { background:rgba(255,113,206,.14); }
-  .links { text-align:center; margin-top:14px; font-size:13px; }
-</style>
-</head>
-<body>
-<main>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>CAPRICCIO 2 — how to play</title>
+    <meta
+      name="description"
+      content="How to play CAPRICCIO 2: the controls, the seven tools, the five meters, and why your city stops growing."
+    />
+    <meta property="og:title" content="CAPRICCIO 2 — how to play" />
+    <meta
+      property="og:description"
+      content="You raise the architecture. The citizens decide what it becomes."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --ink: #1a1036;
+        --deep: #241448;
+        --violet: #542a6e;
+        --mauve: #c05490;
+        --pink: #ff71ce;
+        --cyan: #6ff5ea;
+        --pale: #b8fff9;
+        --paper: #f4e9ff;
+        --amber: #ff9b6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100%;
+        background:
+          radial-gradient(
+            120% 80% at 50% 100%,
+            rgba(255, 155, 106, 0.28) 0%,
+            rgba(255, 113, 206, 0.14) 38%,
+            transparent 72%
+          ),
+          linear-gradient(#1a1036 0%, #241448 42%, #3a1c56 78%, #6b2f63 100%);
+        color: var(--paper);
+        font-family:
+          "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.62;
+        letter-spacing: 0.012em;
+        padding: 0 24px 96px;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9;
+        background: repeating-linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.13) 0 1px,
+          transparent 1px 3px
+        );
+        mix-blend-mode: multiply;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+      header {
+        padding: 80px 0 8px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(26px, 5.6vw, 40px);
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        text-indent: 0.3em;
+        color: var(--paper);
+        text-shadow:
+          2px 0 rgba(1, 205, 254, 0.85),
+          -2px 0 rgba(255, 113, 206, 0.85);
+      }
+      .sub {
+        margin: 0.7em 0 0;
+        font-style: italic;
+        color: var(--pale);
+        letter-spacing: 0.04em;
+        opacity: 0.92;
+      }
+      .rule {
+        width: 150px;
+        height: 1px;
+        margin: 32px auto 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--mauve),
+          transparent
+        );
+      }
+      h2 {
+        margin: 52px 0 14px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      h3 {
+        margin: 30px 0 8px;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--paper);
+        letter-spacing: 0.03em;
+      }
+      p {
+        margin: 0 0 16px;
+        color: #e6d8f4;
+      }
+      em {
+        color: var(--pale);
+        font-style: italic;
+      }
+      strong {
+        color: var(--paper);
+        font-weight: 600;
+      }
+      a {
+        color: var(--pink);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 113, 206, 0.4);
+      }
+      a:hover {
+        border-bottom-color: var(--pink);
+      }
+      .lede {
+        font-size: 18px;
+        line-height: 1.55;
+        color: var(--paper);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 18px;
+        font-size: 15px;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 7px 12px 7px 0;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(192, 84, 144, 0.18);
+      }
+      th {
+        color: var(--cyan);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      td:first-child {
+        white-space: nowrap;
+        color: var(--pale);
+      }
+      kbd {
+        display: inline-block;
+        padding: 1px 7px;
+        margin: 0 1px;
+        border: 1px solid rgba(111, 245, 234, 0.45);
+        border-radius: 3px;
+        background: rgba(26, 16, 54, 0.6);
+        color: var(--pale);
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+      .note {
+        border-left: 2px solid var(--mauve);
+        padding: 2px 0 2px 18px;
+        margin: 24px 0;
+        color: var(--pale);
+        font-style: italic;
+      }
+      .tool {
+        color: var(--pink);
+        font-weight: 600;
+        letter-spacing: 0.1em;
+      }
+      footer {
+        margin-top: 64px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(192, 84, 144, 0.3);
+        font-size: 13px;
+        color: #b9a6d0;
+        text-align: center;
+      }
+      .play {
+        display: inline-block;
+        margin-top: 30px;
+        padding: 11px 30px;
+        border: 1px solid var(--pink);
+        color: var(--paper);
+        letter-spacing: 0.26em;
+        font-size: 13px;
+        border-bottom-width: 1px;
+      }
+      .play:hover {
+        background: rgba(255, 113, 206, 0.14);
+      }
+      .links {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>HOW TO PLAY</h1>
+        <p class="sub">
+          you raise the architecture; the citizens decide what it becomes
+        </p>
+        <div class="rule"></div>
+      </header>
 
-  <header>
-    <h1>HOW TO PLAY</h1>
-    <p class="sub">you raise the architecture; the citizens decide what it becomes</p>
-    <div class="rule"></div>
-  </header>
+      <section>
+        <p class="lede">
+          You never place a house. You build <strong>architecture</strong> —
+          piers, spans, stairs, vaults — and the spaces you leave behind become
+          places people can live. Roof a terrace and someone moves in. Bring
+          water somewhere and the neighbourhood turns toward it.
+        </p>
+        <p>
+          Everything else follows from that. Your job is not to construct a
+          town. It is to make somewhere worth living, and then find out what
+          people do with it.
+        </p>
+      </section>
 
-  <section>
-    <p class="lede">You never place a house. You build <strong>architecture</strong> —
-    piers, spans, stairs, vaults — and the spaces you leave behind become places
-    people can live. Roof a terrace and someone moves in. Bring water somewhere
-    and the neighbourhood turns toward it.</p>
-    <p>Everything else follows from that. Your job is not to construct a town.
-    It is to make somewhere worth living, and then find out what people do with it.</p>
-  </section>
+      <section>
+        <h2>Controls</h2>
+        <table>
+          <tr>
+            <td><kbd>drag</kbd></td>
+            <td>look around</td>
+          </tr>
+          <tr>
+            <td><kbd>scroll</kbd></td>
+            <td>zoom in and out</td>
+          </tr>
+          <tr>
+            <td><kbd>click</kbd></td>
+            <td>place, or set a point</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>put the current tool down</td>
+          </tr>
+          <tr>
+            <td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd></td>
+            <td>undo the last thing you built</td>
+          </tr>
+          <tr>
+            <td><kbd>P</kbd></td>
+            <td>engrave a plate of the current view</td>
+          </tr>
+        </table>
+        <h3>In WANDER</h3>
+        <table>
+          <tr>
+            <td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</td>
+            <td>walk</td>
+          </tr>
+          <tr>
+            <td><kbd>Shift</kbd></td>
+            <td>run</td>
+          </tr>
+          <tr>
+            <td><kbd>mouse</kbd></td>
+            <td>look</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>return to the city view</td>
+          </tr>
+        </table>
+      </section>
 
-  <section>
-    <h2>Controls</h2>
-    <table>
-      <tr><td><kbd>drag</kbd></td><td>look around</td></tr>
-      <tr><td><kbd>scroll</kbd></td><td>zoom in and out</td></tr>
-      <tr><td><kbd>click</kbd></td><td>place, or set a point</td></tr>
-      <tr><td><kbd>Esc</kbd></td><td>put the current tool down</td></tr>
-      <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd></td><td>undo the last thing you built</td></tr>
-      <tr><td><kbd>P</kbd></td><td>engrave a plate of the current view</td></tr>
-    </table>
-    <h3>In WANDER</h3>
-    <table>
-      <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</td><td>walk</td></tr>
-      <tr><td><kbd>Shift</kbd></td><td>run</td></tr>
-      <tr><td><kbd>mouse</kbd></td><td>look</td></tr>
-      <tr><td><kbd>Esc</kbd></td><td>return to the city view</td></tr>
-    </table>
-  </section>
+      <section>
+        <h2>The seven tools</h2>
+        <p>
+          Some take one click. Spans and stairs take two — a start and an end.
+          Pier tops snap, so build from them.
+        </p>
+        <table>
+          <tr>
+            <th>tool</th>
+            <th>what it does</th>
+          </tr>
+          <tr>
+            <td><span class="tool">ESTABLISH</span></td>
+            <td>
+              Piers and columns. Everything starts from a pier — it is the
+              foundation a span can leap from.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">SPAN</span></td>
+            <td>
+              Bridges, aqueducts, galleries. A crossing on arches. Aqueducts
+              carry water along their back.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">RISE</span></td>
+            <td>
+              Stairs. A pier alone is a post; connect it and it becomes a way
+              through.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">VAULT</span></td>
+            <td>
+              Roofed halls. The only way to make a sheltered space, which
+              matters more than it sounds.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">CARVE</span></td>
+            <td>
+              Cut a passage or a gate through a wall or pier. Subtraction, not
+              addition.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">FURNISH</span></td>
+            <td>
+              Statues, fountains, lanterns, trees. Ornament — and lanterns are
+              the ones that do something.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">INVITE</span></td>
+            <td>
+              Paint an intention over an area: dwelling, trade, garden,
+              gathering.
+            </td>
+          </tr>
+        </table>
+        <div class="note">
+          INVITE is the strongest thing you can do. Everywhere else you are
+          influencing where people settle. Here you are telling them.
+        </div>
+      </section>
 
-  <section>
-    <h2>The seven tools</h2>
-    <p>Some take one click. Spans and stairs take two — a start and an end.
-    Pier tops snap, so build from them.</p>
-    <table>
-      <tr><th>tool</th><th>what it does</th></tr>
-      <tr><td><span class="tool">ESTABLISH</span></td><td>Piers and columns. Everything starts from a pier — it is the foundation a span can leap from.</td></tr>
-      <tr><td><span class="tool">SPAN</span></td><td>Bridges, aqueducts, galleries. A crossing on arches. Aqueducts carry water along their back.</td></tr>
-      <tr><td><span class="tool">RISE</span></td><td>Stairs. A pier alone is a post; connect it and it becomes a way through.</td></tr>
-      <tr><td><span class="tool">VAULT</span></td><td>Roofed halls. The only way to make a sheltered space, which matters more than it sounds.</td></tr>
-      <tr><td><span class="tool">CARVE</span></td><td>Cut a passage or a gate through a wall or pier. Subtraction, not addition.</td></tr>
-      <tr><td><span class="tool">FURNISH</span></td><td>Statues, fountains, lanterns, trees. Ornament — and lanterns are the ones that do something.</td></tr>
-      <tr><td><span class="tool">INVITE</span></td><td>Paint an intention over an area: dwelling, trade, garden, gathering.</td></tr>
-    </table>
-    <div class="note">INVITE is the strongest thing you can do. Everywhere else you
-    are influencing where people settle. Here you are telling them.</div>
-  </section>
+      <section>
+        <h2>The four modes</h2>
+        <table>
+          <tr>
+            <td><span class="tool">BUILD</span></td>
+            <td>The normal view, where you make things.</td>
+          </tr>
+          <tr>
+            <td><span class="tool">SECTION</span></td>
+            <td>
+              Slice the city with a cut plane and see it as an architectural
+              section, interiors filled with hatching.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">WANDER</span></td>
+            <td>
+              Drop to street level and walk it. The only way to see the place
+              from inside.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="tool">PLATE</span></td>
+            <td>Frame and engrave a view. Your record of the city.</td>
+          </tr>
+        </table>
+      </section>
 
-  <section>
-    <h2>The four modes</h2>
-    <table>
-      <tr><td><span class="tool">BUILD</span></td><td>The normal view, where you make things.</td></tr>
-      <tr><td><span class="tool">SECTION</span></td><td>Slice the city with a cut plane and see it as an architectural section, interiors filled with hatching.</td></tr>
-      <tr><td><span class="tool">WANDER</span></td><td>Drop to street level and walk it. The only way to see the place from inside.</td></tr>
-      <tr><td><span class="tool">PLATE</span></td><td>Frame and engrave a view. Your record of the city.</td></tr>
-    </table>
-  </section>
+      <section>
+        <h2>The five meters</h2>
+        <p>
+          Top right. They read
+          <strong>only the places people actually live</strong> — a magnificent
+          hall nobody moves into scores nothing at all.
+        </p>
+        <table>
+          <tr>
+            <td>ACCESS</td>
+            <td>Can people reach where they live?</td>
+          </tr>
+          <tr>
+            <td>SHELTER</td>
+            <td>Is there a roof over them?</td>
+          </tr>
+          <tr>
+            <td>LIGHT</td>
+            <td>Is it dark where they are?</td>
+          </tr>
+          <tr>
+            <td>BELONGING</td>
+            <td>
+              Does the place feel like somewhere, with quarters and lamps?
+            </td>
+          </tr>
+          <tr>
+            <td>GRANDEUR</td>
+            <td>Is the architecture itself worth something?</td>
+          </tr>
+        </table>
+        <div class="note">
+          SHELTER is the hard one. Left alone, people settle on open terraces —
+          so a city that grows by itself will be beautiful and exposed. If the
+          meter is low, vault over somewhere people already are, rather than
+          building a fine new hall somewhere they are not.
+        </div>
+      </section>
 
-  <section>
-    <h2>The five meters</h2>
-    <p>Top right. They read <strong>only the places people actually live</strong> —
-    a magnificent hall nobody moves into scores nothing at all.</p>
-    <table>
-      <tr><td>ACCESS</td><td>Can people reach where they live?</td></tr>
-      <tr><td>SHELTER</td><td>Is there a roof over them?</td></tr>
-      <tr><td>LIGHT</td><td>Is it dark where they are?</td></tr>
-      <tr><td>BELONGING</td><td>Does the place feel like somewhere, with quarters and lamps?</td></tr>
-      <tr><td>GRANDEUR</td><td>Is the architecture itself worth something?</td></tr>
-    </table>
-    <div class="note">SHELTER is the hard one. Left alone, people settle on open
-    terraces — so a city that grows by itself will be beautiful and exposed. If
-    the meter is low, vault over somewhere people already are, rather than
-    building a fine new hall somewhere they are not.</div>
-  </section>
+      <section>
+        <h2>Why has my city stopped growing?</h2>
+        <p>It hasn't finished. It is waiting.</p>
+        <p>
+          How large the city can get is limited by your
+          <strong>clearance</strong> — the number top left. Start the game and
+          it will grow to about a dozen and a half buildings, then simply stop,
+          looking complete.
+        </p>
+        <p>
+          Clearance comes almost entirely from
+          <strong>answering the citizens</strong>. Every request you complete
+          raises the ceiling substantially — the first one roughly doubles it —
+          and also lets you build <em>further</em>: longer spans, bigger vaults.
+          Reach and growth are the same currency.
+        </p>
+        <p>
+          So if nothing is happening, look at what somebody is asking you for.
+        </p>
+      </section>
 
-  <section>
-    <h2>Why has my city stopped growing?</h2>
-    <p>It hasn't finished. It is waiting.</p>
-    <p>How large the city can get is limited by your <strong>clearance</strong> —
-    the number top left. Start the game and it will grow to about a dozen and a
-    half buildings, then simply stop, looking complete.</p>
-    <p>Clearance comes almost entirely from <strong>answering the citizens</strong>.
-    Every request you complete raises the ceiling substantially — the first one
-    roughly doubles it — and also lets you build <em>further</em>: longer spans,
-    bigger vaults. Reach and growth are the same currency.</p>
-    <p>So if nothing is happening, look at what somebody is asking you for.</p>
-  </section>
+      <section>
+        <h2>The citizens ask for things</h2>
+        <p>
+          Bottom left. One at a time, in their own words, and never in the form
+          of an instruction — nobody asks for a vault. They tell you that rain
+          spoils the cloth on market day, and you work out that the answer is a
+          roof.
+        </p>
+        <p>
+          When you solve one, you are not thanked. You are told what people did
+          with it: who raced to the top, who planted a bed the same evening, who
+          sits in the passage at noon. That is the whole reward, and it is the
+          best thing in the game.
+        </p>
+        <p>
+          There are a finite number of them. When they stop asking, that means
+          something.
+        </p>
+      </section>
 
-  <section>
-    <h2>The citizens ask for things</h2>
-    <p>Bottom left. One at a time, in their own words, and never in the form of
-    an instruction — nobody asks for a vault. They tell you that rain spoils the
-    cloth on market day, and you work out that the answer is a roof.</p>
-    <p>When you solve one, you are not thanked. You are told what people did with
-    it: who raced to the top, who planted a bed the same evening, who sits in the
-    passage at noon. That is the whole reward, and it is the best thing in the game.</p>
-    <p>There are a finite number of them. When they stop asking, that means
-    something.</p>
-  </section>
+      <section>
+        <h2>The folio</h2>
+        <p>
+          Press <kbd>P</kbd>, or use <span class="tool">PLATE</span>, to engrave
+          the view in front of you. Plates are collected in your folio.
+        </p>
+        <p>
+          The folio does not grow forever. Engrave enough and you will see what
+          that means.
+        </p>
+        <p>
+          Plates also earn a little clearance — so once the citizens have
+          stopped asking, recording the city is the only way to keep building
+          it.
+        </p>
+      </section>
 
-  <section>
-    <h2>The folio</h2>
-    <p>Press <kbd>P</kbd>, or use <span class="tool">PLATE</span>, to engrave the
-    view in front of you. Plates are collected in your folio.</p>
-    <p>The folio does not grow forever. Engrave enough and you will see what that
-    means.</p>
-    <p>Plates also earn a little clearance — so once the citizens have stopped
-    asking, recording the city is the only way to keep building it.</p>
-  </section>
+      <section>
+        <h2>Saving</h2>
+        <p>
+          The city saves itself as you play, in your browser. Come back and it
+          will be where you left it.
+        </p>
+        <p>
+          <em>Begin anew</em> on the title screen erases it. There is no undo
+          for that.
+        </p>
+      </section>
 
-  <section>
-    <h2>Saving</h2>
-    <p>The city saves itself as you play, in your browser. Come back and it will
-    be where you left it.</p>
-    <p><em>Begin anew</em> on the title screen erases it. There is no undo for that.</p>
-  </section>
+      <p style="text-align: center">
+        <a class="play" href="/">ENTER THE CITY</a>
+      </p>
+      <p class="links"><a href="/about.html">about this city</a></p>
 
-  <p style="text-align:center"><a class="play" href="/">ENTER THE CITY</a></p>
-  <p class="links"><a href="/about.html">about this city</a></p>
-
-  <footer>
-    Original CAPRICCIO by Ethan Mollick, generated with Fable.<br />
-    This version built on top of it — same rules, later century.
-  </footer>
-
-</main>
-</body>
+      <footer>
+        Original CAPRICCIO by Ethan Mollick, generated with Fable.<br />
+        This version built on top of it — same rules, later century.
+      </footer>
+    </main>
+  </body>
 </html>

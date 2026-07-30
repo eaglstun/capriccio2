@@ -1,12 +1,17 @@
 ---
 name: capriccio
-description: Inspect and reverse-engineer CAPRICCIO, the Piranesi city-builder build in this repo. Use when investigating how the game works — its pockets, citizens, world, save format, requests, rendering — or when running, serving, or probing it in a browser. Covers the `window.CAP` debug API and the `CAPX` probe helpers.
+description:
+  Inspect and reverse-engineer CAPRICCIO, the Piranesi city-builder build in
+  this repo. Use when investigating how the game works — its pockets, citizens,
+  world, save format, requests, rendering — or when running, serving, or probing
+  it in a browser. Covers the `window.CAP` debug API and the `CAPX` probe
+  helpers.
 ---
 
 # CAPRICCIO investigation
 
-A generated Piranesi city-builder, shipped as a minified production bundle
-with no source.
+A generated Piranesi city-builder, shipped as a minified production bundle with
+no source.
 
 | doc                  | contents                                                            |
 | -------------------- | ------------------------------------------------------------------- |
@@ -20,19 +25,20 @@ with no source.
 | `docs/COMMENTS.md`   | every comment that survived minification — the only stated intent   |
 | `tools/probe.js`     | `CAPX` introspection helpers                                        |
 
-**The shaders are the most readable code in the bundle.** GLSL lives in
-template strings and minifiers don't strip comments inside strings — the
-original author's comments survive verbatim around lines 25400–25900. When you
-need to know intent rather than behavior, read there.
+**The shaders are the most readable code in the bundle.** GLSL lives in template
+strings and minifiers don't strip comments inside strings — the original
+author's comments survive verbatim around lines 25400–25900. When you need to
+know intent rather than behavior, read there.
 
 ## Rule zero: don't read the bundle
 
-Identifiers are 100% mangled. The build exposes **`window.CAP`**, a 33-key
-debug handle onto every subsystem. Any question about behavior is answered
-faster there than in source.
+Identifiers are 100% mangled. The build exposes **`window.CAP`**, a 33-key debug
+handle onto every subsystem. Any question about behavior is answered faster
+there than in source.
 
-Read source only to find _constants and strings_ the minifier preserved —
-object literals with string keys (like the building catalogue `La` at line 28877) survive perfectly intact.
+Read source only to find _constants and strings_ the minifier preserved — object
+literals with string keys (like the building catalogue `La` at line 28877)
+survive perfectly intact.
 
 ## Serving it
 
@@ -67,8 +73,8 @@ const before = CAPX.snapshot();
 CAPX.diff(before);
 ```
 
-One action, one diff, and you learn exactly what it touched. This beats
-reading code by a wide margin for a minified target.
+One action, one diff, and you learn exactly what it touched. This beats reading
+code by a wide margin for a minified target.
 
 ## Two traps
 
@@ -80,15 +86,15 @@ reading code by a wide margin for a minified target.
 ## The model in one paragraph
 
 You place _architecture_, not buildings. Architecture emits **pockets** —
-habitable voids scored on `shelter`, `light`, `scenic`, `area`, and distance
-to water. Citizens occupy pockets. The five HUD meters aggregate over occupied
+habitable voids scored on `shelter`, `light`, `scenic`, `area`, and distance to
+water. Citizens occupy pockets. The five HUD meters aggregate over occupied
 pockets. Agents are a fixed pool of 132 slots with ~46 `active`, drawn as 3
 `InstancedMesh`es, running a `home → towork → work` daily routine on a nav
-graph. The save is an **action log**, not a snapshot: starting ruins are
-seeded separately, and only player actions are persisted and replayed.
+graph. The save is an **action log**, not a snapshot: starting ruins are seeded
+separately, and only player actions are persisted and replayed.
 
 ## Don't
 
 Don't edit `public/assets/index-DCXbw2vV.js`. It is a build artifact and the
-only copy of the game; there is no source to regenerate it from. Write
-findings to separate files.
+only copy of the game; there is no source to regenerate it from. Write findings
+to separate files.

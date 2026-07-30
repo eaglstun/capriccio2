@@ -114,12 +114,12 @@ class NavGraph {
     (s.set(t, 0), n.push(t, o.distanceTo(this.nodes[t].p)));
     const a = new Set();
     let c = 0;
-    for (; n.size > 0 && c++ < 2e4; ) {
+    for (; n.size > 0 && c++ < 2e4;) {
       const l = n.pop();
       if (l === e) {
         const u = [e];
         let d = e;
-        for (; r.has(d); ) ((d = r.get(d)), u.push(d));
+        for (; r.has(d);) ((d = r.get(d)), u.push(d));
         return u.reverse();
       }
       if (a.has(l)) continue;
@@ -153,7 +153,11 @@ class NavGraph {
         for (let r = n.z0; r <= n.z1; r += $n) {
           if (!isFlatGround(s, r)) continue;
           const o = `${s},${r}`;
-          e.has(o) || e.set(o, this.add(new Vector3(s, terrainHeightAt(s, r), r), -1, !0));
+          e.has(o) ||
+            e.set(
+              o,
+              this.add(new Vector3(s, terrainHeightAt(s, r), r), -1, !0),
+            );
         }
     for (const [n, s] of e) {
       const [r, o] = n.split(",").map(Number);
@@ -215,7 +219,7 @@ class p_ {
   push(t, e) {
     (this.ids.push(t), this.ks.push(e));
     let n = this.ids.length - 1;
-    for (; n > 0; ) {
+    for (; n > 0;) {
       const s = (n - 1) >> 1;
       if (this.ks[s] <= this.ks[n]) break;
       (this.swap(n, s), (n = s));

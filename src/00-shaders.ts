@@ -6,7 +6,30 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { Color, DataTexture, DepthTexture, FloatType, LinearFilter, Matrix4, Mesh, NearestFilter, NoToneMapping, OrthographicCamera, PCFShadowMap, PlaneGeometry, RedFormat, RepeatWrapping, SRGBColorSpace, Scene, ShaderMaterial, UnsignedIntType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
+import {
+  Color,
+  DataTexture,
+  DepthTexture,
+  FloatType,
+  LinearFilter,
+  Matrix4,
+  Mesh,
+  NearestFilter,
+  NoToneMapping,
+  OrthographicCamera,
+  PCFShadowMap,
+  PlaneGeometry,
+  RedFormat,
+  RepeatWrapping,
+  SRGBColorSpace,
+  Scene,
+  ShaderMaterial,
+  UnsignedIntType,
+  Vector2,
+  Vector3,
+  WebGLRenderTarget,
+  WebGLRenderer,
+} from "three";
 // --- end generated imports ---
 
 const j0 = `
@@ -375,16 +398,21 @@ function makeBlueNoiseTexture(size = 64) {
     }
   };
   const tightest = () => {
-    let hi = -1, hv = -1;
-    for (let k = 0; k < N; k++) if (on[k] && energy[k] > hv) ((hv = energy[k]), (hi = k));
+    let hi = -1,
+      hv = -1;
+    for (let k = 0; k < N; k++)
+      if (on[k] && energy[k] > hv) ((hv = energy[k]), (hi = k));
     return hi;
   };
   const largestVoid = () => {
-    let lo = -1, lv = 1 / 0;
-    for (let k = 0; k < N; k++) if (!on[k] && energy[k] < lv) ((lv = energy[k]), (lo = k));
+    let lo = -1,
+      lv = 1 / 0;
+    for (let k = 0; k < N; k++)
+      if (!on[k] && energy[k] < lv) ((lv = energy[k]), (lo = k));
     return lo;
   };
-  let st = 20260728, count = 0;
+  let st = 20260728,
+    count = 0;
   const rnd = () => {
     st = (st + 1831565813) | 0;
     let e = Math.imul(st ^ (st >>> 15), 1 | st);
@@ -403,7 +431,7 @@ function makeBlueNoiseTexture(size = 64) {
     if (lo === hi) break;
   }
   const proto = on.slice();
-  for (let c = count; c > 0; ) {
+  for (let c = count; c > 0;) {
     const hi = tightest();
     ((on[hi] = 0), splat(hi, -1), (rank[hi] = --c));
   }
@@ -582,7 +610,11 @@ class J0 {
       l = Math.round(s * this.ss);
     (this.target.setSize(c, l),
       this.postMat.uniforms.uResolution.value.set(c, l));
-    const h = new WebGLRenderTarget(n, s, { colorSpace: SRGBColorSpace, minFilter: LinearFilter, magFilter: LinearFilter }),
+    const h = new WebGLRenderTarget(n, s, {
+        colorSpace: SRGBColorSpace,
+        minFilter: LinearFilter,
+        magFilter: LinearFilter,
+      }),
       u = this.postMat.uniforms;
     ((u.uCameraNear.value = e.near),
       (u.uCameraFar.value = e.far),
@@ -650,17 +682,29 @@ const engravingUniforms = {
  * does not — which is what lets the palette be maximal without turning muddy.
  */
 const districtUniforms = {
-  uDistrictPos: { value: Array.from({ length: 8 }, () => new Vector3(0, 0, 0)) },
+  uDistrictPos: {
+    value: Array.from({ length: 8 }, () => new Vector3(0, 0, 0)),
+  },
   uDistrictCol: { value: Array.from({ length: 8 }, () => new Color(0, 0, 0)) },
 };
 // the signature word of the name picks the hue: Sodium runs hot, the
 // Cistern runs cold, and a player who notices has found something real
 const districtHues = {
-  Lantern: 0.09, Sodium: 0.02, Candle: 0.13,
-  Cistern: 0.54, Runoff: 0.47, Well: 0.60,
-  Garden: 0.33, Laurel: 0.40, Green: 0.29,
-  Quiet: 0.72, Sleeping: 0.78, Patient: 0.64,
-  Halogen: 0.15, Morning: 0.57, White: 0.83,
+  Lantern: 0.09,
+  Sodium: 0.02,
+  Candle: 0.13,
+  Cistern: 0.54,
+  Runoff: 0.47,
+  Well: 0.6,
+  Garden: 0.33,
+  Laurel: 0.4,
+  Green: 0.29,
+  Quiet: 0.72,
+  Sleeping: 0.78,
+  Patient: 0.64,
+  Halogen: 0.15,
+  Morning: 0.57,
+  White: 0.83,
 };
 /** Fallback hue for a district name not in the table. */
 function districtHash(i) {
@@ -698,7 +742,10 @@ function setDistricts(i) {
  */
 function syncLightUniforms(i, t) {
   const e = (s) => 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
-  engravingUniforms.uSunDirW.value.copy(i.position).sub(i.target.position).normalize();
+  engravingUniforms.uSunDirW.value
+    .copy(i.position)
+    .sub(i.target.position)
+    .normalize();
   const n = 1 / Math.PI;
   ((engravingUniforms.uSunLum.value = i.intensity * e(i.color) * n),
     (engravingUniforms.uAmbSky.value = t.intensity * e(t.color) * n),
@@ -1019,4 +1066,13 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
 `;
 
 // --- generated exports ---
-export { J0, Q0, districtUniforms, e_, engravingUniforms, setDistricts, syncLightUniforms, t_ };
+export {
+  J0,
+  Q0,
+  districtUniforms,
+  e_,
+  engravingUniforms,
+  setDistricts,
+  syncLightUniforms,
+  t_,
+};

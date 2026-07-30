@@ -8,7 +8,24 @@
 // --- generated imports ---
 import { BoxGeometry, ConeGeometry, CylinderGeometry } from "three";
 import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials";
-import { Hn, Ji, Ll, MeshBuilder, Pa, Ri, Ur, Yt, __, be, buildAnchor, buildTree, dn, newStructureParts, setToneAttribute, v_ } from "./03-geometry";
+import {
+  Hn,
+  Ji,
+  Ll,
+  MeshBuilder,
+  Pa,
+  Ri,
+  Ur,
+  Yt,
+  __,
+  be,
+  buildAnchor,
+  buildTree,
+  dn,
+  newStructureParts,
+  setToneAttribute,
+  v_,
+} from "./03-geometry";
 // --- end generated imports ---
 
 /**
@@ -267,7 +284,8 @@ function buildRise(i) {
         k.translate(B.x, L, B.z),
         setToneAttribute(k, 1, n),
         Yt(t, "stone", k));
-      const G = Math.min(terrainHeightAt(B.x, B.z), terrainHeightAt(y.x, y.z)) - 1,
+      const G =
+          Math.min(terrainHeightAt(B.x, B.z), terrainHeightAt(y.x, y.z)) - 1,
         Y = L - G;
       if (Y > 0.4) {
         let gt;
@@ -507,7 +525,11 @@ function buildVault(i) {
       qg = new MeshBuilder(0),
       qy = c + o / 2 + 0.9;
     for (const qs of [-1, 1])
-      qg.box(Math.max(2, d - 1.2), 0.09, 0.14, [0, c + 0.06, qs * (o / 2 + 0.82)]);
+      qg.box(Math.max(2, d - 1.2), 0.09, 0.14, [
+        0,
+        c + 0.06,
+        qs * (o / 2 + 0.82),
+      ]);
     const qn = 2 + Math.floor(q() * 3);
     for (let qk = 0; qk < qn; qk++) {
       const qx = (q() - 0.5) * (a - 5),
@@ -515,7 +537,12 @@ function buildVault(i) {
       if (qp < 0.4)
         qc.box(1.4 + q() * 1.2, 0.9 + q() * 0.9, 1.2, [qx, qy - 0.4, 0]);
       else if (qp < 0.7) {
-        const qf = new CylinderGeometry(0.7 + q() * 0.4, 0.8 + q() * 0.4, 0.4, 9);
+        const qf = new CylinderGeometry(
+          0.7 + q() * 0.4,
+          0.8 + q() * 0.4,
+          0.4,
+          9,
+        );
         (qf.translate(qx, qy + 0.05, 0), qc.addRaw(qf));
       } else {
         const qh = 3 + q() * 4;
@@ -745,8 +772,7 @@ function buildOrnament(i) {
     const o = new ConeGeometry(0.52, 1, 4);
     (o.translate(i.x, n + 10.4, i.z), Yt(t, "gold", o));
     const a = new MeshBuilder(0);
-    (a.box(1.7, 0.07, 0.07, [0, 9.3, 0]),
-      a.box(0.07, 0.07, 1.7, [0, 8.9, 0]));
+    (a.box(1.7, 0.07, 0.07, [0, 9.3, 0]), a.box(0.07, 0.07, 1.7, [0, 8.9, 0]));
     const c = a.merge();
     (be(c, i.x, n, i.z, Math.PI / 4), Yt(t, "salvage", c));
     const l = new BoxGeometry(0.2, 0.55, 0.2);

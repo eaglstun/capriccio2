@@ -1,16 +1,18 @@
 ---
 name: threejs-modeler
 description: >-
-  Author procedural 3D models in three.js r180 for CAPRICCIO — geometry built in code from
-  primitives and merged buffers, shipping zero bytes. Use when the task is to add or re-model
-  scenery, props, structures, or characters: "model the ruins as modern concrete", "add
-  landfill mounds", "make the billboards", "give the citizens varied silhouettes". It follows
-  this project's MeshBuilder conventions, keeps structure envelopes frozen because pockets are
-  computed from action geometry, seeds all variation deterministically so save replay stays
-  exact, and merges aggressively to protect the draw-call budget. It writes geometry code and
-  verifies with a real build. NOT for shaders/materials (that is the renderer's post pass), NOT
-  for downloading or generating asset files — `gen-3d-model-maker` and `game-sprite-maker`
-  produce binary assets and are forbidden on this project.
+  Author procedural 3D models in three.js r180 for CAPRICCIO — geometry built in
+  code from primitives and merged buffers, shipping zero bytes. Use when the
+  task is to add or re-model scenery, props, structures, or characters: "model
+  the ruins as modern concrete", "add landfill mounds", "make the billboards",
+  "give the citizens varied silhouettes". It follows this project's MeshBuilder
+  conventions, keeps structure envelopes frozen because pockets are computed
+  from action geometry, seeds all variation deterministically so save replay
+  stays exact, and merges aggressively to protect the draw-call budget. It
+  writes geometry code and verifies with a real build. NOT for shaders/materials
+  (that is the renderer's post pass), NOT for downloading or generating asset
+  files — `gen-3d-model-maker` and `game-sprite-maker` produce binary assets and
+  are forbidden on this project.
 tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -25,8 +27,8 @@ three.js version is **r180**. Do not apply r13x-era advice; several APIs moved.
 
 ## Read before modelling
 
-- `docs/RENDERING.md` — how the engraving/neon renderer works, and what a surface
-  needs to look right in it
+- `docs/RENDERING.md` — how the engraving/neon renderer works, and what a
+  surface needs to look right in it
 - `docs/SIMULATION.md` — what pockets are and why geometry is load-bearing
 - `src/03-geometry.js` — `MeshBuilder`, `newStructureParts`, `setToneAttribute`,
   primitives, `buildTree`
@@ -37,22 +39,22 @@ three.js version is **r180**. Do not apply r13x-era advice; several APIs moved.
 
 ### 1. Envelopes are frozen
 
-Pockets — the habitable voids citizens occupy — are computed from a
-structure's **action geometry**: footprint, height, thickness, endpoints. A
-changed dimension is a changed game, silently.
+Pockets — the habitable voids citizens occupy — are computed from a structure's
+**action geometry**: footprint, height, thickness, endpoints. A changed
+dimension is a changed game, silently.
 
-**Re-model within the envelope.** Detailing, silhouette breakup, greebling,
-and surface relief are free. Overall extents are not.
+**Re-model within the envelope.** Detailing, silhouette breakup, greebling, and
+surface relief are free. Overall extents are not.
 
 Verify: a fresh game must still report **24 structures, 48 pockets, 1331
-navNodes, 46 pop, pocket kinds interior 12 / terrace_p 34 / niche 1 /
-under_arch 1**. If any number moves, you changed the game.
+navNodes, 46 pop, pocket kinds interior 12 / terrace_p 34 / niche 1 / under_arch
+1**. If any number moves, you changed the game.
 
 ### 2. Determinism, or save replay breaks
 
 The save is an **event-sourced action log** — the city is rebuilt by replaying
-actions. If a builder's randomness is not derived from the action, the same
-save loads differently every time.
+actions. If a builder's randomness is not derived from the action, the same save
+loads differently every time.
 
 Every builder seeds from the action id:
 
@@ -92,8 +94,8 @@ materials. Two consequences:
 - **`aTone` is a per-vertex attribute** the shader reads. `setToneAttribute`
   installs it. Geometry without it will render wrong — always run new geometry
   through the same path existing builders use.
-- **Triplanar hatching is world-space**, needs no UVs, and works on any
-  surface angle. You generally do not need to unwrap anything.
+- **Triplanar hatching is world-space**, needs no UVs, and works on any surface
+  angle. You generally do not need to unwrap anything.
 - `uCourseH` selects the masonry treatment per material. Picking the right
   material is how a surface reads as concrete vs. panelling vs. ground.
 
@@ -112,8 +114,8 @@ legitimate for signage, billboard copy, graffiti, hazard striping, decals.
 - Silhouette does most of the work — break long straight edges, vary heights,
   let things lean and fail
 - Repetition with seeded variation beats unique hand-placement
-- Cheap decay: displaced vertices at breaks, exposed internal structure,
-  missing spans, spalled corners
+- Cheap decay: displaced vertices at breaks, exposed internal structure, missing
+  spans, spalled corners
 
 ## Verify
 

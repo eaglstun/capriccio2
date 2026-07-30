@@ -1,14 +1,16 @@
 ---
 name: capriccio-renamer
 description: >-
-  Rename mangled identifiers in CAPRICCIO's `src/` to meaningful names, one subsystem at a
-  time, keeping the change provably a pure identifier substitution. Use when the task is to
-  make `src/` readable — "rename the world module", "give the pocket fields real names",
-  "clean up 06-infill.js". It grounds every name in the existing documentation
-  (`docs/SIMULATION.md`, `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/DEPENDENCIES.md`) rather than inventing
-  vocabulary, applies each rename across ALL files that reference the symbol, and verifies
-  reversibility after every batch. It does NOT restructure code, add imports, split files, or
-  touch `public/`. For identifying three.js symbols use `capriccio-vendor-mapper`.
+  Rename mangled identifiers in CAPRICCIO's `src/` to meaningful names, one
+  subsystem at a time, keeping the change provably a pure identifier
+  substitution. Use when the task is to make `src/` readable — "rename the world
+  module", "give the pocket fields real names", "clean up 06-infill.js". It
+  grounds every name in the existing documentation (`docs/SIMULATION.md`,
+  `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/DEPENDENCIES.md`) rather than
+  inventing vocabulary, applies each rename across ALL files that reference the
+  symbol, and verifies reversibility after every batch. It does NOT restructure
+  code, add imports, split files, or touch `public/`. For identifying three.js
+  symbols use `capriccio-vendor-mapper`.
 tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -36,23 +38,24 @@ line 25401.
 
 ## Rules
 
-1. **A rename is global.** A symbol declared in one file is referenced in
-   others — `tools/scope_graph.py` tells you exactly where. Renaming in one
-   file only is the most likely way to break things.
-2. **Names come from the docs, not from imagination.** `docs/SIMULATION.md` already
-   establishes the vocabulary: pocket, shelter, scenic, infill, designation,
-   anchor, span, rise, vault, carve, emb, plate, folio. Use it. Consistency
-   with existing documentation matters more than your preferred phrasing.
+1. **A rename is global.** A symbol declared in one file is referenced in others
+   — `tools/scope_graph.py` tells you exactly where. Renaming in one file only
+   is the most likely way to break things.
+2. **Names come from the docs, not from imagination.** `docs/SIMULATION.md`
+   already establishes the vocabulary: pocket, shelter, scenic, infill,
+   designation, anchor, span, rise, vault, carve, emb, plate, folio. Use it.
+   Consistency with existing documentation matters more than your preferred
+   phrasing.
 3. **Work one subsystem at a time**, verify, then move on. Do not attempt a
    whole-codebase rename in one pass.
-4. **Beware the 14 shadowed names.** `docs/DEPENDENCIES.md` lists 2-char names that
-   are also declared in inner scopes (`Ch Co Fr Kt Pe Pl Qe Th bi` and
-   others). A naive global find-and-replace on these WILL corrupt inner
-   scopes. Check each occurrence by hand.
-5. **Never rename inside strings.** GLSL uniform names, `localStorage` keys,
-   UI copy, and `capriccio-save-v1` are read by name at runtime. `aTone` is a
-   real vertex attribute; `uHatchFreq` is a real uniform. Rename either and the
-   game breaks silently.
+4. **Beware the 14 shadowed names.** `docs/DEPENDENCIES.md` lists 2-char names
+   that are also declared in inner scopes (`Ch Co Fr Kt Pe Pl Qe Th bi` and
+   others). A naive global find-and-replace on these WILL corrupt inner scopes.
+   Check each occurrence by hand.
+5. **Never rename inside strings.** GLSL uniform names, `localStorage` keys, UI
+   copy, and `capriccio-save-v1` are read by name at runtime. `aTone` is a real
+   vertex attribute; `uHatchFreq` is a real uniform. Rename either and the game
+   breaks silently.
 
 ## Suggested order
 
@@ -68,8 +71,8 @@ Cheapest first, because the documentation behind them is strongest:
 ## Do not
 
 - Do not touch `public/` — it is the only runnable copy of the game.
-- Do not add `import`/`export`, split files, or reorder statements. Renaming
-  and restructuring are separate jobs; mixing them destroys the invariant that
-  makes this safe.
+- Do not add `import`/`export`, split files, or reorder statements. Renaming and
+  restructuring are separate jobs; mixing them destroys the invariant that makes
+  this safe.
 - Do not rename vendor symbols — those come from three.js and are
   `capriccio-vendor-mapper`'s territory.

@@ -6,7 +6,15 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferGeometry, Group, Line, LineBasicMaterial, LineDashedMaterial, Object3D, Vector3 } from "three";
+import {
+  BufferGeometry,
+  Group,
+  Line,
+  LineBasicMaterial,
+  LineDashedMaterial,
+  Object3D,
+  Vector3,
+} from "three";
 import { terrainHeightAt } from "./01-materials";
 // --- end generated imports ---
 
@@ -101,7 +109,13 @@ class BuildOverlays {
             [-s, s],
             [-s, -s],
           ])
-            r.push(new Vector3(n.x + o, terrainHeightAt(n.x + o, n.z + a) + m, n.z + a));
+            r.push(
+              new Vector3(
+                n.x + o,
+                terrainHeightAt(n.x + o, n.z + a) + m,
+                n.z + a,
+              ),
+            );
           this.marks.add(this.dashedLine(r, this.carveMat));
         }
       }

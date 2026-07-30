@@ -7,8 +7,8 @@ pastel, a very little fluorescent.
 
 ## 1. Mall Pink — the signature
 
-The pairing most people mean by "vaporwave". Pink and cyan at full strength
-over a bleached grey base.
+The pairing most people mean by "vaporwave". Pink and cyan at full strength over
+a bleached grey base.
 
 | role        | hex       | notes                                  |
 | ----------- | --------- | -------------------------------------- |
@@ -48,8 +48,8 @@ restraint is the effect.
 
 ## 4. Windows 95 Chrome
 
-Period-correct UI. These are the real system values, so a dialog built from
-them reads instantly.
+Period-correct UI. These are the real system values, so a dialog built from them
+reads instantly.
 
 | role               | hex                         |
 | ------------------ | --------------------------- |
@@ -67,8 +67,8 @@ Bevel recipe: 1px `#FFFFFF` top/left, 1px `#808080` bottom/right, then 1px
 
 ## 5. Laserwave (leaning synthwave)
 
-Darker and more sincere. Use when the ask is closer to outrun — but check
-first, since vaporwave proper is daylight.
+Darker and more sincere. Use when the ask is closer to outrun — but check first,
+since vaporwave proper is daylight.
 
 | role          | hex       |
 | ------------- | --------- |
@@ -86,13 +86,12 @@ paper/plastic the original would have faded onto:
 - Toward warm cream (`#F2E8D5`) for anything print, mall, or 1980s.
 - Toward cool grey-blue (`#D6DCE4`) for anything CRT, software, or corporate.
 
-In CSS, a `filter: saturate(0.7) sepia(0.15)` over a too-hot image gets most
-of the way there. In GLSL, mix toward the paper color rather than toward
-luminance.
+In CSS, a `filter: saturate(0.7) sepia(0.15)` over a too-hot image gets most of
+the way there. In GLSL, mix toward the paper color rather than toward luminance.
 
 ## Checking contrast
 
-Pastel-on-pastel is the aesthetic and also unreadable. For any text a user
-must actually read, keep 4.5:1 against its background and let the decorative
-type be the low-contrast layer. A pink `#FF71CE` on cyan `#01CDFE` looks
-correct and fails badly — reserve that combination for ornament.
+Pastel-on-pastel is the aesthetic and also unreadable. For any text a user must
+actually read, keep 4.5:1 against its background and let the decorative type be
+the low-contrast layer. A pink `#FF71CE` on cyan `#01CDFE` looks correct and
+fails badly — reserve that combination for ornament.

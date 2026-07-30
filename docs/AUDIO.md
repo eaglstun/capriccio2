@@ -18,10 +18,10 @@ The clever part is the modulation:
 lfo = oscillator(0.07 Hz) → gain(130) → bandpass.frequency
 ```
 
-An LFO at **0.07 Hz — one cycle every ~14 seconds** — sweeps the filter's
-centre frequency ±130 Hz around 480. The wind doesn't get louder and quieter;
-its _timbre_ moves, the way real wind changes colour as it gusts. Amplitude
-tremolo would have sounded like a fan.
+An LFO at **0.07 Hz — one cycle every ~14 seconds** — sweeps the filter's centre
+frequency ±130 Hz around 480. The wind doesn't get louder and quieter; its
+_timbre_ moves, the way real wind changes colour as it gusts. Amplitude tremolo
+would have sounded like a fan.
 
 `windGain = 0.04 + dusk × 0.035` — **the wind picks up at dusk.**
 
@@ -75,8 +75,8 @@ Fires when `Math.floor(hour)` changes, tracked by `lastBellHour`.
 Every 3.5–11.5 seconds, with an 80% chance, and **only while `dusk < 0.55`**:
 
 2–4 chirps at 2300–3900 Hz, 130 ms apart, each a 90 ms sine with a **−160 Hz
-downward slide**. The falling pitch is what makes it read as a bird rather
-than a beep.
+downward slide**. The falling pitch is what makes it read as a bird rather than
+a beep.
 
 The birds go quiet at dusk. Nobody will consciously notice this and everybody
 will feel it.
@@ -90,15 +90,15 @@ While anything is under construction, every 0.55–1.05 s:
   → bandpass(2400 + rand×1800 Hz, Q 6) → gain 0.1
 ```
 
-The centre frequency is re-randomised per strike, so repeated hits vary like
-a real tool on real stone. Recall that infill construction is capped at **2
+The centre frequency is re-randomised per strike, so repeated hits vary like a
+real tool on real stone. Recall that infill construction is capped at **2
 buildings at once** — so the chiselling stays sparse and legible rather than
 becoming a rattle.
 
 ## Why this matters
 
 Every element is tied to simulation state, not to a timeline: wind to dusk,
-water to distance, birds to time of day, chisels to whether the city is
-actively growing, bells to the clock. The ambience _is_ a readout of the game
-state. You could play with your eyes closed and still know roughly what time
-it is, whether you're near water, and whether anything is being built.
+water to distance, birds to time of day, chisels to whether the city is actively
+growing, bells to the clock. The ambience _is_ a readout of the game state. You
+could play with your eyes closed and still know roughly what time it is, whether
+you're near water, and whether anything is being built.

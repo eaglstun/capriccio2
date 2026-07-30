@@ -33,7 +33,7 @@ function rv(i) {
     [1, "I"],
   ] as const;
   let e = "";
-  for (const [n, s] of t) for (; i >= n; ) ((e += s), (i -= n));
+  for (const [n, s] of t) for (; i >= n;) ((e += s), (i -= n));
   return e || "I";
 }
 

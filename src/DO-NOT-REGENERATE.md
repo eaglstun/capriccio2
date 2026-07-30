@@ -19,5 +19,5 @@ while silently running regenerated code.
 
 The marker file `src/.hand-edited` makes the tool refuse. Do not delete it.
 
-If you need to re-derive the split (e.g. to compare against the original),
-do it on a branch that has no reskin, or into a different output directory.
+If you need to re-derive the split (e.g. to compare against the original), do it
+on a branch that has no reskin, or into a different output directory.

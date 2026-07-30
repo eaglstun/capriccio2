@@ -66,22 +66,21 @@ what makes it read as _diffusion_ rather than _screening_.
 512×342 screen; on a 1500px viewport, 2px cells are proportionally far finer
 than a real Mac. Try 3, look at it, decide.
 
-**A4. Keep the contrast curve.** `(dl - 0.5) * 1.45 + 0.56` is already doing
-the ¾-conservation blowout correctly. Do not touch it.
+**A4. Keep the contrast curve.** `(dl - 0.5) * 1.45 + 0.56` is already doing the
+¾-conservation blowout correctly. Do not touch it.
 
 ## What NOT to do
 
 - **No ping-pong error buffer.** It looks tempting and it is wrong: a fragment
-  shader resolves every pixel simultaneously against last frame's data, which
-  is a simultaneous relaxation, not a raster scan. It needs several static
-  frames to converge and this scene never holds still — citizens walk, neon
-  flickers, satellites cross, the tracking bar rolls. You would get permanent
-  smear.
+  shader resolves every pixel simultaneously against last frame's data, which is
+  a simultaneous relaxation, not a raster scan. It needs several static frames
+  to converge and this scene never holds still — citizens walk, neon flickers,
+  satellites cross, the tracking bar rolls. You would get permanent smear.
 - **Do not touch the plate dither.** `14-plates.js` runs true Atkinson on the
-  CPU and it is correct. **The realtime is an homage; the plates are the
-  genuine article.** That division is deliberate and it is the point: the world
-  you move through is rendered in a stylistic cousin, and the sixteen images
-  that survive are the real 1984 algorithm.
+  CPU and it is correct. **The realtime is an homage; the plates are the genuine
+  article.** That division is deliberate and it is the point: the world you move
+  through is rendered in a stylistic cousin, and the sixteen images that survive
+  are the real 1984 algorithm.
 
 ---
 
@@ -146,5 +145,5 @@ the ORIGINAL**, never `?fresh` on it.
 
 Report: what changed by file; which noise you used and why; bundle size;
 draws/tris; `CAP.status()` confirmed; screenshots — including a close crop of
-the dither so the change from Bayer is visible, and the outfall from the
-default camera.
+the dither so the change from Bayer is visible, and the outfall from the default
+camera.

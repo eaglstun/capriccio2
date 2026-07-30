@@ -6,7 +6,20 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DynamicDrawUsage as Lu, InstancedMesh, Mesh, Object3D, OctahedronGeometry, SphereGeometry, Vector3 } from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  ConeGeometry,
+  CylinderGeometry,
+  DynamicDrawUsage as Lu,
+  InstancedMesh,
+  Mesh,
+  Object3D,
+  OctahedronGeometry,
+  SphereGeometry,
+  Vector3,
+} from "three";
 import { hashString, r_, seededRng } from "./01-materials";
 import { Co } from "./06-infill";
 // --- end generated imports ---
@@ -50,7 +63,9 @@ class Citizens {
     // glow material, so it dims to a lamp at dusk like everything else lit —
     // findable once framed, not a quest beacon across the map.
     this.marker = new Mesh(new OctahedronGeometry(0.34, 0), t.glowMat);
-    ((this.marker.scale.y = 1.6), (this.marker.visible = !1), n.add(this.marker));
+    ((this.marker.scale.y = 1.6),
+      (this.marker.visible = !1),
+      n.add(this.marker));
     const s = t.mats.figure;
     this.meshes = [Po(0), Po(1), Po(2)].map((r) => {
       const o = new InstancedMesh(r, s, Co);
@@ -87,7 +102,8 @@ class Citizens {
       lk() < 0.06
         ? c.setHSL(0.07, 0.95, 0.58) // one hi-vis jacket in twenty
         : c.setHSL(
-            (hues[Math.floor(lk() * hues.length)] + (lk() - 0.5) * 0.06 + 1) % 1,
+            (hues[Math.floor(lk() * hues.length)] + (lk() - 0.5) * 0.06 + 1) %
+              1,
             0.18 + lk() * 0.5,
             0.26 + lk() * 0.4,
           );
@@ -259,7 +275,10 @@ class Citizens {
     {
       const standing = [];
       for (const c of this.agents)
-        c.active && c.path.length === 0 && c.state === "gather" && standing.push(c);
+        c.active &&
+          c.path.length === 0 &&
+          c.state === "gather" &&
+          standing.push(c);
       for (let i = 0; i < standing.length; i++) {
         const c = standing[i];
         if (talk.has(c)) continue;
@@ -376,7 +395,8 @@ class Citizens {
           Math.atan2(
             faceX - this.dummy.position.x,
             faceZ - this.dummy.position.z,
-          ) + Math.sin(c.bob * 0.6) * 0.07,
+          ) +
+            Math.sin(c.bob * 0.6) * 0.07,
           0,
         );
       else
@@ -583,7 +603,8 @@ function V_(i) {
 function Fl(i) {
   return gameState.folio
     ? !0
-    : gameState.res.stone >= i.stone && gameState.res.salvage >= (i.salvage || 0);
+    : gameState.res.stone >= i.stone &&
+        gameState.res.salvage >= (i.salvage || 0);
 }
 function W_(i) {
   gameState.folio ||

@@ -319,7 +319,8 @@ class Hud {
         this.qualBars.set(m, _.querySelector<HTMLElement>("i")));
     }
     ((t.querySelector<HTMLElement>("#undo").onclick = () => this.cb.onUndo()),
-      (t.querySelector<HTMLElement>("#folio-line").onclick = () => this.cb.onFolio()),
+      (t.querySelector<HTMLElement>("#folio-line").onclick = () =>
+        this.cb.onFolio()),
       // the panel is the affordance: click it and the camera goes to find
       // whoever is asking
       (this.requestEl.title = "find who is asking"),
@@ -356,7 +357,9 @@ class Hud {
     t.querySelector<HTMLElement>("#sec-flip").onclick = () => {
       ((u *= -1), this.cb.onSection({ flip: u }));
     };
-    for (const m of this.plateCtl.querySelectorAll<HTMLElement>("button[data-a]"))
+    for (const m of this.plateCtl.querySelectorAll<HTMLElement>(
+      "button[data-a]",
+    ))
       m.onclick = () => {
         (this.plateCtl
           .querySelectorAll<HTMLElement>("button[data-a]")
@@ -368,7 +371,8 @@ class Hud {
     d.oninput = () => this.cb.onPlate({ fov: Number(d.value) });
     const f = t.querySelector<HTMLInputElement>("#plate-hour");
     ((f.oninput = () => this.cb.onPlate({ hour: Number(f.value) })),
-      (t.querySelector<HTMLElement>("#plate-go").onclick = () => this.cb.onEngrave()),
+      (t.querySelector<HTMLElement>("#plate-go").onclick = () =>
+        this.cb.onEngrave()),
       (t.querySelector<HTMLElement>("#veil .begin").onclick = () => {
         ((this.veil.style.opacity = "0"),
           setTimeout(() => {
@@ -481,10 +485,17 @@ class Hud {
     (gameState.folio
       ? ((this.resStone.textContent = "∞"), (this.resSalvage.textContent = "∞"))
       : ((this.resStone.textContent = String(Math.floor(gameState.res.stone))),
-        (this.resSalvage.textContent = String(Math.floor(gameState.res.salvage)))),
+        (this.resSalvage.textContent = String(
+          Math.floor(gameState.res.salvage),
+        ))),
       (this.resFavor.textContent = String(Math.floor(gameState.res.favor))),
       (this.resPop.textContent = String(t)));
-    (this.setRate(this.resStoneRate, gameState.res.stone, STONE_RATE, STONE_CAP),
+    (this.setRate(
+      this.resStoneRate,
+      gameState.res.stone,
+      STONE_RATE,
+      STONE_CAP,
+    ),
       this.setRate(
         this.resSalvageRate,
         gameState.res.salvage,

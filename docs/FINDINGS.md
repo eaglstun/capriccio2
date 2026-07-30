@@ -19,16 +19,16 @@ for (const t of hn.actions)
   ...
 ```
 
-The city is _reconstructed by re-running every action the player ever took_,
-in order. This is event sourcing. Consequences worth noting:
+The city is _reconstructed by re-running every action the player ever took_, in
+order. This is event sourcing. Consequences worth noting:
 
 - The world is a pure function of the action log. Building placement must
   therefore be fully deterministic — no randomness in construction, or saves
   would load differently than they were built.
 - Save size grows with actions taken, not with city size.
 - There is no undo cost problem: truncating the log rebuilds an earlier city.
-- Any procedural content that _isn't_ derived from actions has to be
-  serialized separately — which is exactly what `infill` is.
+- Any procedural content that _isn't_ derived from actions has to be serialized
+  separately — which is exactly what `infill` is.
 
 ### Schema (serializer at line 28849)
 
@@ -50,10 +50,9 @@ Action objects carry a type discriminant `t` plus geometry, e.g. a `"wall"`
 action has `ax, az, bx, bz, th` (start, end, thickness) — seen at line 28986.
 
 **"Plates" and "folio" are Piranesi vocabulary.** Piranesi published etched
-_plates_ collected in _folios_. The `SAVE PLATE` UI string plus `plates`
-capped at 16 suggests the game lets you preserve views of your city as
-etchings. That is a genuinely elegant piece of theming and worth confirming in
-play.
+_plates_ collected in _folios_. The `SAVE PLATE` UI string plus `plates` capped
+at 16 suggests the game lets you preserve views of your city as etchings. That
+is a genuinely elegant piece of theming and worth confirming in play.
 
 ### Useful lever
 
@@ -136,8 +135,8 @@ Mollick described the game.
 
 `court` is described as "14 by 20 paces" but its footprint is `w:13, h:9`.
 `market` says "18 by 34" against `w:17, h:12`; `basilica` says "22 by 52"
-against `w:22, h:17`. The width figures are close (13→14, 17→18, 22→22) but
-the depth figures are off by more than 2x and not by a consistent ratio.
+against `w:22, h:17`. The width figures are close (13→14, 17→18, 22→22) but the
+depth figures are off by more than 2x and not by a consistent ratio.
 
 Possible explanations, none yet verified:
 

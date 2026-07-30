@@ -2,10 +2,10 @@
 
 The look lives in the damage layer. These are the effects, cheapest first.
 
-> These snippets are written from the standard techniques, not copy-pasted
-> from a running build in this repo. Treat them as sketches to adapt — check
-> uniform names and the `ShaderPass`/`EffectComposer` import paths against the
-> three.js version actually installed before assuming they compile.
+> These snippets are written from the standard techniques, not copy-pasted from
+> a running build in this repo. Treat them as sketches to adapt — check uniform
+> names and the `ShaderPass`/`EffectComposer` import paths against the three.js
+> version actually installed before assuming they compile.
 
 ## Cheap wins (CSS only)
 
@@ -52,8 +52,8 @@ Slower than you think is right.
 
 **VHS tracking wobble** — a keyframed `clip-path` band that sweeps down the
 element every 6–10 seconds, with a small `translateX` on the clipped copy. One
-glitch every several seconds reads as a worn tape; constant glitching reads as
-a broken website.
+glitch every several seconds reads as a worn tape; constant glitching reads as a
+broken website.
 
 ## GLSL fragment effects
 
@@ -94,8 +94,8 @@ float threshold = bayer[p.x][p.y] - 0.5;
 vec3 quantized = floor(col * levels + threshold) / levels;   // levels ~ 8.0
 ```
 
-Indexing a `mat4` with a non-constant expression needs GLSL ES 3.00 (WebGL2).
-On WebGL1 unroll it into a small `if` ladder or sample a 4×4 texture instead.
+Indexing a `mat4` with a non-constant expression needs GLSL ES 3.00 (WebGL2). On
+WebGL1 unroll it into a small `if` ladder or sample a 4×4 texture instead.
 
 **Fade toward paper** rather than desaturating to grey:
 
@@ -124,8 +124,8 @@ gl_Position = p;
 ```
 
 **3. Affine texture mapping** — the texture swim on floors and walls. Real
-hardware had no perspective correction, so kill it by doing the divide
-yourself and handing the rasterizer `w = 1.0`:
+hardware had no perspective correction, so kill it by doing the divide yourself
+and handing the rasterizer `w = 1.0`:
 
 ```glsl
 vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -137,27 +137,27 @@ gl_Position = p;
 Be aware of what this costs: with `w` forced to 1 you lose perspective-correct
 depth interpolation and correct near-plane clipping, so large polygons close to
 the camera will z-fight or clip wrong. It works best on small, heavily
-subdivided geometry — which is also what the original hardware ran. If the
-scene needs correct depth more than it needs the swim, skip this one and keep
-the other two.
+subdivided geometry — which is also what the original hardware ran. If the scene
+needs correct depth more than it needs the swim, skip this one and keep the
+other two.
 
 ## Scene setup for the mood
 
-- `scene.fog = new THREE.FogExp2(0x2b1055, 0.035)` — dense enough that the
-  grid dissolves before it reaches the horizon. Match the fog color to the
-  bottom of the sky gradient or the seam shows.
+- `scene.fog = new THREE.FogExp2(0x2b1055, 0.035)` — dense enough that the grid
+  dissolves before it reaches the horizon. Match the fog color to the bottom of
+  the sky gradient or the seam shows.
 - Ground: `GridHelper` with a bright line color on a dark plane, or a single
   large plane with the grid in the fragment shader (cheaper, and lets you fade
   the lines with distance to kill aliasing).
-- Materials: `MeshBasicMaterial`, or `MeshStandardMaterial` with `emissive`
-  set and almost no light in the scene. Correct lighting is the enemy.
-- Bloom: `UnrealBloomPass` with a **low** threshold (~0.2) so pastels bloom
-  too. High-threshold bloom only lights the neons and gives you synthwave.
+- Materials: `MeshBasicMaterial`, or `MeshStandardMaterial` with `emissive` set
+  and almost no light in the scene. Correct lighting is the enemy.
+- Bloom: `UnrealBloomPass` with a **low** threshold (~0.2) so pastels bloom too.
+  High-threshold bloom only lights the neons and gives you synthwave.
 - Sun: a circle with horizontal bands cut out — do it in the fragment shader
   with `step()` on `uv.y`, with the band gaps widening toward the bottom.
 
 ## Order of passes
 
 Render → bloom → chromatic aberration → dithering/quantize → scanlines →
-vignette. Scanlines want to be near-last so bloom doesn't smear them into
-mush, and the vignette last so it darkens everything uniformly.
+vignette. Scanlines want to be near-last so bloom doesn't smear them into mush,
+and the vignette last so it darkens everything uniformly.

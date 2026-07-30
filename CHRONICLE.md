@@ -40,9 +40,8 @@ Two limits were measured and neither is negotiable without new data:
 { t: "anchor", x: 20, z: 20, topY: 12, style: "pier", id: 1000 }
 ```
 
-No day, no hour. The log is an **ordering**, not a timeline. Without the
-enabler below, the Chronicle can say "the twenty-third thing you built" but not
-"day 4".
+No day, no hour. The log is an **ordering**, not a timeline. Without the enabler
+below, the Chronicle can say "the twenty-third thing you built" but not "day 4".
 
 **2. Infill is not in the action log.** The vernacular buildings and the
 citizens are serialized separately, and the order they actually grew in depended
@@ -59,8 +58,8 @@ not the history.
 This is backward-compatible in both directions and does not require a save
 version bump:
 
-- Old saves load fine — the field is simply absent, and the Chronicle falls
-  back to ordinal captions for those cities
+- Old saves load fine — the field is simply absent, and the Chronicle falls back
+  to ordinal captions for those cities
 - New saves load fine in older builds — an unknown field on an action object is
   ignored
 - `loadGame` gates only on the top-level `v`, which does not change
@@ -148,16 +147,17 @@ look at what you did.
 
 `pickPocket`, the five stat formulas (GRANDEUR having been changed in the
 previous phase), `applyAction` itself, the pocket model, catalogue `key` values,
-structure envelopes. `public/` never edited. Never run `split_bundle.py --write`;
-never delete `src/.hand-edited`. No shipped binary assets or runtime fetches.
+structure envelopes. `public/` never edited. Never run
+`split_bundle.py --write`; never delete `src/.hand-edited`. No shipped binary
+assets or runtime fetches.
 
 **The save format is no longer frozen** — nobody has played this, so there are
 no saves to protect. The `day`/`hour` stamping has already shipped; anything
 else the Chronicle needs from the save may simply be added.
 
 What has NOT changed is that `applyAction` and the pocket model must stay
-deterministic. That was never a compat constraint: the save is an action log,
-so non-deterministic replay means saving and reloading gives a different city.
+deterministic. That was never a compat constraint: the save is an action log, so
+non-deterministic replay means saving and reloading gives a different city.
 
 ---
 

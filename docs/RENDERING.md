@@ -2,91 +2,85 @@
 
 Source lines ~25400–25900 in the local pretty-printed bundle.
 
-> **This branch (`vaporwave`):** the machinery below is intact but
-> re-aimed at the end of humanity. What changed, in `src/00-shaders.js`:
+> **This branch (`vaporwave`):** the machinery below is intact but re-aimed at
+> the end of humanity. What changed, in `src/00-shaders.js`:
 >
-> - **Sky** — the paper sky became a perpetual sunset gradient with a
->   banded low sun, smog strata pooled on the horizon, a broken orbital
->   ring, and azimuth-hashed light shafts rising off the megastructure
->   line. The burin-line and cloud machinery survives underneath.
+> - **Sky** — the paper sky became a perpetual sunset gradient with a banded low
+>   sun, smog strata pooled on the horizon, a broken orbital ring, and
+>   azimuth-hashed light shafts rising off the megastructure line. The
+>   burin-line and cloud machinery survives underneath.
 > - **Masonry** — the wall-course branch now draws corporate panelling
 >   (staggered seams, vent slats, inspection plates, corner bolts) when
->   `uCourseH >= 0.95`, at panel sizes large enough not to read as
->   ashlar. Materials with `courseH < 0.95` (`stoneOld`) draw
->   **board-formed concrete** — shutter seams, form-tie holes on the
->   pour grid, pour-lift tonal banding. The Roman coursing is gone;
->   the ruins are ours now. The only remaining token of deep antiquity
->   is deliberate spolia: one column embedded near the plaza edge, and
->   roughly one rubble drum in ten (`Pa`).
-> - **Ruin geometry** (pass 3) — arches keep their silhouette but shed
->   the Roman dressing: no imposts, no keystone; flat bearing pads, a
->   service conduit over the crown, and bent rebar standing proud of
->   every spalled break (`Hn`). Vault ribs became flat pour-joint bands.
->   Column anchors became stacks with a service deck and a lit aerial.
-> - **Scenery** (pass 3, all scene-only, never in `structGroup`):
->   benched landfill mounds with gull orbits, seven billboards still
->   advertising via a runtime `CanvasTexture` atlas (zero shipped
->   bytes), trash-can fires flickered by `world.sceneTick`, wrecked
->   cars, containers, trolleys, pallets, fencing that ends in nothing.
-> - **Citizens** — per-instance clothing colour (`setColorAt`) and
->   build (non-uniform instance scale), derived deterministically from
->   the agent index; the figure base material is near-white so the
->   instance colours carry.
+>   `uCourseH >= 0.95`, at panel sizes large enough not to read as ashlar.
+>   Materials with `courseH < 0.95` (`stoneOld`) draw **board-formed concrete**
+>   — shutter seams, form-tie holes on the pour grid, pour-lift tonal banding.
+>   The Roman coursing is gone; the ruins are ours now. The only remaining token
+>   of deep antiquity is deliberate spolia: one column embedded near the plaza
+>   edge, and roughly one rubble drum in ten (`Pa`).
+> - **Ruin geometry** (pass 3) — arches keep their silhouette but shed the Roman
+>   dressing: no imposts, no keystone; flat bearing pads, a service conduit over
+>   the crown, and bent rebar standing proud of every spalled break (`Hn`).
+>   Vault ribs became flat pour-joint bands. Column anchors became stacks with a
+>   service deck and a lit aerial.
+> - **Scenery** (pass 3, all scene-only, never in `structGroup`): benched
+>   landfill mounds with gull orbits, seven billboards still advertising via a
+>   runtime `CanvasTexture` atlas (zero shipped bytes), trash-can fires
+>   flickered by `world.sceneTick`, wrecked cars, containers, trolleys, pallets,
+>   fencing that ends in nothing.
+> - **Citizens** — per-instance clothing colour (`setColorAt`) and build
+>   (non-uniform instance scale), derived deterministically from the agent
+>   index; the figure base material is near-white so the instance colours carry.
 > - **Ink outlines** became neon rim light: hot pink near, cyan far.
 > - **Paper grain** became CRT scanlines plus chroma wobble, with a new
->   `uTime`-driven VHS tracking bar (rolling displacement + chroma tear;
->   every depth/colour read follows the displaced uv so the tear is whole).
-> - **New in the post pass:** an 8-tap two-ring neon bloom keyed on
->   luminance _and_ saturation (paper never blooms, neon does), and a
->   graded haze that reconstructs world height and drowns the low city
->   in smog colour.
+>   `uTime`-driven VHS tracking bar (rolling displacement + chroma tear; every
+>   depth/colour read follows the displaced uv so the tear is whole).
+> - **New in the post pass:** an 8-tap two-ring neon bloom keyed on luminance
+>   _and_ saturation (paper never blooms, neon does), and a graded haze that
+>   reconstructs world height and drowns the low city in smog colour.
 > - **Palette now:** post `paper #e9b8d6`, `ink #ff3fae`; material
->   `uInkCol #2b1a52`; stone family in `01-materials.js` is pastel
->   violet/teal. The triplanar hatching is unchanged — it is what keeps
->   this looking hand-made rather than filtered.
+>   `uInkCol #2b1a52`; stone family in `01-materials.js` is pastel violet/teal.
+>   The triplanar hatching is unchanged — it is what keeps this looking
+>   hand-made rather than filtered.
 > - The megastructure skyline itself is geometry, not sky: three merged
->   scene-only meshes built at the end of `C_` in `src/05-world.js` from
->   a fixed seed, never added to `structGroup`, so raycasting and
->   gameplay cannot see it.
-> - **Competing styles** (pass 4) — style is period, and four periods
->   now argue over the frame with hard edges:
+>   scene-only meshes built at the end of `C_` in `src/05-world.js` from a fixed
+>   seed, never added to `structGroup`, so raycasting and gameplay cannot see
+>   it.
+> - **Competing styles** (pass 4) — style is period, and four periods now argue
+>   over the frame with hard edges:
 >   - _c.1750_: the triplanar burin hatching, still on all old fabric
->     (board-formed concrete `stoneOld`, `rock`, ground). `salvage`
->     (A14, formerly `timber`) is hatched too but wears the corporate
->     panel seams (`courseH >= 0.95`) — dismantled sheet, drawn in the
->     old manner.
->   - _1984_: materials flagged `dither` (`stone` — the corporate
->     panelling fabric — and `distant`, the megastructure skyline)
->     quantize their engraved output to 1-bit against a **64×64
->     blue-noise threshold texture** (void-and-cluster, generated at
->     load in ~50ms — deterministic, tiles on the torus, 4096 levels,
->     zero shipped bytes) with an Atkinson-shaped contrast curve
->     (highlights blow, shadows crush). The threshold is biased toward
->     the mid wherever luminance is changing (`fwidth`), so clusters
->     bunch along edges the way error diffusion does. Cell size is held
->     at ~3 screen px by `engravingUniforms.uPxScale` so the
->     supersampled downscale can't grey it out. The fabric boundary is
->     the style boundary. This is still a screen, not true Atkinson — a
->     fragment shader cannot run sequential error diffusion honestly —
->     but it now has Atkinson's aperiodic clusters and edge behaviour
->     instead of a repeating Bayer lattice.
->   - _1984 for real_: PLATE captures run **true Atkinson error
->     diffusion** on the CPU in `src/14-plates.js` (1/8 of the error to
->     six neighbours, 2/8 discarded) — the still is rendered once at
->     2000px, so the sequential algorithm applies honestly. Plates are
->     now 1-bit ink `#2b1a52` on paper `#f6e0ef`.
->   - _1990_: the VHS tracking bar now switches styles as well as
->     displacing pixels — inside the gated band the finished frame
->     re-quantizes to a hard-edged 1-bit dithered strip (post pass,
->     `STYLE SLAB` block); neon bloom and scanlines stay "now".
+>     (board-formed concrete `stoneOld`, `rock`, ground). `salvage` (A14,
+>     formerly `timber`) is hatched too but wears the corporate panel seams
+>     (`courseH >= 0.95`) — dismantled sheet, drawn in the old manner.
+>   - _1984_: materials flagged `dither` (`stone` — the corporate panelling
+>     fabric — and `distant`, the megastructure skyline) quantize their engraved
+>     output to 1-bit against a **64×64 blue-noise threshold texture**
+>     (void-and-cluster, generated at load in ~50ms — deterministic, tiles on
+>     the torus, 4096 levels, zero shipped bytes) with an Atkinson-shaped
+>     contrast curve (highlights blow, shadows crush). The threshold is biased
+>     toward the mid wherever luminance is changing (`fwidth`), so clusters
+>     bunch along edges the way error diffusion does. Cell size is held at ~3
+>     screen px by `engravingUniforms.uPxScale` so the supersampled downscale
+>     can't grey it out. The fabric boundary is the style boundary. This is
+>     still a screen, not true Atkinson — a fragment shader cannot run
+>     sequential error diffusion honestly — but it now has Atkinson's aperiodic
+>     clusters and edge behaviour instead of a repeating Bayer lattice.
+>   - _1984 for real_: PLATE captures run **true Atkinson error diffusion** on
+>     the CPU in `src/14-plates.js` (1/8 of the error to six neighbours, 2/8
+>     discarded) — the still is rendered once at 2000px, so the sequential
+>     algorithm applies honestly. Plates are now 1-bit ink `#2b1a52` on paper
+>     `#f6e0ef`.
+>   - _1990_: the VHS tracking bar now switches styles as well as displacing
+>     pixels — inside the gated band the finished frame re-quantizes to a
+>     hard-edged 1-bit dithered strip (post pass, `STYLE SLAB` block); neon
+>     bloom and scanlines stay "now".
 >
-> The prose below describes the original engraving and is kept as the
-> reference for what the machinery was built to do.
+> The prose below describes the original engraving and is kept as the reference
+> for what the machinery was built to do.
 
 **The GLSL is the most readable code in the entire artifact.** Shaders live in
-template strings, and minifiers do not strip comments _inside_ strings — so
-the original author's comments survive verbatim. This is the only place in
-662KB where you can read intent in the writer's own words:
+template strings, and minifiers do not strip comments _inside_ strings — so the
+original author's comments survive verbatim. This is the only place in 662KB
+where you can read intent in the writer's own words:
 
 > `// distance-adaptive hatching: line spacing tracks viewing distance in powers`
 > `// of two (crossfaded like mip levels) so strokes stay engraving-fine up close`
@@ -102,17 +96,17 @@ and the split between them is the point:
 | **material hook** | world space  | the hatching and masonry — locked to the stone                    |
 | **post pass**     | screen space | sky, ink outlines, paper grain, vignette — locked to the viewport |
 
-That mirrors a real print: the engraved image is _in_ the plate, while the
-tooth of the paper and the plate's edge belong to the sheet you're holding.
+That mirrors a real print: the engraved image is _in_ the plate, while the tooth
+of the paper and the plate's edge belong to the sheet you're holding.
 
 ### The hatching specifically is not a filter
 
 The obvious way to fake an etching is to do the whole thing in screen space.
 This does not do that, and the difference is the whole reason it holds up.
 
-The hatching is **injected into three.js's own standard material** — the
-vertex chunk begins `#include <fog_vertex>`, meaning it patches the built-in
-shader rather than replacing it. The injected code computes:
+The hatching is **injected into three.js's own standard material** — the vertex
+chunk begins `#include <fog_vertex>`, meaning it patches the built-in shader
+rather than replacing it. The injected code computes:
 
 ```glsl
 vWorldPosE    // world-space position
@@ -138,8 +132,8 @@ float hatchTri(vec3 wp, vec3 aw, vec2 dir, ...) {
 ```
 
 Hatch lines are projected on all three world planes and blended by the squared
-normal (`aw`), so any surface at any angle gets clean strokes with no UVs and
-no seams. Standard triplanar mapping, applied to line work.
+normal (`aw`), so any surface at any angle gets clean strokes with no UVs and no
+seams. Standard triplanar mapping, applied to line work.
 
 `hatchLine` adds noise to the coordinate before rasterizing:
 
@@ -152,14 +146,13 @@ hatching reads as machine-made; the wobble reads as a burin in a human hand.
 
 ## Distance-adaptive stroke density
 
-`hatchAdaptive` evaluates the hatch at two frequencies (`lvA`, `lvB`, powers
-of two apart) and crossfades between them by `lf` — mip-mapping, done manually
-for line density. Strokes stay fine when you are close and remain visible when
-you are far, without the moiré that fixed-frequency hatching produces at
-distance.
+`hatchAdaptive` evaluates the hatch at two frequencies (`lvA`, `lvB`, powers of
+two apart) and crossfades between them by `lf` — mip-mapping, done manually for
+line density. Strokes stay fine when you are close and remain visible when you
+are far, without the moiré that fixed-frequency hatching produces at distance.
 
-This is the detail that separates it from a shader-toy effect. Somebody
-thought about what happens when you zoom.
+This is the detail that separates it from a shader-toy effect. Somebody thought
+about what happens when you zoom.
 
 ## Masonry — three cases by normal
 
@@ -172,8 +165,8 @@ thought about what happens when you zoom.
 | walls                                 | horizontal courses at `uCourseH`, with per-block tone                                                                                                         |
 
 `blockTone` is driven by `eHash21(floor(co / g))` — a hash per block — so every
-individual stone carries slightly different tone. That is why the walls read
-as _masonry_ rather than as a tiled texture.
+individual stone carries slightly different tone. That is why the walls read as
+_masonry_ rather than as a tiled texture.
 
 ## Lighting is hand-reconstructed for the ink
 
@@ -185,9 +178,9 @@ uAmbSky  = hemi.intensity * lum(hemi.color)   / π
 uAmbGround = hemi.intensity * lum(hemi.groundColor) / π
 ```
 
-The scene's real lights are collapsed to **scalar luminance**, π-normalized,
-and fed to the hatcher. Colour is discarded on purpose: an engraving has one
-ink. Light level chooses hatch _density_, not hue.
+The scene's real lights are collapsed to **scalar luminance**, π-normalized, and
+fed to the hatcher. Colour is discarded on purpose: an engraving has one ink.
+Light level chooses hatch _density_, not hue.
 
 ## Palette
 
@@ -200,8 +193,8 @@ ink. Light level chooses hatch _density_, not hue.
 
 The renderer clears to the paper colour and the sky _is_ the paper —
 `vec3 sky = uPaper;` — with a comment noting that dusk "warms and darkens the
-paper sky a touch near the sun's side." The illusion is that you are looking
-at a sheet, not through a window.
+paper sky a touch near the sun's side." The illusion is that you are looking at
+a sheet, not through a window.
 
 Other uniforms: `uCutting` (engaged during CARVE), `uDebugView`.
 
@@ -232,8 +225,7 @@ scene's exp2 fog, so ink and atmosphere dissolve on the same curve.
 ### PAPER
 
 > `// grain: two frequencies of static screen-space tooth`
-> `// slight warm paper tint multiply + dusk warmth`
-> `// vignette`
+> `// slight warm paper tint multiply + dusk warmth` `// vignette`
 
 Two octaves of grain, a warm tint multiply, and a vignette. **Static** screen
 space is the operative word — the grain belongs to the sheet, not the scene.
@@ -258,13 +250,13 @@ There is also a **section poché** path:
 
 > `// section poché: interior of cut solids reads as dark diagonal-lined mass`
 
-That is SECTION mode — the drafting convention where a cut through solid
-matter is filled with dark diagonal hatching.
+That is SECTION mode — the drafting convention where a cut through solid matter
+is filled with dark diagonal hatching.
 
 ## Cost
 
 `CAP.status()` reported **23 draw calls / 557,878 triangles** on a
-132-population city — a cheap frame for what it produces. The material hook
-adds only noise lookups to the existing standard-material shading; the post
-pass is a single full-screen pass doing sky, edges, and paper together rather
-than a stack of separate effects.
+132-population city — a cheap frame for what it produces. The material hook adds
+only noise lookups to the existing standard-material shading; the post pass is a
+single full-screen pass doing sky, edges, and paper together rather than a stack
+of separate effects.

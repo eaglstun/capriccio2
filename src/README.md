@@ -2,10 +2,10 @@
 
 > **This tree is TypeScript.** Every module is `.ts`, checked by
 > `yarn typecheck` (`tsc --noEmit`, currently **0 errors**) and transpiled by
-> esbuild inside Vite. Much of the history below describes the `.js` tree it
-> was converted from; that history is still true of how the code got here, but
-> the filenames in it are one extension out of date. See
-> **"The TypeScript conversion"** near the bottom.
+> esbuild inside Vite. Much of the history below describes the `.js` tree it was
+> converted from; that history is still true of how the code got here, but the
+> filenames in it are one extension out of date. See **"The TypeScript
+> conversion"** near the bottom.
 
 ## What this is
 
@@ -18,19 +18,20 @@ order. What IS applied, all of it mechanically and all of it undoable:
 - one relocation to `_hoisted.js` (see below)
 
 `split_bundle.py` verifies by undoing all three and requiring the result to be
-**byte-identical** to the original app section. That is what makes editing
-code nobody can read safe: "looks right" becomes "provably the same program".
+**byte-identical** to the original app section. That is what makes editing code
+nobody can read safe: "looks right" becomes "provably the same program".
 
-**That reversibility is historical now — do not try to use it.** Two things
-have broken it, in order: the vaporwave reskin hand-edited `00`–`17` (see
+**That reversibility is historical now — do not try to use it.** Two things have
+broken it, in order: the vaporwave reskin hand-edited `00`–`17` (see
 `DO-NOT-REGENERATE.md`), and the TypeScript conversion renamed every module and
-added type annotations the splitter cannot emit. `split_bundle.py --write`
-would overwrite the entire tree with regenerated JavaScript. The marker file
+added type annotations the splitter cannot emit. `split_bundle.py --write` would
+overwrite the entire tree with regenerated JavaScript. The marker file
 `src/.hand-edited` makes it refuse; leave it there.
 
-Historically the tool failed loudly rather than silently producing garbage: it verified that
-concatenating these files in `manifest.json` order reproduces the original app
-section **byte for byte**, and it aborts if any anchor stops matching.
+Historically the tool failed loudly rather than silently producing garbage: it
+verified that concatenating these files in `manifest.json` order reproduces the
+original app section **byte for byte**, and it aborts if any anchor stops
+matching.
 
 ## It builds, and it runs
 
@@ -67,8 +68,9 @@ divergence here is now expected rather than a symptom.
 
 More importantly the figure is **not stable between samples**. Draw calls are
 counted after frustum culling, so they move with the camera. Three fresh cities,
-each with zero player actions, measured 146, 150 and 179 draws at 597,742–599,210
-triangles. It cannot be an equality check against a single number.
+each with zero player actions, measured 146, 150 and 179 draws at
+597,742–599,210 triangles. It cannot be an equality check against a single
+number.
 
 The `96 / 561,016` in the original column is left as recorded when it was taken;
 it has not been re-measured against `public/`. The rows that _are_ stable —
@@ -103,10 +105,10 @@ graph, so `...yt` survived while every other `yt` became `gameState`, and
 
 ### The cycle, and `_hoisted.js`
 
-In one flat scope a `function` declaration is hoisted, so a caller can sit
-above it. Split into modules that becomes a forward import — and because
-bootstrap constructs `new Hud(...)`, hud importing `rv` from bootstrap made a
-real cycle. Rollup evaluated bootstrap first and the game died with
+In one flat scope a `function` declaration is hoisted, so a caller can sit above
+it. Split into modules that becomes a forward import — and because bootstrap
+constructs `new Hud(...)`, hud importing `rv` from bootstrap made a real cycle.
+Rollup evaluated bootstrap first and the game died with
 `Cannot access 'Hud' before initialization`.
 
 `rv` is therefore relocated to `_hoisted.js`, reproducing the hoisting the
@@ -116,8 +118,8 @@ by the integrity check**, so byte-identity with the original still holds.
 ## The split
 
 Vendor (three.js r180 + OrbitControls) occupies bundle lines 1–25400 and is
-deliberately **not** included here — it is a dependency, not source. The app
-is lines 25401–30968: 174KB, 5,568 lines, 186 top-level statements.
+deliberately **not** included here — it is a dependency, not source. The app is
+lines 25401–30968: 174KB, 5,568 lines, 186 top-level statements.
 
 | file              | lines | what                                                          |
 | ----------------- | ----- | ------------------------------------------------------------- |
@@ -142,21 +144,21 @@ is lines 25401–30968: 174KB, 5,568 lines, 186 top-level statements.
 
 ## How the boundaries were chosen
 
-Not by heuristics. `tools/split_bundle.py` holds an explicit `ANCHORS` list —
-a regex per section matched against the **first line** of a top-level
-statement. Each anchor opens a section; following statements join it until the
-next anchor. The list is a reviewable claim about the code rather than a
-guess, and if the bundle ever changes, unmatched anchors abort the run.
+Not by heuristics. `tools/split_bundle.py` holds an explicit `ANCHORS` list — a
+regex per section matched against the **first line** of a top-level statement.
+Each anchor opens a section; following statements join it until the next anchor.
+The list is a reviewable claim about the code rather than a guess, and if the
+bundle ever changes, unmatched anchors abort the run.
 
 Two things the splitter has to get right:
 
 1. **GLSL lives in template literals and its lines start at column 0.** Naive
-   "top-level statements start at column 0" detection cuts straight through
-   the shaders. The scanner tracks string, template (including `${}`) and
-   comment state.
-2. **The seam.** `const j0 = \`` at line 25401 is the first app declaration —
-   a fullscreen-quad vertex shader. Everything above it is OrbitControls
-   pointer handlers and three.js.
+   "top-level statements start at column 0" detection cuts straight through the
+   shaders. The scanner tracks string, template (including `${}`) and comment
+   state.
+2. **The seam.** `const j0 = \`` at line 25401 is the first app declaration — a
+   fullscreen-quad vertex shader. Everything above it is OrbitControls pointer
+   handlers and three.js.
 
 ## Reading order
 
@@ -166,18 +168,18 @@ comments survived minification (see `../docs/COMMENTS.md`).
 
 ## Next steps
 
-Steps 1–4 are done: vendor mapped, symbols renamed, modules emitted, build
-green and behaviourally identical. What remains is quality, not correctness:
+Steps 1–4 are done: vendor mapped, symbols renamed, modules emitted, build green
+and behaviourally identical. What remains is quality, not correctness:
 
-1. **Rename locals.** The top-level surface is named but method bodies are
-   still `t`/`e`/`n`. This needs real per-function scope analysis — a parser,
-   not a regex. Biggest readability win left by far.
-2. ~~**Rewrite class fields.**~~ **Done.** All 137 `defineField(this, ...)`
-   call sites (not 124 — the old count was low) across 15 classes are real
-   class fields. `_runtime.ts` is unreferenced and can be deleted whenever
-   someone is comfortable doing it.
-3. **Fold `_hoisted.js` back** once `16-hud` and `17-bootstrap` no longer form
-   a cycle — likely after bootstrap is split into declarations and init.
+1. **Rename locals.** The top-level surface is named but method bodies are still
+   `t`/`e`/`n`. This needs real per-function scope analysis — a parser, not a
+   regex. Biggest readability win left by far.
+2. ~~**Rewrite class fields.**~~ **Done.** All 137 `defineField(this, ...)` call
+   sites (not 124 — the old count was low) across 15 classes are real class
+   fields. `_runtime.ts` is unreferenced and can be deleted whenever someone is
+   comfortable doing it.
+3. **Fold `_hoisted.js` back** once `16-hud` and `17-bootstrap` no longer form a
+   cycle — likely after bootstrap is split into declarations and init.
 4. **Rename the remaining ~79 top-level symbols**, including the 14 shadowed
    ones (each needs manual verification).
 5. **Behavioural diffing beyond fresh state** — replay an action log through
@@ -194,31 +196,31 @@ real TypeScript and pick up three.js's types for free, not to annotate 10,000
 lines of extracted bundle code. Turning those flags on, module by module, is
 phase 2. **Do not add annotations to satisfy a flag that is still off.**
 
-**Class fields were the whole job.** 849 of the initial errors were one
-problem: TypeScript cannot see a property installed by `Object.defineProperty`,
-which is what the `defineField` shim did, so every read of one was an error.
-Converting the 137 call sites to real fields took it to 151 in a single pass.
-`useDefineForClassFields: true` makes that a semantics-preserving change — it
-is `[[Define]]`, exactly what the shim did.
+**Class fields were the whole job.** 849 of the initial errors were one problem:
+TypeScript cannot see a property installed by `Object.defineProperty`, which is
+what the `defineField` shim did, so every read of one was an error. Converting
+the 137 call sites to real fields took it to 151 in a single pass.
+`useDefineForClassFields: true` makes that a semantics-preserving change — it is
+`[[Define]]`, exactly what the shim did.
 
 Three fields use `declare` rather than a plain declaration — `World.sceneTick`,
-`Citizens.look`, `Soundscape.bellShaper`. Those were never `defineField`ed;
-they are assigned lazily and did not exist as own properties before first
-assignment. `declare` emits nothing, so that stays true. **Do not "tidy" them
-into ordinary fields** — that would newly define them as `undefined`.
+`Citizens.look`, `Soundscape.bellShaper`. Those were never `defineField`ed; they
+are assigned lazily and did not exist as own properties before first assignment.
+`declare` emits nothing, so that stays true. **Do not "tidy" them into ordinary
+fields** — that would newly define them as `undefined`.
 
 **Two named types carry real contracts.** `StructureParts` in `03-geometry`
 (what every builder returns; `anchorTop` is optional because only anchors set
-it, which is why the world module tests for it) and `PlacedAction` in
-`11-tools` (the record a placement commits — the shape the save stores). The
-per-tool action union is genuinely a discriminated union on `t` and is left
-open; writing it out is phase-2 work.
+it, which is why the world module tests for it) and `PlacedAction` in `11-tools`
+(the record a placement commits — the shape the save stores). The per-tool
+action union is genuinely a discriminated union on `t` and is left open; writing
+it out is phase-2 work.
 
 ### Verified against the pre-conversion build
 
-Not "it looked fine". The `main` build and the TypeScript build were both
-loaded with the same 1,941-byte save on separate origins, and driven through
-the same sequence — load, place a pier, undo:
+Not "it looked fine". The `main` build and the TypeScript build were both loaded
+with the same 1,941-byte save on separate origins, and driven through the same
+sequence — load, place a pier, undo:
 
 |            | main (pre-conversion) | typescript         |
 | ---------- | --------------------- | ------------------ |

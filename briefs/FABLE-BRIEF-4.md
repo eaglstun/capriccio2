@@ -17,8 +17,8 @@ while the city is building. It is a good bed and it never develops.
 **Nothing percussive for the first ~30s.** The pads establish alone, exactly as
 now. Then drums arrive and the piece has a second act.
 
-Use the arrangement vocabulary from `~/.claude/skills/guitar/formats/drums.md`
-— bass drum, snare, hi-hats, ride, floor toms, crash, fills; subdivisions on
+Use the arrangement vocabulary from `~/.claude/skills/guitar/formats/drums.md` —
+bass drum, snare, hi-hats, ride, floor toms, crash, fills; subdivisions on
 quarters / eighths / sixteenths; `half-time` as an annotation. Suggested shape,
 not a script:
 
@@ -50,9 +50,9 @@ From the reference, the techniques that will earn the most here:
 - **add9** — the 9th without a 7th. Warmth without jazz weight, and it stacks
   cleanly under a beat. `Fadd9`, `Cadd9`.
 - **Modal interchange** — a **D major** where the diatonic chord would be Dm
-  borrows from A Dorian. One bright chord in a minor key is the most
-  emotionally effective single move available to you here, and vaporwave
-  lives on exactly that kind of unearned major lift. Use it **once**, late.
+  borrows from A Dorian. One bright chord in a minor key is the most emotionally
+  effective single move available to you here, and vaporwave lives on exactly
+  that kind of unearned major lift. Use it **once**, late.
 
 Vary the loop across the build rather than adding chords everywhere: bars 1–8
 plain, 9–16 with suspensions, later passes with the borrowed major. **The
@@ -65,8 +65,8 @@ Build by **adding voices**, not by turning things up:
 - a slow counter-melody, one note per bar, high and thin
 - an octave-doubled pad an octave down as the drums arrive, for weight
 - light detuned unison on the lead pad only after the second section
-- keep the construction arpeggio doing its existing job — it is bound to the
-  sim and must stay bound
+- keep the construction arpeggio doing its existing job — it is bound to the sim
+  and must stay bound
 
 Still **synthesized only** — no `samples()`, no fetches. The existing sound
 effects (wind, drones, bell, chisels) are a separate system; do not touch their
@@ -96,16 +96,16 @@ arbitrate between all four.** The rendering technique becomes the timeline.
 
 ## B2. Atkinson dithering — and the honest constraint
 
-Atkinson is **error diffusion**: each pixel pushes 1/8 of its quantisation
-error to six neighbours, and _discards the remaining 2/8_. That discard is why
-it blows out highlights and crushes shadows — it is the signature.
+Atkinson is **error diffusion**: each pixel pushes 1/8 of its quantisation error
+to six neighbours, and _discards the remaining 2/8_. That discard is why it
+blows out highlights and crushes shadows — it is the signature.
 
-**It is sequential, so a fragment shader cannot do it properly.** Do not
-pretend otherwise. Options, in the order I would try them:
+**It is sequential, so a fragment shader cannot do it properly.** Do not pretend
+otherwise. Options, in the order I would try them:
 
 1. **Ordered dither with an Atkinson-shaped response.** Bayer or blue-noise
-   threshold — parallel, one cheap pass — with the contrast curve tuned to
-   mimic the 6/8 error retention. Not Atkinson; reads as Atkinson.
+   threshold — parallel, one cheap pass — with the contrast curve tuned to mimic
+   the 6/8 error retention. Not Atkinson; reads as Atkinson.
 2. **True Atkinson on the PLATE captures.** Plates are stills rendered once at
    2000px, so the real algorithm can run honestly on the CPU there. The
    engraver's plate becomes a 1-bit dithered plate. **This is the best fit in
@@ -116,8 +116,8 @@ Say which you used. Do not claim true Atkinson if you shipped ordered dither.
 
 ## B3. Arbitration — hard edges, and meaning
 
-Maximalism dies without crisp boundaries. Four styles cross-faded is mush;
-four styles with sharp edges is deliberate collage. Prefer, in order:
+Maximalism dies without crisp boundaries. Four styles cross-faded is mush; four
+styles with sharp edges is deliberate collage. Prefer, in order:
 
 1. **By fabric.** `uCourseH` already separates first-era material from
    end-of-humanity material — the rule you invented in pass 2. Render the old
@@ -143,6 +143,6 @@ binary assets or runtime fetches (runtime canvases are fine). No hand-renaming.
 Verify after each block: `yarn build` green; fresh game reports **24 structures,
 48 pockets, 1331 navNodes, 46 pop, kinds 12/34/1/1**. Report draws/tris.
 
-**Listen to the music before claiming it works** — a Strudel pattern that
-throws at scheduler time fails silently to the eye. And do not claim it renders
-if you have not looked at it.
+**Listen to the music before claiming it works** — a Strudel pattern that throws
+at scheduler time fails silently to the eye. And do not claim it renders if you
+have not looked at it.

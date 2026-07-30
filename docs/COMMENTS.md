@@ -1,16 +1,16 @@
 # Every comment that survived the build
 
 The bundle was minified, which strips comments — but **not comments inside
-string literals**. CAPRICCIO's GLSL lives in JS template strings, so the
-shader comments came through untouched.
+string literals**. CAPRICCIO's GLSL lives in JS template strings, so the shader
+comments came through untouched.
 
 43 comment lines survive in 662KB. Ten belong to three.js. Two are false
 positives. **Thirty-one are the game's own** — and thirty of those are in the
 shaders.
 
-This is the only place in the entire artifact where intent is stated rather
-than inferred. Everything else in this repo's documentation is reverse-
-engineered; this file is quotation.
+This is the only place in the entire artifact where intent is stated rather than
+inferred. Everything else in this repo's documentation is reverse- engineered;
+this file is quotation.
 
 Line numbers refer to the local pretty-printed bundle.
 
@@ -24,9 +24,9 @@ Line numbers refer to the local pretty-printed bundle.
 // dusk warms and darkens the paper sky a touch near the sun's side
 ```
 
-The sky is _hatched_, not shaded — horizontal burin strokes that thicken
-toward the horizon. A **burin** is the lozenge-tipped steel tool an engraver
-pushes through copper.
+The sky is _hatched_, not shaded — horizontal burin strokes that thicken toward
+the horizon. A **burin** is the lozenge-tipped steel tool an engraver pushes
+through copper.
 
 ## Ink outlines (25488–25525)
 
@@ -56,10 +56,10 @@ graphics word.
 // vignette
 ```
 
-**Tooth** is the papermaker's word for a sheet's surface texture — the
-roughness that holds ink. Note _static_ screen-space: the grain is fixed to
-the viewport, like looking at a physical print, while the hatching underneath
-is locked to world space. Two different frames of reference, deliberately.
+**Tooth** is the papermaker's word for a sheet's surface texture — the roughness
+that holds ink. Note _static_ screen-space: the grain is fixed to the viewport,
+like looking at a physical print, while the hatching underneath is locked to
+world space. Two different frames of reference, deliberately.
 
 ## Hatching (25767–25789)
 
@@ -71,9 +71,9 @@ is locked to world space. Two different frames of reference, deliberately.
 // and remain visible far away — while staying anchored to the stone
 ```
 
-The most technically substantial comment in the bundle, and it states the
-whole thesis: fine up close, visible far away, **anchored to the stone**. That
-last clause is the difference between an engraving and a filter.
+The most technically substantial comment in the bundle, and it states the whole
+thesis: fine up close, visible far away, **anchored to the stone**. That last
+clause is the difference between an engraving and a filter.
 
 "Hand-cut waviness" is one line of noise added to the hatch coordinate. It is
 the difference between a machine ruling and a person cutting.
@@ -90,9 +90,8 @@ the difference between a machine ruling and a person cutting.
 ```
 
 Three surface treatments by normal. Note the restraint in _"where the ground
-genuinely tilts (strata edges only)"_ — contour lines everywhere would read as
-a topographic map; contour lines only on real slopes read as geological
-strata.
+genuinely tilts (strata edges only)"_ — contour lines everywhere would read as a
+topographic map; contour lines only on real slopes read as geological strata.
 
 ## Light and shade (25853–25901)
 
@@ -125,8 +124,8 @@ That comment is the SECTION mode, and it is named correctly.
 // stack: modes row sits above the full-width scrollable palette
 ```
 
-A note about HUD layout. The lone survivor outside the shaders, and it is
-about a flexbox.
+A note about HUD layout. The lone survivor outside the shaders, and it is about
+a flexbox.
 
 ---
 
@@ -137,14 +136,14 @@ Across thirty-one comments the working vocabulary is:
 > burin · tooth · intrados · poché · strata · courses · patchwork · moiré ·
 > hand-cut · flecks · haze
 
-That is the register of a printmaker and an architectural draughtsman, not of
-a graphics programmer. Someone reasoning about copper, paper and stone, and
-using shaders as the means.
+That is the register of a printmaker and an architectural draughtsman, not of a
+graphics programmer. Someone reasoning about copper, paper and stone, and using
+shaders as the means.
 
-Worth remembering what these are: **the comments a model wrote to itself**
-while building this. Nobody was going to read them. They were stripped from
-every other file in the bundle and survived here only by the accident of
-living inside a string.
+Worth remembering what these are: **the comments a model wrote to itself** while
+building this. Nobody was going to read them. They were stripped from every
+other file in the bundle and survived here only by the accident of living inside
+a string.
 
 ---
 
@@ -164,5 +163,5 @@ chunks:
 16977  ( u, v, -1 ) neg z
 ```
 
-Lines 11702 and 11950 (`validated`,) are false positives — string fragments,
-not comments.
+Lines 11702 and 11950 (`validated`,) are false positives — string fragments, not
+comments.

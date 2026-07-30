@@ -6,10 +6,33 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { Color, DirectionalLight, FogExp2, HemisphereLight, PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
+import {
+  Color,
+  DirectionalLight,
+  FogExp2,
+  HemisphereLight,
+  PerspectiveCamera,
+  Scene,
+  Vector2,
+  Vector3,
+} from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { J0, engravingUniforms, setDistricts, syncLightUniforms } from "./00-shaders";
-import { Aa, Nn, Vr, clamp, hashString, lerp, n_, terrainHeightAt } from "./01-materials";
+import {
+  J0,
+  engravingUniforms,
+  setDistricts,
+  syncLightUniforms,
+} from "./00-shaders";
+import {
+  Aa,
+  Nn,
+  Vr,
+  clamp,
+  hashString,
+  lerp,
+  n_,
+  terrainHeightAt,
+} from "./01-materials";
 import { Ah, C_, P_, World } from "./05-world";
 import { InfillSystem } from "./06-infill";
 import { Citizens, Rh, V_, gameState } from "./07-citizens";
@@ -76,14 +99,14 @@ window.addEventListener(
   { once: !0 },
 );
 const te = { hour: 9.1, day: 1, speed: 15 / 570, paused: !1 };
-const dc_dusk = new Color("#ff8c46"),      // violent orange
-  dc_dawn = new Color("#dbe2f2"),          // chalk-pale morning sun
+const dc_dusk = new Color("#ff8c46"), // violent orange
+  dc_dawn = new Color("#dbe2f2"), // chalk-pale morning sun
   dc_hemi = new Color("#d8cdf0"),
   dc_hemiDawn = new Color("#c3cfe6"),
-  dc_paperDay = new Color("#f0ddeb"),      // bleached high day
-  dc_paperDusk = new Color("#eb9f76"),     // the hot sheet
-  dc_paperDawn = new Color("#bfc8d8"),     // cool blue-grey
-  dc_paperNight = new Color("#221a30"),    // the sheet gone cold and dark
+  dc_paperDay = new Color("#f0ddeb"), // bleached high day
+  dc_paperDusk = new Color("#eb9f76"), // the hot sheet
+  dc_paperDawn = new Color("#bfc8d8"), // cool blue-grey
+  dc_paperNight = new Color("#221a30"), // the sheet gone cold and dark
   dc_hemiNight = new Color("#4a4666");
 // The clock runs 5.6 → 29.6 (= 5.6 next morning); hours past 20.5 are the
 // night, which the frame loop drives at NIGHT_RATE so dark is an event, not
@@ -143,7 +166,10 @@ function os(i) {
     (Pe.intensity = lerp(3.5, 2.55, o) * (1 - nightAmt)),
     // ambient down hard: enough to read silhouettes, no more
     (Nr.intensity = lerp(lerp(0.6, 0.42, o), 0.08, nightAmt)),
-    Nr.color.copy(dc_hemi).lerp(dc_hemiDawn, dawnAmt).lerp(dc_hemiNight, nightAmt),
+    Nr.color
+      .copy(dc_hemi)
+      .lerp(dc_hemiDawn, dawnAmt)
+      .lerp(dc_hemiNight, nightAmt),
     ke.setDusk(duskAmt),
     ke.setDawn(dawnAmt),
     ke.setNight(nightAmt),
@@ -578,7 +604,8 @@ new URLSearchParams(location.search).has("fresh") &&
   localStorage.removeItem("capriccio-tutorial-v1"));
 const hn = loadGame();
 if (hn) {
-  ((gameState.playerActions = hn.actions), (gameState.nextId = 1e3 + hn.actions.length + 5));
+  ((gameState.playerActions = hn.actions),
+    (gameState.nextId = 1e3 + hn.actions.length + 5));
   for (const t of hn.actions)
     ((t.id = t.id ?? gameState.nextId++),
       Kt.applyAction(structuredClone(t)),
@@ -669,11 +696,15 @@ te.paused = !0;
  * Candle refused to leave. */
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
-  if (((Aa.value += t), ov(Aa.value), Kt.sceneTick && Kt.sceneTick(Aa.value), !te.paused)) {
+  if (
+    ((Aa.value += t),
+    ov(Aa.value),
+    Kt.sceneTick && Kt.sceneTick(Aa.value),
+    !te.paused)
+  ) {
     // the dark hours run at NIGHT_RATE — a full day is ~11.7 real minutes,
     // ~2.3 of them night — and the day turns over at the 29.6 → 5.6 wrap
-    const hourDelta =
-      t * te.speed * (te.hour > NIGHT_START ? NIGHT_RATE : 1);
+    const hourDelta = t * te.speed * (te.hour > NIGHT_START ? NIGHT_RATE : 1);
     ((te.hour += hourDelta),
       te.hour >= DAY_END && ((te.hour -= 24), te.day++, (gameState.dirty = !0)),
       os(te.hour),
@@ -692,7 +723,12 @@ function Nh(i) {
         oi.check(Kt, Ne),
         ei.sync()),
       (Do += t),
-      Do > 8 && ((Do = 0), (bi = Rh(Kt, Ne)), setDistricts(bi), updateQualityMeters(), gameState.dirty && ac()));
+      Do > 8 &&
+        ((Do = 0),
+        (bi = Rh(Kt, Ne)),
+        setDistricts(bi),
+        updateQualityMeters(),
+        gameState.dirty && ac()));
     const e = ie.position,
       Vv = {
         dusk: ke.postMat.uniforms.uDusk.value,
@@ -706,7 +742,7 @@ function Nh(i) {
     (Lh.update(t, Vv), score.update(t, Vv));
   }
   if (Sf) {
-    ((Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur)));
+    Sf.k = Math.min(1, Sf.k + (t * 1000) / Sf.dur);
     const n = Sf.k,
       r = n * n * (3 - 2 * n);
     (ie.position.lerpVectors(Sf.p0, Sf.p1, r),
@@ -838,7 +874,7 @@ window.CAP = {
     return (ei.sync(), (bi = Rh(Kt, Ne)), setDistricts(bi), Ne.items.length);
   },
   skip(i) {
-    for (te.hour += i; te.hour >= DAY_END; ) ((te.hour -= 24), te.day++);
+    for (te.hour += i; te.hour >= DAY_END;) ((te.hour -= 24), te.day++);
     os(te.hour);
   },
   pathTest(i, t, e, n) {
@@ -866,4 +902,31 @@ window.CAP = {
 };
 
 // --- generated exports ---
-export { Do, Fr, Lo, Ne, Or, Te, Us, ac, av, bi, cc, ei, fe, ic, ie, je, ke, ni, oc, oi, os, ov, rc, sc, te, us };
+export {
+  Do,
+  Fr,
+  Lo,
+  Ne,
+  Or,
+  Te,
+  Us,
+  ac,
+  av,
+  bi,
+  cc,
+  ei,
+  fe,
+  ic,
+  ie,
+  je,
+  ke,
+  ni,
+  oc,
+  oi,
+  os,
+  ov,
+  rc,
+  sc,
+  te,
+  us,
+};

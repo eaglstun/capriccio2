@@ -6,9 +6,9 @@ change any of it — every number below is frozen and verified identical.
 ## The shape in one paragraph
 
 You start cramped. Favor unlocks how far you can build, and favor comes almost
-entirely from five citizen requests. Complete them and the city's growth
-ceiling roughly quadruples. After that the requests are gone forever and the
-only remaining source is publishing plates. Population caps at 132. There is no
+entirely from five citizen requests. Complete them and the city's growth ceiling
+roughly quadruples. After that the requests are gone forever and the only
+remaining source is publishing plates. Population caps at 132. There is no
 ending, no failure, and no score.
 
 ---
@@ -77,8 +77,8 @@ which persists in the save. Once done they never return.
 | `evening-light` | 30    |
 
 **300 favor total.** The first one alone crosses the 60 threshold, upgrading
-spans 55→95, vaults 40→60, and more than doubling the growth ceiling. The
-second crosses 150.
+spans 55→95, vaults 40→60, and more than doubling the growth ceiling. The second
+crosses 150.
 
 They arrive one at a time; a new one appears 9 seconds after the last completes.
 
@@ -88,9 +88,9 @@ Once the five are done, the only remaining source of favor is **engraving a
 plate: +6 each, unlimited.**
 
 Which is a quietly perfect piece of design. The citizens stop asking you for
-things, and the only way to keep growing is to _publish views of your own
-city_. Your standing as an artist becomes the thing that lets you build. That
-is, precisely, how Piranesi funded Piranesi.
+things, and the only way to keep growing is to _publish views of your own city_.
+Your standing as an artist becomes the thing that lets you build. That is,
+precisely, how Piranesi funded Piranesi.
 
 ## The ceilings
 

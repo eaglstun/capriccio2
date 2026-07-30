@@ -6,7 +6,16 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BufferAttribute, BufferGeometry, Camera, CylinderGeometry, Mesh, Object3D, Raycaster, TorusGeometry } from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  Camera,
+  CylinderGeometry,
+  Mesh,
+  Object3D,
+  Raycaster,
+  TorusGeometry,
+} from "three";
 import { terrainHeightAt } from "./01-materials";
 import { setToneAttribute } from "./03-geometry";
 import { buildStructureMesh } from "./04-builders";
@@ -340,7 +349,8 @@ class PlacementTool {
         ((o = d.x), (a = d.z), (c = t.s < 0.5 ? Math.PI / 2 : 0));
       }
       const l = t.w / 2 + 0.35;
-      ((e = new TorusGeometry(l, 0.3, 8, 22, Math.PI)), e.rotateY(c + Math.PI / 2));
+      ((e = new TorusGeometry(l, 0.3, 8, 22, Math.PI)),
+        e.rotateY(c + Math.PI / 2));
       const h = new CylinderGeometry(0.28, 0.28, t.h - l, 8);
       (h.translate(-l, -(t.h - l) / 2, 0), h.rotateY(c + Math.PI / 2));
       const u = new CylinderGeometry(0.28, 0.28, t.h - l, 8);

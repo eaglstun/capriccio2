@@ -1,7 +1,7 @@
 # Brief 6 — language drift, and what the game is now for
 
-Read `docs/PROGRESSION.md` first. It documents how the original plays out, and the
-mechanics are frozen, so it describes ours too.
+Read `docs/PROGRESSION.md` first. It documents how the original plays out, and
+the mechanics are frozen, so it describes ours too.
 
 ---
 
@@ -30,8 +30,8 @@ So sort every term into three piles.
 
 **Keep — the thing survives, so the word does:**
 
-- **Pier, Column, Bridge, Stair, Switchback, Gallery, Passage, Garden** —
-  plain, current, still true.
+- **Pier, Column, Bridge, Stair, Switchback, Gallery, Passage, Garden** — plain,
+  current, still true.
 - **Cistern** — cisterns are exactly what you would still have.
 - **Aqueduct** — arguable. It reads ancient but describes precisely what the
   thing does, and infrastructure words are conservative. Your call; if you keep
@@ -45,9 +45,9 @@ So sort every term into three piles.
 
 - **FAVOR** — courtly, and mechanically it is now closer to _standing_,
   _credit_, or _clearance_. See Part B before choosing.
-- **Tav.** — Piranesi's _Tavola_, plate numbering. Keeping it says the
-  recording convention outlived the culture that invented it, which is a good
-  joke. Replacing it loses the engraver. Lean toward keeping.
+- **Tav.** — Piranesi's _Tavola_, plate numbering. Keeping it says the recording
+  convention outlived the culture that invented it, which is a good joke.
+  Replacing it loses the engraver. Lean toward keeping.
 - **District words** — Candle and Lantern are pre-electric. Some should drift
   (Sodium, Halogen, Relay, Substation, Transfer, Ash, Runoff), and **one or two
   should not** — a quarter still called the Candle Quarter, long after candles,
@@ -71,21 +71,21 @@ building. It is a game about a place filling up.
 
 Three mechanics that read differently at the end of humanity:
 
-1. **Population caps at 132 and no more arrive.** In the original that is a
-   town reaching capacity. Here it is a final census.
+1. **Population caps at 132 and no more arrive.** In the original that is a town
+   reaching capacity. Here it is a final census.
 2. **GRANDEUR saturates after about seven spans and never moves again.** A
    scoring quirk becomes a statement: magnificence has a ceiling now.
-3. **The save keeps `plates.slice(-16)`.** Sixteen plates. The rest fall off
-   the end, permanently.
+3. **The save keeps `plates.slice(-16)`.** Sixteen plates. The rest fall off the
+   end, permanently.
 
 ### The proposal
 
 **The goal shifts from building the city to choosing what survives of it.**
 
-That third mechanic is the whole thing and it is already implemented. At the
-end of humanity the city cannot be saved — population is capped, grandeur is
-capped, the requests run out. But **sixteen images can be.** The folio is the
-only artefact that persists, and it is finite.
+That third mechanic is the whole thing and it is already implemented. At the end
+of humanity the city cannot be saved — population is capped, grandeur is capped,
+the requests run out. But **sixteen images can be.** The folio is the only
+artefact that persists, and it is finite.
 
 So: the player is not a founder. The player is the last person recording.
 
@@ -96,23 +96,23 @@ doing:
   When a seventeenth plate is engraved, show which one it pushes out. That
   single UI change converts a storage detail into the central decision of the
   game.
-- Let the plate caption carry the weight it already has — district, day
-  number, plate number.
-- Reconsider **FAVOR** in this light. If plates are the point, favor is what
-  the record buys you: _standing_, _credit_, _clearance_, _warrant_. Something
-  that means "you are permitted to build further because you documented what
-  was here."
+- Let the plate caption carry the weight it already has — district, day number,
+  plate number.
+- Reconsider **FAVOR** in this light. If plates are the point, favor is what the
+  record buys you: _standing_, _credit_, _clearance_, _warrant_. Something that
+  means "you are permitted to build further because you documented what was
+  here."
 - The title-screen text can shift from "RAISE the great architecture" toward
-  something about what is left. **One line, not a paragraph.** The current
-  copy is good and should not be replaced wholesale.
+  something about what is left. **One line, not a paragraph.** The current copy
+  is good and should not be replaced wholesale.
 
 ### What must not happen
 
 - **No fail state, no timer, no collapse.** The original has no ending, and
   imposing doom would be a much worse and much more obvious idea than the one
   above. The restraint is the point.
-- **No change to any frozen system** — this proposal is deliberately designed
-  to require none.
+- **No change to any frozen system** — this proposal is deliberately designed to
+  require none.
 - Do not over-explain it in the UI. If a player has to be told the folio only
   holds sixteen, it has been written badly. They should discover it by filling
   it.
@@ -127,6 +127,6 @@ Never run `split_bundle.py --write`; never delete `src/.hand-edited`. No shipped
 binary assets or runtime fetches. Keep the triplanar hatching and the
 dither/engraving split. No hand-renaming.
 
-Verify: `yarn build` green; fresh game reports **24 structures, 48 pockets,
-1331 navNodes, 46 pop, kinds 12/34/1/1**. Serve on **8124 or your own port —
-8123 is the ORIGINAL**, never `?fresh` on it.
+Verify: `yarn build` green; fresh game reports **24 structures, 48 pockets, 1331
+navNodes, 46 pop, kinds 12/34/1/1**. Serve on **8124 or your own port — 8123 is
+the ORIGINAL**, never `?fresh` on it.

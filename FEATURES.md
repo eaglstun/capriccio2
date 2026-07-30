@@ -1,8 +1,8 @@
 # Feature plan — the next round
 
-Written from `docs/PROGRESSION.md`, which traced how the game actually plays out.
-Nothing here is committed to yet; the point is to decide what to build and, more
-importantly, **what to unfreeze**.
+Written from `docs/PROGRESSION.md`, which traced how the game actually plays
+out. Nothing here is committed to yet; the point is to decide what to build and,
+more importantly, **what to unfreeze**.
 
 ---
 
@@ -21,20 +21,20 @@ stretch of the game is also the least directed.
 **2. GRANDEUR is a dead meter.** It counts spans (0.14), vaults (0.12), stairs
 (0.08) and giant piers (0.08), clamps at 1.0, and therefore **saturates after
 about seven spans and never moves again**. Ornament — statues, fountains,
-lanterns, cypresses, columns, passages, gates — contributes exactly zero. So
-the meter most associated with Piranesi is the one that stops responding first
-and ignores every decorative thing you build.
+lanterns, cypresses, columns, passages, gates — contributes exactly zero. So the
+meter most associated with Piranesi is the one that stops responding first and
+ignores every decorative thing you build.
 
 **3. There is no night.** The clock hard-resets 20.5 → 5.6. All the neon, the
 failing signs, the trash fires and the lamp-family palette only ever appear at
 dusk, briefly. The single largest unrealised asset in the build.
 
-**4. Plates are stored and never seen again.** Each plate saves `{cam, hour,
-caption, n}` — the full camera pose. Sixteen of them. The folio shows slots,
-but you cannot revisit what you recorded.
+**4. Plates are stored and never seen again.** Each plate saves
+`{cam, hour, caption, n}` — the full camera pose. Sixteen of them. The folio
+shows slots, but you cannot revisit what you recorded.
 
-**5. Undo exists; history does not.** The save is an action log and nothing
-uses that fact except reload.
+**5. Undo exists; history does not.** The save is an action log and nothing uses
+that fact except reload.
 
 ---
 
@@ -50,18 +50,18 @@ items on the old frozen list were never about compatibility at all. Sort them:
 
 - **The save format may change.** Add fields, rename fields, restructure it.
   Bump `v` and drop the old-version branch if that is cleaner.
-- **Catalogue `key` values may change.** They are referenced by `chooseKind`
-  and the builders, so it is a refactor — but a safe one, and no save will be
+- **Catalogue `key` values may change.** They are referenced by `chooseKind` and
+  the builders, so it is a refactor — but a safe one, and no save will be
   orphaned.
 - **Resource field names may change.** `res.timber` can genuinely become
   `res.salvage` rather than a label-only rename. See A14.
 
 ### Still constrained — these are correctness, not compat
 
-- **`applyAction` and the pocket model must stay deterministic.** This was
-  never about old saves. The save IS an action log, so if replay is not
-  deterministic then saving and reloading gives you a _different city_ — the
-  feature breaks against itself, today, with no history involved.
+- **`applyAction` and the pocket model must stay deterministic.** This was never
+  about old saves. The save IS an action log, so if replay is not deterministic
+  then saving and reloading gives you a _different city_ — the feature breaks
+  against itself, today, with no history involved.
 - **Every builder must keep seeding from the action id.** Same reason.
 - **Structure envelopes still govern pockets.** Changing a footprint changes
   what the city grows, which is a gameplay decision rather than a bug — make it
@@ -74,8 +74,8 @@ items on the old frozen list were never about compatibility at all. Sort them:
 
 ### The verification numbers still apply
 
-A fresh city should still report **24 structures, 48 pockets, 1331 navNodes,
-46 pop, kinds 12/34/1/1** unless a change is _meant_ to move them. They are the
+A fresh city should still report **24 structures, 48 pockets, 1331 navNodes, 46
+pop, kinds 12/34/1/1** unless a change is _meant_ to move them. They are the
 cheapest signal that something drifted by accident, and that is worth keeping
 whether or not anyone has a save.
 
@@ -129,10 +129,10 @@ name above them. One label, because there is only ever one speaker.
 
 ### The handover
 
-When a request completes, the marker leaves that citizen and appears on
-whoever asks next, after the existing 9s delay. The previous speaker returns to
-being an ordinary citizen — same colour rules as everyone else, no label, still
-walking their route.
+When a request completes, the marker leaves that citizen and appears on whoever
+asks next, after the existing 9s delay. The previous speaker returns to being an
+ordinary citizen — same colour rules as everyone else, no label, still walking
+their route.
 
 **When all five requests are done, nobody is marked at all.** That falls out of
 the design rather than being special-cased, and it is thematically exact: the
@@ -185,8 +185,8 @@ Two things were verified while speccing it and both belong here:
 - **Infill is not in the action log**, and the order it grew in is recorded
   nowhere, so the organic growth of the city is not reconstructable.
 
-`CHRONICLE.md` contains a time-critical enabler — stamping `day`/`hour` onto
-new actions — that is worth taking even if the rest is deferred.
+`CHRONICLE.md` contains a time-critical enabler — stamping `day`/`hour` onto new
+actions — that is worth taking even if the rest is deferred.
 
 ### A2. Procedural requests — fill the mid-game
 
@@ -278,16 +278,15 @@ edge, the luminance curve, the `bnThresh` lookup and the two-tone assignment.
 
 #### Verify
 
-`yarn build` green, fresh-city numbers unchanged, and **capture the band mid-roll
-in daylight and at night**. It is intermittent — gated on noise — so a
+`yarn build` green, fresh-city numbers unchanged, and **capture the band
+mid-roll in daylight and at night**. It is intermittent — gated on noise — so a
 screenshot at an arbitrary moment will usually miss it. Drive `uTime` or wait.
 
 ### A7. Citizens get their own outline colour
 
-The neon rim light currently treats every surface the same — hot pink near,
-cyan far, whether it is a wall, a wrecked car or a person. **Give the citizens
-their own outline colour** so the living things read differently from the
-scenery.
+The neon rim light currently treats every surface the same — hot pink near, cyan
+far, whether it is a wall, a wrecked car or a person. **Give the citizens their
+own outline colour** so the living things read differently from the scenery.
 
 #### The problem, stated properly
 
@@ -311,9 +310,9 @@ Verified:
 
 #### The approach
 
-1. **The `figure` material writes a distinctive alpha** — say `0.5` — instead
-   of `1.0`. It is opaque and blending is off, so this changes nothing about how
-   it draws; the value simply lands in the buffer.
+1. **The `figure` material writes a distinctive alpha** — say `0.5` — instead of
+   `1.0`. It is opaque and blending is off, so this changes nothing about how it
+   draws; the value simply lands in the buffer.
 2. **The post pass samples `texture2D(tDiffuse, suv).a`** and, where it is near
    that value, uses a different outline colour.
 3. Everything else is untouched.
@@ -334,13 +333,13 @@ Try the alpha mask first; fall back to this if the mask fights anything.
 
 #### What colour
 
-Suggestion, not instruction: **something warm.** The palette is sodium,
-mercury, halogen, pink and cyan — all of it lamps and signage. The citizens are
-the only living things in the frame, and a warm outline against the cold neon
-would say so without a word of UI. Amber or a warm white.
+Suggestion, not instruction: **something warm.** The palette is sodium, mercury,
+halogen, pink and cyan — all of it lamps and signage. The citizens are the only
+living things in the frame, and a warm outline against the cold neon would say
+so without a word of UI. Amber or a warm white.
 
-Avoid the district colours — those already mean something and reusing them
-would muddy both.
+Avoid the district colours — those already mean something and reusing them would
+muddy both.
 
 #### Watch for
 
@@ -362,11 +361,11 @@ export is unaffected.
 
 ### A8. A hint after Tullia asks for water
 
-The second request is the hardest thing in the game and nothing helps the
-player with it.
+The second request is the hardest thing in the game and nothing helps the player
+with it.
 
-> _"No water climbs so high. The spring across the great void mocks us every
-> dry summer."_ — Tullia
+> _"No water climbs so high. The spring across the great void mocks us every dry
+> summer."_ — Tullia
 
 To satisfy it the player must get a water source above y=14 on the far side of
 the canyon. That means: know that **aqueducts carry water** and an ordinary
@@ -381,9 +380,9 @@ Measured, the distances are unforgiving:
 | massif rim            | high terrace            | **142**       |
 
 Max span is **55** under 60 clearance, **95** at 60+, **150** at 150+. So even
-the shortest leg of the crossing cannot be done in one span at any clearance
-the player is likely to hold — **it has to be broken into legs with
-intermediate piers**, and nothing in the game says so.
+the shortest leg of the crossing cannot be done in one span at any clearance the
+player is likely to hold — **it has to be broken into legs with intermediate
+piers**, and nothing in the game says so.
 
 **Add a hint.** Requirements:
 
@@ -392,8 +391,7 @@ intermediate piers**, and nothing in the game says so.
   answer immediately is worse than the current silence.
 - It is **a citizen speaking**, not a tooltip. `docs/CHARACTERS.md` has the
   rules — a consequence, not an instruction. Something that gestures at
-  aqueducts and at piers standing in the void without naming a tool or a
-  button.
+  aqueducts and at piers standing in the void without naming a tool or a button.
 - It should not repeat endlessly. Once, or at most twice.
 
 Keep the discovery. The hint should make the player think "oh — I could put a
@@ -449,8 +447,8 @@ you can see the edge of the world.
 
 **a) Extend the horizon.** Either grow the terrain plane, or add low hills
 around the perimeter to close the gap between ground and skyline. Hills are
-cheaper — they need no extra resolution in the playable area and can be a
-coarse merged mesh, scene-only and never in `structGroup`.
+cheaper — they need no extra resolution in the playable area and can be a coarse
+merged mesh, scene-only and never in `structGroup`.
 
 Keep it _low_. The city should still feel like it sits on a plain; the point is
 that the plain has an edge you cannot see over, not that it is ringed by
@@ -462,8 +460,8 @@ underside of the world. A simple clamp against `terrainHeightAt` plus a small
 margin would fix it.
 
 Do this one **after** the horizon — the horizon is the thing that actually
-bothers the eye, and clamping the camera without extending the ground would
-just hide one symptom of the same gap.
+bothers the eye, and clamping the camera without extending the ground would just
+hide one symptom of the same gap.
 
 ### A12. You cannot tell what is carvable
 
@@ -513,13 +511,13 @@ gives.
 - **Do not reuse the era distinction.** Old fabric already means something.
 - The signal must survive **at night**, when the fabric is mostly dark and the
   neon carries the frame.
-- A giant pier that has already been carved must stop reading as carvable —
-  the state is per-structure, not per-type.
+- A giant pier that has already been carved must stop reading as carvable — the
+  state is per-structure, not per-type.
 
 ### A13. Billboard text clips, and every sign is the same typeface
 
-**Two problems in the same place** — the runtime canvas atlas at the end of
-`C_` in `05-world.js`.
+**Two problems in the same place** — the runtime canvas atlas at the end of `C_`
+in `05-world.js`.
 
 #### a) The clipping is measurable
 
@@ -550,8 +548,8 @@ person to write a longer tagline should not have to know this.
 #### b) Every sign is Georgia
 
 Seven different companies across decades of a dead economy, all set in one
-serif. Real signage is a jumble — that is most of what makes a strip look like
-a strip.
+serif. Real signage is a jumble — that is most of what makes a strip look like a
+strip.
 
 Give each cell its own face. **System fonts only** — no webfonts, nothing
 fetched, per the standing constraint. There is plenty of range in what is
@@ -575,9 +573,9 @@ exactly the kind of thing that will not show up on the machine it was built on.
 ### A14. TIMBER is the wrong word
 
 The second resource is still called **TIMBER**, which is a word for a material
-nobody in this city uses. The buildings it pays for are corrugated sheet,
-tarps, shipping containers and salvaged panel — the shanty modules from pass 3.
-Nothing is made of wood.
+nobody in this city uses. The buildings it pays for are corrugated sheet, tarps,
+shipping containers and salvaged panel — the shanty modules from pass 3. Nothing
+is made of wood.
 
 This is the same drift already applied to FAVOR → CLEARANCE, and it follows the
 rule in `docs/CHARACTERS.md`: **words tied to dead things die.** Timber died
@@ -587,8 +585,8 @@ with the forests.
 
 It says the material comes from **taking apart what is already there**, which is
 exactly what the infill looks like and exactly what a city at the end of
-humanity would actually be built from. It also pairs correctly with STONE:
-one quarried, one scavenged.
+humanity would actually be built from. It also pairs correctly with STONE: one
+quarried, one scavenged.
 
 Alternatives if it does not sit right: SCRAP (blunter), SHEET (more technical),
 COMPOSITE (colder). Avoid POLYMER — it competes with the cypress hint, which
@@ -603,10 +601,10 @@ object, the HUD id.
 
 Also update `docs/PROGRESSION.md` and the how-to-play page, which both name it.
 
-The material is separately `mats.timber` in code. Rename that too while in
-there — and if the surfaces it draws still read as _planks_ rather than as
-salvaged sheet, that is worth fixing at the same time, since the word and the
-look should agree.
+The material is separately `mats.timber` in code. Rename that too while in there
+— and if the surfaces it draws still read as _planks_ rather than as salvaged
+sheet, that is worth fixing at the same time, since the word and the look should
+agree.
 
 ### A4. Ambient life
 
@@ -623,9 +621,9 @@ and it is the _calm_ end of the range. Two more, and **neither may be more
 tranquil than what exists.** More bass, more drums, and weird is welcome — it is
 vaporwave.
 
-Theory reference: `~/.claude/skills/guitar/references/theory.md`.
-Strudel reference: `~/.claude/skills/strudel/` — **read its gotchas first**, two
-of them silently produce no sound.
+Theory reference: `~/.claude/skills/guitar/references/theory.md`. Strudel
+reference: `~/.claude/skills/strudel/` — **read its gotchas first**, two of them
+silently produce no sound.
 
 #### Keep the tonic, change the mode
 
@@ -657,8 +655,8 @@ the theory reference's substitution and borrowed-chord material:
 
 "Generative" fails when it sounds random. The rule that prevents it:
 
-> **Randomise rhythm and choice. Never randomise pitch outside the scale.**
-> A random note in key sounds intentional. A random rhythm sounds broken.
+> **Randomise rhythm and choice. Never randomise pitch outside the scale.** A
+> random note in key sounds intentional. A random rhythm sounds broken.
 
 So constrain pitch material to the mode and let Strudel vary everything else:
 
@@ -688,8 +686,8 @@ bell do. Cross-fade over several seconds; never cut.
 
 - **This project does NOT use `@strudel/web`.** It imports `@strudel/core`
   subpaths plus `superdough` directly, with `webaudioOutput` inlined — see the
-  top of `src/18-music.js`. Keep that; the full bundle cost 908KB against
-  157KB for the subpath imports.
+  top of `src/18-music.js`. Keep that; the full bundle cost 908KB against 157KB
+  for the subpath imports.
 - **Tempo is `setCps`, never `.cps()`.** The control sets a per-hap value the
   scheduler never reads back, so the clock stays at the default and nothing
   audibly changes.
@@ -728,8 +726,8 @@ te.hour += t * te.speed;
 te.hour > 20.5 && ((te.hour = 5.6), te.day++);
 ```
 
-The day runs **5.6 to 20.5 and jumps straight back**. The hours between 20.5
-and 5.6 are never visited. Night is not dark in this game; it does not exist.
+The day runs **5.6 to 20.5 and jumps straight back**. The hours between 20.5 and
+5.6 are never visited. Night is not dark in this game; it does not exist.
 
 And `os()`, the lighting function, normalises with a **clamp**:
 
@@ -745,9 +743,9 @@ the clock alone is not enough; `os()` needs a night branch.**
 
 Pleasantly, most of it. No change needed to any of these:
 
-- **Citizens.** Their routine already reads `(hour > 19.6 || hour < 6) -> tohome`.
-  Given real night hours they will walk home and stay there, and the streets
-  will empty on their own.
+- **Citizens.** Their routine already reads
+  `(hour > 19.6 || hour < 6) -> tohome`. Given real night hours they will walk
+  home and stay there, and the streets will empty on their own.
 - **Birds.** Gated on `dusk < 0.55`, so they fall silent as it darkens.
 - **Wind.** Already rises with dusk.
 - **The bell.** Rings on the hour and will keep ringing through the night, which
@@ -862,11 +860,12 @@ the game still ahead of it.
   value at all would let the starting scenery dominate the meter. There is also
   a straight argument for it: grandeur is built magnificence, and a tree is the
   one thing in the world nobody built.
-- **Passage: 0.** A door through a wall is circulation, not monument. The
-  _Great Gate_ is the ceremonial one and it scores.
+- **Passage: 0.** A door through a wall is circulation, not monument. The _Great
+  Gate_ is the ceremonial one and it scores.
 
 **Lanterns score only 0.005** because they already feed BELONGING at 0.05 each.
-Paying them fully into both meters would let one cheap object drive half the HUD.
+Paying them fully into both meters would let one cheap object drive half the
+HUD.
 
 #### The cost is smaller than previously stated
 
@@ -891,8 +890,8 @@ the same clock hour, and structures / pockets / navNodes / pop unchanged.
 An earlier draft of this line said **0.27**, which the stated weights cannot
 produce — the design table above says 0.20 for the seeded ruins, and that is the
 right figure. Measured on a fresh city from the shipped code: **GRANDEUR
-0.196**, structure half 0.110, ornament half 0.086, against ACCESS 1.0,
-SHELTER 0.111, LIGHT 0.900, BELONGING 0.545.
+0.196**, structure half 0.110, ornament half 0.086, against ACCESS 1.0, SHELTER
+0.111, LIGHT 0.900, BELONGING 0.545.
 
 ### B3. New building types
 
@@ -903,7 +902,8 @@ envelopes for existing types do not change. New keys, new geometry, new hints.
 
 ## Suggested sequence
 
-1. **A0 Named citizens** — a real bug, found in play, and everything it needs exists
+1. **A0 Named citizens** — a real bug, found in play, and everything it needs
+   exists
 2. **A1 Chronicle** — highest payoff per unit of risk, needs no permission
 3. **B1 Night** — one narrow, well-understood unfreeze, large visual payoff
 4. **A2 Procedural requests** — fixes the real design flaw

@@ -37,7 +37,8 @@ function eligible() {
   return !!s && s.playerActions.length === 0;
 }
 
-const REDUCED = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? !1;
+const REDUCED =
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? !1;
 const COARSE = window.matchMedia?.("(pointer: coarse)").matches ?? !1;
 
 const tutCss = `
@@ -332,9 +333,13 @@ function startWalkthrough() {
     if (beat === 4) {
       if (i === "rise" || i === "span") {
         ringOff();
-        say("Click the low place, then the top of your pier — its top will snap.");
+        say(
+          "Click the low place, then the top of your pier — its top will snap.",
+        );
       } else if (!connectAction) {
-        say("A pier alone is a post. Click RISE — connect it, and it becomes a way through.");
+        say(
+          "A pier alone is a post. Click RISE — connect it, and it becomes a way through.",
+        );
         ringOn(CAP.hud.toolBtns.get("rise"));
       }
     }
@@ -401,11 +406,14 @@ function startWalkthrough() {
       case 2: {
         hush();
         flyTo(new Vector3(-18, 6, 30), 74, 30, 1.9);
-        later(() => {
-          say(
-            "It is already inhabited — forty-six citizens, living in ruins somebody else left.",
-          );
-        }, REDUCED ? 200 : 1600);
+        later(
+          () => {
+            say(
+              "It is already inhabited — forty-six citizens, living in ruins somebody else left.",
+            );
+          },
+          REDUCED ? 200 : 1600,
+        );
         later(() => setBeat(3), 7600);
         break;
       }
@@ -424,7 +432,9 @@ function startWalkthrough() {
           setBeat(5);
           break;
         }
-        say("A pier alone is a post. Click RISE — connect it, and it becomes a way through.");
+        say(
+          "A pier alone is a post. Click RISE — connect it, and it becomes a way through.",
+        );
         ringOn(CAP.hud.toolBtns.get("rise"));
         break;
       }
@@ -442,7 +452,9 @@ function startWalkthrough() {
           const q = playerPocket();
           if (q && inhabited(q)) {
             markPos = new Vector3(q.pos[0], q.pos[1] + 1.4, q.pos[2]);
-            say("Someone is already moving in. You did not place that — they chose it.");
+            say(
+              "Someone is already moving in. You did not place that — they chose it.",
+            );
             later(() => setBeat(6), 6000);
           } else if (performance.now() - t0 > 7000) {
             say(
@@ -464,7 +476,8 @@ function startWalkthrough() {
         // the fix that works everywhere must work here too: as Marcus is
         // named, the camera goes to him — marked, walking his route
         const sp = CAP.speaker?.();
-        if (sp) flyTo(new Vector3(sp.pos.x, sp.pos.y + 1.3, sp.pos.z), 28, 12, 1.9);
+        if (sp)
+          flyTo(new Vector3(sp.pos.x, sp.pos.y + 1.3, sp.pos.z), 28, 12, 1.9);
         say(
           "Marcus is asking for a way up to the high terrace. That is the first job — the city will ask the rest in time. Click the request whenever you lose whoever is asking.",
           !0,
@@ -524,7 +537,11 @@ function startWalkthrough() {
         dz = cam.position.z - tg.z,
         r = Math.hypot(dx, dz),
         az = Math.atan2(dx, dz) + 0.00006 * dt;
-      cam.position.set(tg.x + Math.sin(az) * r, cam.position.y, tg.z + Math.cos(az) * r);
+      cam.position.set(
+        tg.x + Math.sin(az) * r,
+        cam.position.y,
+        tg.z + Math.cos(az) * r,
+      );
       controls.update();
     }
     placeRing();
@@ -554,5 +571,7 @@ if (eligible()) {
     };
     setTimeout(wait, 400);
   };
-  document.querySelector<HTMLElement>("#veil .begin")?.addEventListener("click", arm, { once: !0 });
+  document
+    .querySelector<HTMLElement>("#veil .begin")
+    ?.addEventListener("click", arm, { once: !0 });
 }

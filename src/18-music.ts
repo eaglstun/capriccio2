@@ -53,7 +53,12 @@ import { note } from "@strudel/core/controls.mjs";
 // perlin is the tape sag. euclid puts a shaker on (5,8) so it never lands
 // square. The functional forms are used so the imports cannot be tree-shaken
 // away from their Pattern.prototype registrations.
-import { chooseCycles, perlin, irand, degradeBy } from "@strudel/core/signal.mjs";
+import {
+  chooseCycles,
+  perlin,
+  irand,
+  degradeBy,
+} from "@strudel/core/signal.mjs";
 import { euclid } from "@strudel/core/euclid.mjs";
 import {
   superdough,
@@ -113,7 +118,14 @@ function harmonicLoop(stage) {
   const eight = [...BARS_PLAIN, ...BARS_SUS];
   if (stage < 3) return eight;
   // 16 bars; the last suspended bar gives way to the borrowed major.
-  return [...eight, ...BARS_PLAIN, BARS_SUS[0], BARS_SUS[1], BARS_SUS[2], BAR_D];
+  return [
+    ...eight,
+    ...BARS_PLAIN,
+    BARS_SUS[0],
+    BARS_SUS[1],
+    BARS_SUS[2],
+    BAR_D,
+  ];
 }
 
 const chord = (ns) => stack(...ns.map((n) => note(n)));
@@ -150,7 +162,9 @@ function lowPad(bars, duskAmt) {
 
 /** Triangle bass on the written root of each bar. */
 function bass(bars) {
-  return cat(...bars.map((b) => seq(note(b[1]), silence, note(b[1] + 12), silence)))
+  return cat(
+    ...bars.map((b) => seq(note(b[1]), silence, note(b[1] + 12), silence)),
+  )
     .s("triangle")
     .attack(0.03)
     .release(0.6)
@@ -174,7 +188,11 @@ function counter(bars) {
 /** The construction arpeggio — square, and audible ONLY while something is
  * being built. Bound to sim state like every other sound in the game. */
 function arp(bars) {
-  return cat(...bars.map((b) => seq(...[0, 2, 4, 2, 1, 3, 4, 3].map((k) => note(b[0][k] + 12)))))
+  return cat(
+    ...bars.map((b) =>
+      seq(...[0, 2, 4, 2, 1, 3, 4, 3].map((k) => note(b[0][k] + 12))),
+    ),
+  )
     .s("square")
     .attack(0.01)
     .release(0.25)
@@ -206,7 +224,8 @@ const hats8 = (g) => seq(...Array.from({ length: 8 }, () => hat(g)));
 const hats4 = (g) => seq(...Array.from({ length: 4 }, () => hat(g)));
 const kickQ = (g) => seq(kick(g), kick(g * 0.8), kick(g), kick(g * 0.8));
 // kick opens up: 1, the and-of-2, 3
-const kickOpen = (g) => seq(seq(kick(g), R), seq(R, kick(g * 0.85)), kick(g * 0.9), R);
+const kickOpen = (g) =>
+  seq(seq(kick(g), R), seq(R, kick(g * 0.85)), kick(g * 0.9), R);
 const snare24 = (g) => seq(R, snare(g), R, snare(g));
 const rideQ = () => seq(ride(), ride(), ride(), ride());
 // floor toms walking down on sixteenths across beat 4
@@ -243,10 +262,22 @@ function kit(stage, duskAmt) {
 // [chord voicing, bass riff (8 eighth-note slots, 0 = rest)] per bar.
 // Loop: Am9 | D6/9 | Am9 | Gadd9. Every riff note is in A Dorian.
 const BARS_DORIAN = [
-  [[57, 60, 64, 67, 71], [33, 0, 0, 45, 43, 0, 40, 0]], // Am9   · A . . A' G . E .
-  [[50, 54, 57, 59, 64], [38, 0, 0, 50, 48, 0, 45, 48]], // D6/9  · D . . D' C . A C
-  [[57, 60, 64, 67, 71], [33, 0, 45, 0, 43, 33, 0, 40]], // Am9   · A . A' . G A . E
-  [[43, 47, 50, 57, 62], [31, 0, 0, 43, 42, 0, 38, 42]], // Gadd9 · G . . G' F# . D F#
+  [
+    [57, 60, 64, 67, 71],
+    [33, 0, 0, 45, 43, 0, 40, 0],
+  ], // Am9   · A . . A' G . E .
+  [
+    [50, 54, 57, 59, 64],
+    [38, 0, 0, 50, 48, 0, 45, 48],
+  ], // D6/9  · D . . D' C . A C
+  [
+    [57, 60, 64, 67, 71],
+    [33, 0, 45, 0, 43, 33, 0, 40],
+  ], // Am9   · A . A' . G A . E
+  [
+    [43, 47, 50, 57, 62],
+    [31, 0, 0, 43, 42, 0, 38, 42],
+  ], // Gadd9 · G . . G' F# . D F#
 ];
 
 /** Track 2's bass: the riff, sawtooth, well forward in the mix. */
@@ -268,7 +299,11 @@ const DORIAN_POOL = [69, 71, 74, 76, 78, 81]; // A4 B4 D5 E5 F#5 A5
 function counterDorian() {
   return degradeBy(
     0.3,
-    note(irand(DORIAN_POOL.length).segment(2).fmap((i) => DORIAN_POOL[i]))
+    note(
+      irand(DORIAN_POOL.length)
+        .segment(2)
+        .fmap((i) => DORIAN_POOL[i]),
+    )
       .s("sine")
       .attack(0.4)
       .release(1.4)
@@ -293,13 +328,21 @@ const shaker = (g) =>
 function kitDorian(stage, duskAmt) {
   if (stage < 1) return null;
   if (duskAmt)
-    return stack(seq(kick(0.5), R, R, R), hats8(0.09), seq(R, R, snare(0.22), R));
+    return stack(
+      seq(kick(0.5), R, R, R),
+      hats8(0.09),
+      seq(R, R, snare(0.22), R),
+    );
   return stack(hats16(0.13), kickOpen(0.45), snare24(0.3), shaker(0.09));
 }
 
 function arrangementDorian(stage, duskAmt, constructing) {
   const layers = [
-    pads(BARS_DORIAN.map((b) => [b[0]]), duskAmt, 2),
+    pads(
+      BARS_DORIAN.map((b) => [b[0]]),
+      duskAmt,
+      2,
+    ),
     bassRiff(BARS_DORIAN),
     counterDorian(),
   ];
@@ -363,7 +406,11 @@ const STRANGE_POOL_HI = [72, 76, 79, 84]; // C5 E5 G5 C6
 function counterStrange() {
   return degradeBy(
     0.55,
-    note(irand(STRANGE_POOL_HI.length).segment(2).fmap((i) => STRANGE_POOL_HI[i]))
+    note(
+      irand(STRANGE_POOL_HI.length)
+        .segment(2)
+        .fmap((i) => STRANGE_POOL_HI[i]),
+    )
       .s("sine")
       .attack(0.9)
       .release(2.4)
@@ -487,11 +534,7 @@ class Score {
     this.level += (target - this.level) * Math.min(1, dt * 0.5);
     // which track the simulation wants right now
     const want =
-      st.hour > TRACK_NIGHT_HOUR
-        ? 3
-        : (st.pop ?? 0) >= TRACK_GROWN_POP
-          ? 2
-          : 1;
+      st.hour > TRACK_NIGHT_HOUR ? 3 : (st.pop ?? 0) >= TRACK_GROWN_POP ? 2 : 1;
     // track changes cross over silence: ease down over ~3s, swap the
     // pattern at the bottom, ease back up. Never cut. A new want mid-fade
     // waits its turn — the fade in progress always completes.

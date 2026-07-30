@@ -291,7 +291,8 @@ const GEN_KINDS = [
     key: "gather",
     favor: 25,
     speakers: ["the old men", "Livia", "Tullia"],
-    find: (w) => findCluster(w, (p) => gatherSpotsNear(w, p.pos[0], p.pos[2], 30) === 0),
+    find: (w) =>
+      findCluster(w, (p) => gatherSpotsNear(w, p.pos[0], p.pos[2], 30) === 0),
     lines: [
       [
         "Evenings {locus} have nowhere to land. People stand in doorways, half in and half out.",

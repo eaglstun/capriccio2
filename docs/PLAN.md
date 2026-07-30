@@ -8,14 +8,14 @@ _how it is structured_. We will never recover original names or comments.
 ## What we're working with
 
 - One `index.html` + one JS bundle. No source, no `package.json`, no map.
-- Vendor (three.js + inlined GLSL) is roughly the first ~25,000 lines.
-  App code is roughly the last ~6,000. **This seam is estimated, not measured
-  — Phase 2 pins it down.**
+- Vendor (three.js + inlined GLSL) is roughly the first ~25,000 lines. App code
+  is roughly the last ~6,000. **This seam is estimated, not measured — Phase 2
+  pins it down.**
 - **Identifiers are 100% mangled.** 865 declarations in the app section, every
   one ≤2 chars. Reading top-down like source is a trap.
 - **String literals survived** (339 unique). Minifiers can't touch string
-  contents or object string-keys. These are our anchors, and they are the
-  reason this is tractable at all.
+  contents or object string-keys. These are our anchors, and they are the reason
+  this is tractable at all.
 
 ## Phases
 
@@ -25,11 +25,11 @@ Build a few things in-game, then read `localStorage['capriccio-save-v1']`.
 
 A save file is the game's data model _voluntarily serialized with its keys
 intact_. This is the single highest-payoff move available: it likely hands us
-the world schema, the building enum, and agent state in clean readable form,
-for ten minutes of play. Everything downstream gets easier.
+the world schema, the building enum, and agent state in clean readable form, for
+ten minutes of play. Everything downstream gets easier.
 
-- [x] Save **schema** recovered statically — it's an **action log**, not a
-      world snapshot (see `FINDINGS.md`)
+- [x] Save **schema** recovered statically — it's an **action log**, not a world
+      snapshot (see `FINDINGS.md`)
 - [ ] Serve and play the game
 - [ ] Dump a real save blob to confirm action shape + `infill` + `folio`
 - [ ] Derive agent state (not present in the save — must come from runtime)
@@ -51,8 +51,8 @@ Output: a design document for a game that never had one.
 ### Phase 2 — Find the exact vendor/app seam
 
 Locate precisely where three.js ends and the game begins, so we never
-accidentally read a quaternion class again. Narrows the reading surface from
-31k lines to ~6k.
+accidentally read a quaternion class again. Narrows the reading surface from 31k
+lines to ~6k.
 
 - [ ] Identify seam line number
 - [ ] Extract app-only slice to a working file
@@ -60,9 +60,9 @@ accidentally read a quaternion class again. Narrows the reading surface from
 ### Phase 3 — Live introspection over static reading
 
 Run with devtools open, breakpoint the input handlers, walk the real objects.
-Mangled names don't matter when the debugger shows you an object's actual
-shape. This is how we get the simulation: what a citizen _is_, what it wants,
-how it chooses a building.
+Mangled names don't matter when the debugger shows you an object's actual shape.
+This is how we get the simulation: what a citizen _is_, what it wants, how it
+chooses a building.
 
 **Shortcut found: the build ships `window.CAP`**, a 33-key debug handle onto
 every subsystem. No breakpointing needed. See `docs/SIMULATION.md`.
@@ -76,14 +76,13 @@ every subsystem. No breakpointing needed. See `docs/SIMULATION.md`.
 
 ### What actually worked
 
-The winning move was **hybrid**, not pure runtime introspection: once the
-live HUD gave us `qualBars` as a preserved string, that string located the
-computation in source (line 30709) in one grep — and reading 20 lines beat
-any number of black-box experiments. Runtime told us _where to look_; source
-gave the exact formula; runtime then _verified_ it.
+The winning move was **hybrid**, not pure runtime introspection: once the live
+HUD gave us `qualBars` as a preserved string, that string located the
+computation in source (line 30709) in one grep — and reading 20 lines beat any
+number of black-box experiments. Runtime told us _where to look_; source gave
+the exact formula; runtime then _verified_ it.
 
-Neither approach alone would have got there. Note this in
-`bundle-archaeology`.
+Neither approach alone would have got there. Note this in `bundle-archaeology`.
 
 ### Phase 4 — Targeted component reads
 
@@ -106,8 +105,8 @@ Statue, Switchback, Terrace, Undercroft, Vaults, Well
 
 **Stats:** ACCESS, ADORN, BELONGING, GRANDEUR, LIGHT, SHELTER, SPAN
 
-**Actions:** BUILD, CARVE, ESTABLISH, INVITE, POST, PLATE, RISE, SECTION,
-VAULT, WANDER
+**Actions:** BUILD, CARVE, ESTABLISH, INVITE, POST, PLATE, RISE, SECTION, VAULT,
+WANDER
 
 **Agent states:** Sleeping, Gathering, Trade, Quiet, Patient, Wander
 
@@ -115,8 +114,8 @@ VAULT, WANDER
 
 **Controls:** KeyW/A/S/D, KeyP, KeyZ, Shift, Space, Escape, arrow keys
 
-**Audio is synthesized, not sampled** — `bandpass`, `aTone`, `birdTimer` are
-Web Audio. Part of why the whole thing fits in 662KB.
+**Audio is synthesized, not sampled** — `bandpass`, `aTone`, `birdTimer` are Web
+Audio. Part of why the whole thing fits in 662KB.
 
-**Typography:** Iowan Old Style, Palatino Linotype — deliberate old-print
-serif choice, consistent with the Piranesi conceit.
+**Typography:** Iowan Old Style, Palatino Linotype — deliberate old-print serif
+choice, consistent with the Piranesi conceit.

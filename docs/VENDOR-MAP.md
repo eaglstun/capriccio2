@@ -35,8 +35,8 @@ A scan for vendor top-level names of length ≥ 3 referenced by the app found
 
 ### False positives — 17 of the reported 64 are app-local names
 
-The heuristic treats any unresolved 2-char token as vendor. Object-literal
-keys and indented local declarations are not preceded by `.`, so they leak in.
+The heuristic treats any unresolved 2-char token as vendor. Object-literal keys
+and indented local declarations are not preceded by `.`, so they leak in.
 
 **Object property names in the app's own data (14):**
 
@@ -49,9 +49,9 @@ keys and indented local declarations are not preceded by `.`, so they leak in.
 | `ay` `by`           | 3 each | span endpoint heights                                    |
 | `cy` `cz`           | 2 each | cloud-centre keys — `{ cx:-30, cz:-20, cy:42, r:34 }`    |
 
-`x0` and `z0` do also exist as `function x0(i)` / `function z0(i)` in the
-vendor half, but every counted app occurrence is an object key in
-`05-world.js`, never a call. Coincidence of naming, not a reference.
+`x0` and `z0` do also exist as `function x0(i)` / `function z0(i)` in the vendor
+half, but every counted app occurrence is an object key in `05-world.js`, never
+a call. Coincidence of naming, not a reference.
 
 **Local variables inside app functions (3):**
 
@@ -61,8 +61,8 @@ vendor half, but every counted app occurrence is an object key in
 | `pt`     | 6    | temp local — `const pt = s.x + c.x * B` — `04-builders.js:46`                    |
 | `th`     | 1    | thickness key — `th: 3.2` — `05-world.js:346`                                    |
 
-`Lt` and `pt` do appear in the vendor half, but only as function-scoped
-locals there too; neither is a top-level declaration in either half.
+`Lt` and `pt` do appear in the vendor half, but only as function-scoped locals
+there too; neither is a top-level declaration in either half.
 
 64 − 17 + 1 (`P`) = **48**.
 
@@ -70,10 +70,10 @@ locals there too; neither is a top-level declaration in either half.
 
 ## The map
 
-Evidence codes: **F** = `is*` prototype flag; **T** = `this.type = "..."`
-string literal set in the constructor; **C** = constructor signature /
-properties; **V** = literal constant value; **S** = app call site.
-Bundle line numbers are of the declaration.
+Evidence codes: **F** = `is*` prototype flag; **T** = `this.type = "..."` string
+literal set in the constructor; **C** = constructor signature / properties;
+**V** = literal constant value; **S** = app call site. Bundle line numbers are
+of the declaration.
 
 ### Core math and scene graph
 
@@ -218,8 +218,8 @@ import {
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 ```
 
-47 named exports from `three@0.180` plus `OrbitControls`. `K` is not an import
-— it is the bundler's class-field helper and vanishes on recompile.
+47 named exports from `three@0.180` plus `OrbitControls`. `K` is not an import —
+it is the bundler's class-field helper and vanishes on recompile.
 
 Notably absent, given a 5,500-line 3D game: no `Texture`/`TextureLoader`, no
 `GLTFLoader`, no `AnimationMixer`, no `Points`/`Sprite`, no `PointLight` or
@@ -234,7 +234,7 @@ Two changes would make the vendor list trustworthy without hand-checking:
 1. Accept 1-char unresolved identifiers as vendor candidates (currently
    `len(name) == 2` silently drops `P`, the largest dependency of all).
 2. Cross-check each candidate against column-0 declarations in bundle lines
-   1–25400, and separately against **indented** declarations inside `src/`.
-   A candidate that is not declared at vendor top level, or that _is_
-   declared as a local in `src/`, is a false positive. That alone removes all
-   17 listed above.
+   1–25400, and separately against **indented** declarations inside `src/`. A
+   candidate that is not declared at vendor top level, or that _is_ declared as
+   a local in `src/`, is a false positive. That alone removes all 17 listed
+   above.

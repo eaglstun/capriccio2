@@ -6,7 +6,13 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { PerspectiveCamera, Plane, Raycaster, Vector3, WebGLRenderer } from "three";
+import {
+  PerspectiveCamera,
+  Plane,
+  Raycaster,
+  Vector3,
+  WebGLRenderer,
+} from "three";
 import { engravingUniforms } from "./00-shaders";
 // --- end generated imports ---
 
@@ -32,7 +38,9 @@ class SectionMode {
   }
   /** Enable or disable the cut. */
   set(t) {
-    ((this.active = t), (engravingUniforms.uCutting.value = t ? 1 : 0), this.apply());
+    ((this.active = t),
+      (engravingUniforms.uCutting.value = t ? 1 : 0),
+      this.apply());
   }
   /** Cut along x or z. */
   setAxis(t) {
@@ -52,7 +60,9 @@ class SectionMode {
       return;
     }
     const t =
-      this.axis === "x" ? new Vector3(-this.flip, 0, 0) : new Vector3(0, 0, -this.flip);
+      this.axis === "x"
+        ? new Vector3(-this.flip, 0, 0)
+        : new Vector3(0, 0, -this.flip);
     (this.plane.set(t, this.flip * this.offset),
       (this.renderer.clippingPlanes = [this.plane]));
   }
@@ -131,7 +141,8 @@ class WanderMode {
   }
   /** Terrain height under a point, used to keep the walker on the ground. */
   groundAt(t, e, n) {
-    (this.ray.set(new Vector3(t, n + 1.4, e), new Vector3(0, -1, 0)), (this.ray.far = 60));
+    (this.ray.set(new Vector3(t, n + 1.4, e), new Vector3(0, -1, 0)),
+      (this.ray.far = 60));
     const s = this.ray.intersectObjects(this.world.raycastTargets(), !1);
     return s.length ? s[0].point.y : -999;
   }
@@ -140,7 +151,9 @@ class WanderMode {
     if (!this.active) return;
     const e =
         this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") ? 7.2 : 3.4,
-      n = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(-1),
+      n = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(
+        -1,
+      ),
       s = new Vector3(-n.z, 0, n.x),
       r = new Vector3();
     ((this.keys.has("KeyW") || this.keys.has("ArrowUp")) && r.add(n),
