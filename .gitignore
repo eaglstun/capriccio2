@@ -13,3 +13,8 @@ dist/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Agent git worktrees. These are separate checkouts of this same repo that
+# happen to live inside it; committing one would commit a second copy of the
+# whole tree. Also ignored by Prettier, for the same reason.
+.claude/worktrees/
