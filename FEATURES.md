@@ -8,12 +8,12 @@ unfreeze**.
 Every item carries the commit that built it, following the convention B1 and B2
 already used. What is actually outstanding:
 
-| item                      | state                                                     |
-| ------------------------- | --------------------------------------------------------- |
-| **A10 gamepad**           | **not started** — the only untouched item on the list     |
-| **A3 folio**              | shipped in part; the contact-sheet export was not built   |
-| **A1 Chronicle**          | in progress — engine shipped, the rest is `FABLE-BRIEF-9` |
-| **B3 new building types** | never scoped past a paragraph                             |
+| item                      | state                                                                |
+| ------------------------- | -------------------------------------------------------------------- |
+| **A10 gamepad**           | **not started** — the only untouched item on the list                |
+| **A3 folio**              | shipped in part; the contact-sheet export was not built              |
+| **A1 Chronicle**          | **built** — engine `b8b1307`, UI + engraving from the past `122a22d` |
+| **B3 new building types** | never scoped past a paragraph                                        |
 
 Everything else below is built. The plans are kept as the record of why, which
 is the same thing B1 and B2 do.
@@ -940,7 +940,8 @@ envelopes for existing types do not change. New keys, new geometry, new hints.
 The original order, with what actually happened:
 
 1. ~~**A0 Named citizens**~~ — built, `fbca02f`
-2. **A1 Chronicle** — in progress; engine done, UI specced in `FABLE-BRIEF-9`
+2. ~~**A1 Chronicle**~~ — built; engine `b8b1307`, the rest `27b0103` +
+   `122a22d`
 3. ~~**B1 Night**~~ — built, `db32dc7`. The unfreeze was granted and used
 4. ~~**A2 Procedural requests**~~ — built, `39d7fb7`
 5. ~~**A3 Folio**~~ — built in part, `792390d`; contact-sheet export outstanding

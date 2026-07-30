@@ -3,6 +3,16 @@
 A companion to `FEATURES.md`. This is one feature, specced on its own because it
 carries a mechanic rather than being presentation.
 
+**Status: shipped.** The enabler (day/hour stamping) landed first; the replay
+engine and its safety landed in `b8b1307` (`src/20-chronicle.ts`,
+`rebuildFromActions`); the scrub UI, engraving from the past and the look landed
+in `27b0103` + `122a22d` (`uChronicle` on the post shader,
+`src/21-chronicle-fx.ts`, the folio-panel UI). Every item in the Verify section
+below was measured in the browser before the final commit. The one deliberate
+scope note: `three-gpu-pathtracer` was evaluated and cut — the plate's tonal
+values come from hatching and ink the tracer cannot see, so it would replace the
+burin strokes rather than improve them. This file is kept as the record of why.
+
 ---
 
 ## What it is
