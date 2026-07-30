@@ -13,7 +13,7 @@ already used. What is actually outstanding:
 | **A10 gamepad**           | **not started** — the only untouched item on the list     |
 | **A3 folio**              | shipped in part; the contact-sheet export was not built   |
 | **A1 Chronicle**          | in progress — engine shipped, the rest is `FABLE-BRIEF-9` |
-| **B3 new building types** | never scoped past a paragraph                             |
+| **B3 new building types** | shipped — three FURNISH ornaments, `FABLE-BRIEF-10`       |
 
 Everything else below is built. The plans are kept as the record of why, which
 is the same thing B1 and B2 do.
@@ -928,10 +928,19 @@ right figure. Measured on a fresh city from the shipped code: **GRANDEUR
 0.196**, structure half 0.110, ornament half 0.086, against ACCESS 1.0, SHELTER
 0.111, LIGHT 0.900, BELONGING 0.545.
 
-### B3. New building types — NOT STARTED
+### B3. New building types — SHIPPED
 
 Adding catalogue entries is safe as long as existing keys are untouched and
 envelopes for existing types do not change. New keys, new geometry, new hints.
+
+Scoped by `FABLE-BRIEF-10` into three FURNISH ornaments and built: the
+**brazier** (the one warm light after dark — salvage drum on a tripod, a
+`hearth` pocket beside it, a lantern-weight count in BELONGING, and
+`three-nebula` sparks that are strictly render-only), the **fallen column** (the
+one ornament that lies down; emits nothing, by the cypress's rule), and the
+**game board** (the ambient line's chalk game made permanent, with a `gameboard`
+pocket where life gathers). The palette picked all three up from the catalogue
+with no HUD change, and the fresh-city baseline did not move.
 
 ---
 
@@ -946,8 +955,9 @@ The original order, with what actually happened:
 5. ~~**A3 Folio**~~ — built in part, `792390d`; contact-sheet export outstanding
 6. ~~Then reconsider B2~~ — reconsidered and built, `d1d9ae3`
 
-**What is left after the Chronicle:** A10 gamepad, the A3 contact sheet, and B3
-new building types. That is the whole remaining backlog from this document.
+**What is left after the Chronicle:** A10 gamepad and the A3 contact sheet. B3
+shipped as three FURNISH ornaments (`FABLE-BRIEF-10`). That is the whole
+remaining backlog from this document.
 
 ---
 
