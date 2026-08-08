@@ -7,6 +7,7 @@
 
 // --- generated imports ---
 import {
+  Box3,
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
@@ -45,13 +46,35 @@ import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry";
 import { buildStructureMesh } from "./04-builders";
 // --- end generated imports ---
 
+/**
+ * A Group that counts its own mutations.
+ *
+ * `raycastTargets()` wants to cache its flattened array rather than rebuild it
+ * on every call, and three.js Object3D fires no events. Counting add/remove
+ * here means the cache invalidates itself from any call site — including the
+ * module-level scenery functions further down this file — rather than relying
+ * on someone remembering to poke a dirty flag.
+ */
+class CountedGroup extends Group {
+  version = 0;
+  add(...t: Object3D[]) {
+    return (this.version++, super.add(...t));
+  }
+  remove(...t: Object3D[]) {
+    return (this.version++, super.remove(...t));
+  }
+  clear() {
+    return (this.version++, super.clear());
+  }
+}
+
 class World {
   scene: Scene;
   /** The shared material set built by 01-materials. Shape not yet typed. */
   mats: any;
   glowMat: ReturnType<typeof i_>;
   terrainMesh: Mesh;
-  structGroup = new Group();
+  structGroup = new CountedGroup();
   waterGroup = new Group();
   infillGroup = new Group();
   nav = new NavGraph();
@@ -64,6 +87,13 @@ class World {
   actions: any[] = [];
   onStructureBuilt: ((struct: any) => void) | null = null;
   desigMarks = new Map<any, any>();
+  // raycastTargets() cache, invalidated by structGroup.version. `rtBounds[i]`
+  // is the world-space box of `rtCache[i]`, used by raycastTargetsUnder.
+  rtCache: Object3D[] = [];
+  rtBounds: Box3[] = [];
+  rtVersion = -1;
+  rtTerrain: Mesh | null = null;
+  rtUnder: Object3D[] = [];
   // installed by the scenery pass, called once per frame with the clock.
   // `declare` so the property still appears only on first assignment.
   declare sceneTick?: (t: number) => void;
@@ -420,7 +450,44 @@ class World {
    * stops the player building on the backdrop.
    */
   raycastTargets() {
-    return [this.terrainMesh, ...this.structGroup.children];
+    if (
+      this.rtVersion !== this.structGroup.version ||
+      this.rtTerrain !== this.terrainMesh
+    ) {
+      // matrices may be a frame stale for anything added since the last
+      // render; the boxes below are world-space, so force them current first
+      this.structGroup.updateMatrixWorld(!0);
+      ((this.rtCache = [this.terrainMesh, ...this.structGroup.children]),
+        (this.rtBounds = this.rtCache.map((t) => new Box3().setFromObject(t))),
+        (this.rtVersion = this.structGroup.version),
+        (this.rtTerrain = this.terrainMesh));
+    }
+    return this.rtCache;
+  }
+  /**
+   * The subset of `raycastTargets()` that a straight-down ray at (x, z) could
+   * possibly hit.
+   *
+   * For a vertical ray this is an exact broad phase, not an approximation: a
+   * mesh whose world bounding box does not span x and z cannot be under the
+   * point. WANDER casts three of these per frame, and without it every step
+   * tested every structure and every distant ruin in the city.
+   *
+   * The returned array is reused between calls — read it, don't keep it.
+   */
+  raycastTargetsUnder(t, e) {
+    const n = this.raycastTargets(),
+      s = this.rtUnder;
+    s.length = 0;
+    for (let r = 0; r < n.length; r++) {
+      const o = this.rtBounds[r];
+      o.min.x <= t &&
+        o.max.x >= t &&
+        o.min.z <= e &&
+        o.max.z >= e &&
+        s.push(n[r]);
+    }
+    return s;
   }
   /**
    * Distance to the nearest water source, or a large sentinel if there is

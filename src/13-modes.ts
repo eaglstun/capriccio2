@@ -88,6 +88,15 @@ class WanderMode {
   grounded = !1;
   onExit: (() => void) | null = null;
   ray = new Raycaster();
+  // scratch vectors — update() and groundAt() run every frame and used to
+  // allocate six Vector3s a frame between them, which is GC pressure you feel
+  // as hitching in first person even though the arithmetic is trivial
+  scOrigin = new Vector3();
+  scDown = new Vector3(0, -1, 0);
+  scFwd = new Vector3();
+  scRight = new Vector3();
+  scMove = new Vector3();
+  scLook = new Vector3();
   // listeners kept as bound fields so enter()/exit() can remove the same
   // references they added
   boundMove: (e: MouseEvent) => void;
@@ -139,11 +148,22 @@ class WanderMode {
       (this.pitch -= t.movementY * 0.0019),
       (this.pitch = Math.max(-1.35, Math.min(1.35, this.pitch))));
   }
-  /** Terrain height under a point, used to keep the walker on the ground. */
+  /**
+   * Terrain height under a point, used to keep the walker on the ground.
+   *
+   * The ray is always straight down, so it only needs the meshes whose world
+   * bounding box spans (t, e) — see World.raycastTargetsUnder. That is an
+   * exact filter for a vertical ray, and it is the difference between testing
+   * three structures and testing the whole city three times a frame.
+   */
   groundAt(t, e, n) {
-    (this.ray.set(new Vector3(t, n + 1.4, e), new Vector3(0, -1, 0)),
+    (this.scOrigin.set(t, n + 1.4, e),
+      this.ray.set(this.scOrigin, this.scDown),
       (this.ray.far = 60));
-    const s = this.ray.intersectObjects(this.world.raycastTargets(), !1);
+    const s = this.ray.intersectObjects(
+      this.world.raycastTargetsUnder(t, e),
+      !1,
+    );
     return s.length ? s[0].point.y : -999;
   }
   /** Per-frame walk: apply WASD to velocity, damp it, and follow the ground. */
@@ -151,21 +171,24 @@ class WanderMode {
     if (!this.active) return;
     const e =
         this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") ? 7.2 : 3.4,
-      n = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(
-        -1,
-      ),
-      s = new Vector3(-n.z, 0, n.x),
-      r = new Vector3();
+      n = this.scFwd
+        .set(Math.sin(this.yaw), 0, Math.cos(this.yaw))
+        .multiplyScalar(-1),
+      s = this.scRight.set(-n.z, 0, n.x),
+      r = this.scMove.set(0, 0, 0);
     ((this.keys.has("KeyW") || this.keys.has("ArrowUp")) && r.add(n),
       (this.keys.has("KeyS") || this.keys.has("ArrowDown")) && r.sub(n),
       (this.keys.has("KeyD") || this.keys.has("ArrowRight")) && r.add(s),
-      (this.keys.has("KeyA") || this.keys.has("ArrowLeft")) && r.sub(s),
-      r.lengthSq() > 0 && r.normalize().multiplyScalar(e));
+      (this.keys.has("KeyA") || this.keys.has("ArrowLeft")) && r.sub(s));
+    const moving = r.lengthSq() > 0;
+    moving && r.normalize().multiplyScalar(e);
     const o = this.pos.y - 1.7,
       a = this.pos.x + r.x * t,
       c = this.pos.z + r.z * t,
       l = this.groundAt(this.pos.x, this.pos.z, o + 0.6),
-      h = this.groundAt(a, c, o + 0.6),
+      // standing still means (a, c) IS (pos.x, pos.z) and the query is the
+      // same ray from the same origin — reuse it rather than cast it twice
+      h = moving ? this.groundAt(a, c, o + 0.6) : l,
       u = h - o;
     h > -900 && u < 0.55
       ? ((this.pos.x = a), (this.pos.z = c))
@@ -179,7 +202,7 @@ class WanderMode {
       ? (this.pos.y = Math.max(f, this.pos.y - 9.8 * t * 1.6))
       : (this.pos.y += (f - this.pos.y) * Math.min(1, t * 14)),
       this.camera.position.copy(this.pos));
-    const m = new Vector3(
+    const m = this.scLook.set(
       this.pos.x - Math.sin(this.yaw) * Math.cos(this.pitch),
       this.pos.y + Math.sin(this.pitch),
       this.pos.z - Math.cos(this.yaw) * Math.cos(this.pitch),

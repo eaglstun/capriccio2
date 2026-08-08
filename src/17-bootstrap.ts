@@ -724,6 +724,19 @@ let oc = !1;
 function ac() {
   oc || saveGame({ day: te.day, hour: te.hour, infill: Ne.serialize() });
 }
+// The periodic autosave serialises the whole city and JSON.stringifies it into
+// localStorage — synchronous, and long enough to cost a frame. Orbiting you
+// never see it; in WANDER it lands as a hitch every eight seconds. Push it to
+// idle time. `ac()` itself stays synchronous for the page-hide path, which has
+// no idle time left to spend.
+let ocIdle = 0;
+function acIdle() {
+  if (oc || ocIdle) return;
+  const t = (window as any).requestIdleCallback;
+  ocIdle = t
+    ? t(() => ((ocIdle = 0), ac()), { timeout: 2000 })
+    : setTimeout(() => ((ocIdle = 0), ac()), 0);
+}
 new URLSearchParams(location.search).has("fresh") &&
   (localStorage.removeItem("capriccio-save-v1"),
   // ?fresh also re-arms the first-run walkthrough (brief 8) — the one
@@ -861,7 +874,7 @@ function Nh(i) {
         (bi = Rh(Kt, Ne)),
         setDistricts(bi),
         updateQualityMeters(),
-        gameState.dirty && ac()));
+        gameState.dirty && acIdle()));
   }
   // the soundscape and the score keep playing INSIDE the Chronicle — they
   // only read the sim, and the city's music over its own bones is right —
