@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>CAPRICCIO 2 — listen</title>
+    <meta
+      name="description"
+      content="The CAPRICCIO 2 score, without the city: three Strudel tracks and a synthesized soundscape, driven by a simulation you move by hand."
+    />
+    <meta property="og:title" content="CAPRICCIO 2 — listen" />
+    <meta
+      property="og:description"
+      content="No samples. Move the hour, the population and the chisels, and hear the city decide what to play."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --ink: #1a1036;
+        --deep: #241448;
+        --violet: #542a6e;
+        --mauve: #c05490;
+        --pink: #ff71ce;
+        --cyan: #6ff5ea;
+        --pale: #b8fff9;
+        --paper: #f4e9ff;
+        --amber: #ff9b6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100%;
+        background:
+          radial-gradient(
+            120% 80% at 50% 100%,
+            rgba(255, 155, 106, 0.28) 0%,
+            rgba(255, 113, 206, 0.14) 38%,
+            transparent 72%
+          ),
+          linear-gradient(#1a1036 0%, #241448 42%, #3a1c56 78%, #6b2f63 100%);
+        color: var(--paper);
+        font-family:
+          "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.62;
+        letter-spacing: 0.012em;
+        padding: 0 24px 96px;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9;
+        background: repeating-linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.13) 0 1px,
+          transparent 1px 3px
+        );
+        mix-blend-mode: multiply;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+      header {
+        padding: 80px 0 8px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(26px, 5.6vw, 40px);
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        text-indent: 0.3em;
+        color: var(--paper);
+        text-shadow:
+          2px 0 rgba(1, 205, 254, 0.85),
+          -2px 0 rgba(255, 113, 206, 0.85);
+      }
+      .sub {
+        margin: 0.7em 0 0;
+        font-style: italic;
+        color: var(--pale);
+        letter-spacing: 0.04em;
+        opacity: 0.92;
+      }
+      .rule {
+        width: 150px;
+        height: 1px;
+        margin: 32px auto 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--mauve),
+          transparent
+        );
+      }
+      h2 {
+        margin: 52px 0 14px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      p {
+        margin: 0 0 1em;
+      }
+      a {
+        color: var(--pink);
+        text-decoration-color: rgba(255, 113, 206, 0.4);
+        text-underline-offset: 3px;
+      }
+      a:hover {
+        color: var(--cyan);
+      }
+
+      /* ---------------------------------------------------------- the deck */
+      .deck {
+        margin-top: 46px;
+        padding: 26px 24px 22px;
+        border: 1px solid rgba(192, 84, 144, 0.45);
+        background: rgba(26, 16, 54, 0.5);
+        box-shadow:
+          inset 0 0 60px rgba(111, 245, 234, 0.05),
+          0 18px 50px rgba(0, 0, 0, 0.35);
+      }
+      #power {
+        display: block;
+        width: 100%;
+        padding: 16px;
+        font: inherit;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: linear-gradient(180deg, var(--pale), var(--cyan));
+        border: 0;
+        cursor: pointer;
+        transition: filter 0.2s;
+      }
+      #power:hover {
+        filter: brightness(1.1);
+      }
+      #power[data-on="1"] {
+        color: var(--paper);
+        background: transparent;
+        border: 1px solid rgba(111, 245, 234, 0.55);
+      }
+      #power[disabled] {
+        opacity: 0.55;
+        cursor: progress;
+      }
+      #scope {
+        display: block;
+        width: 100%;
+        height: 92px;
+        margin: 20px 0 4px;
+        opacity: 0.9;
+      }
+      .now {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        border-top: 1px solid rgba(192, 84, 144, 0.3);
+        padding-top: 16px;
+      }
+      .now .num {
+        font-size: 11px;
+        letter-spacing: 0.24em;
+        color: var(--mauve);
+      }
+      .now .name {
+        font-size: 19px;
+        letter-spacing: 0.05em;
+        color: var(--pink);
+      }
+      .now .desc {
+        font-size: 13px;
+        font-style: italic;
+        color: var(--pale);
+        opacity: 0.8;
+      }
+      .readout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+        gap: 10px;
+        margin: 18px 0 0;
+      }
+      .readout div {
+        border-top: 1px solid rgba(111, 245, 234, 0.18);
+        padding-top: 8px;
+      }
+      .readout dt {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        opacity: 0.75;
+      }
+      .readout dd {
+        margin: 2px 0 0;
+        font-size: 17px;
+        font-variant-numeric: tabular-nums;
+        color: var(--paper);
+      }
+
+      /* ------------------------------------------------------- the controls */
+      .ctl {
+        margin: 22px 0 0;
+      }
+      .ctl > .row {
+        display: grid;
+        grid-template-columns: 116px 1fr 62px;
+        align-items: center;
+        gap: 14px;
+        padding: 9px 0;
+      }
+      .ctl label {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--pale);
+        opacity: 0.85;
+      }
+      .ctl output {
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        color: var(--amber);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          rgba(192, 84, 144, 0.75),
+          rgba(111, 245, 234, 0.5)
+        );
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--pink);
+        box-shadow: 0 0 10px rgba(255, 113, 206, 0.8);
+        cursor: pointer;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 15px;
+        height: 15px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--pink);
+        cursor: pointer;
+      }
+      .toggles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .toggles button {
+        flex: 1 1 auto;
+        padding: 9px 12px;
+        font: inherit;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--pale);
+        background: transparent;
+        border: 1px solid rgba(192, 84, 144, 0.45);
+        cursor: pointer;
+      }
+      .toggles button[data-on="1"] {
+        color: var(--ink);
+        background: var(--pink);
+        border-color: var(--pink);
+      }
+      .hint {
+        margin: 14px 0 0;
+        font-size: 12.5px;
+        color: var(--pale);
+        opacity: 0.65;
+      }
+
+      /* ---------------------------------------------------------- the prose */
+      .notes dt {
+        margin-top: 18px;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--pink);
+      }
+      .notes dd {
+        margin: 4px 0 0;
+      }
+      .play {
+        display: inline-block;
+        margin-top: 40px;
+        padding: 13px 30px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: linear-gradient(180deg, var(--pale), var(--cyan));
+        text-decoration: none;
+      }
+      .links {
+        margin-top: 14px;
+        font-size: 13px;
+      }
+      footer {
+        margin-top: 64px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(192, 84, 144, 0.3);
+        font-size: 12.5px;
+        text-align: center;
+        color: var(--pale);
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>LISTEN</h1>
+        <p class="sub">the score, without the city</p>
+        <div class="rule"></div>
+      </header>
+
+      <p style="margin-top: 40px">
+        Everything CAPRICCIO plays is generated in the browser — three Strudel
+        tracks over synthesized voices, plus a soundscape of pink-noise wind,
+        water and bells. Nothing is downloaded. Here it runs with no city
+        attached: the sliders below <em>are</em> the simulation the music reads,
+        so you can move the hour, grow the population, or set the chisels going
+        and hear what the score does about it.
+      </p>
+
+      <section class="deck">
+        <button id="power" data-on="0">Begin the score</button>
+        <canvas
+          id="scope"
+          width="1280"
+          height="184"
+          aria-hidden="true"
+        ></canvas>
+
+        <div class="now">
+          <span class="num" id="trackNum">TRACK —</span>
+          <span class="name" id="trackName">silent</span>
+          <span class="desc" id="trackDesc">press begin</span>
+        </div>
+
+        <dl class="readout">
+          <div>
+            <dt>Hour</dt>
+            <dd id="rClock">—</dd>
+          </div>
+          <div>
+            <dt>Stage</dt>
+            <dd id="rStage">—</dd>
+          </div>
+          <div>
+            <dt>Section</dt>
+            <dd id="rSection">—</dd>
+          </div>
+          <div>
+            <dt>Tempo</dt>
+            <dd id="rBpm">—</dd>
+          </div>
+          <div>
+            <dt>Dusk</dt>
+            <dd id="rDusk">—</dd>
+          </div>
+        </dl>
+
+        <div class="ctl">
+          <div class="row">
+            <label for="cHour">Hour</label>
+            <input
+              id="cHour"
+              type="range"
+              min="5.6"
+              max="29.6"
+              step="0.05"
+              value="9.1"
+            />
+            <output id="oHour">09:06</output>
+          </div>
+          <div class="row">
+            <label for="cPop">Population</label>
+            <input
+              id="cPop"
+              type="range"
+              min="0"
+              max="140"
+              step="1"
+              value="8"
+            />
+            <output id="oPop">8</output>
+          </div>
+          <div class="row">
+            <label for="cWater">Water</label>
+            <input
+              id="cWater"
+              type="range"
+              min="0"
+              max="80"
+              step="1"
+              value="40"
+            />
+            <output id="oWater">40m</output>
+          </div>
+        </div>
+
+        <div class="toggles">
+          <button id="tClock" data-on="1">Clock running</button>
+          <button id="tBuild" data-on="0">Under construction</button>
+          <button id="tAmb" data-on="1">Soundscape</button>
+        </div>
+
+        <p class="hint">
+          Track 2 arrives at a population of 58; track 3 takes over after 20:30.
+          A change never cuts — it fades down through silence over three seconds
+          and comes back in the new mode. All three are rooted on A.
+        </p>
+      </section>
+
+      <h2>What you are hearing</h2>
+      <dl class="notes">
+        <dt>Track 1 — calm</dt>
+        <dd>
+          A minor, about 67bpm: i–VI–III–VII, held as ninths. It takes half a
+          minute to decide it wants percussion, suspends its thirds for the
+          second pass, and borrows exactly one major chord, late.
+        </dd>
+        <dt>Track 2 — techno</dt>
+        <dd>
+          A Dorian at 124bpm, four on the floor, and the one track where the pad
+          is not the subject — it is pulled back to glue so the rhythm section
+          can be what you hear. A clap rather than a snare on 2 and 4, open hats
+          filling every off-beat, chord stabs on the ands, and an acid bassline
+          whose resonant filter wanders on perlin noise, so the same eight notes
+          are a different colour every pass. Three stages: pulse, drop, roll.
+          The city has to grow into this one.
+        </dd>
+        <dt>Track 3 — night</dt>
+        <dd>
+          Half-time at 60bpm — exactly half of track 2 — and voiced a full
+          octave below the other two, with the counter-melody left up at the top
+          so the middle of the register stays empty. Dark hats with a quarter of
+          them missing, and a floor tom where the snare would be. Bar one is
+          always Am9; the rest are chosen fresh each cycle from four candidates.
+          Heavy detune, tape sag.
+        </dd>
+        <dt>The soundscape</dt>
+        <dd>
+          Separate from the score and always literal about the sim: wind gusting
+          on a fourteen-second cycle, water fading in with the square of the
+          distance, birds that fall silent at dusk, chisels while anything is
+          being built, and a bell at 8, 12 and 18.
+        </dd>
+        <dt>The arrangement</dt>
+        <dd>
+          Stages are on wall-clock time from the moment you press begin — hats
+          at 0:30, snare and counter-melody at 1:00, ride and fills at 1:30.
+          That is a one-way build: it only ever adds.
+        </dd>
+        <dt>The form</dt>
+        <dd>
+          So there is a second axis, which starts once the build reaches its
+          third stage at 1:00 and then runs for as long as the track does:
+          <strong
+            >verse, verse, chorus, verse, chorus, bridge, chorus, chorus</strong
+          >
+          — the bridge three quarters of the way through, where a bridge
+          belongs. The chorus takes the full kit and opens the filter; the verse
+          is held one step below it. The bridge is the subtraction, and it is
+          different in each track: track 1 loses its drums entirely and hangs on
+          suspended chords, track 2 breaks down to a pad and a thin hat line
+          with no low end at all, track 3 loses its floor and keeps its hats.
+          Sections are counted in bars rather than seconds, so a change always
+          lands on a bar line — eight bars each in tracks 1 and 3, sixteen in
+          track 2, which is the unit techno is built in. One pass of the whole
+          form is about four minutes in every track.
+        </dd>
+      </dl>
+
+      <p style="text-align: center">
+        <a class="play" href="/">Enter the city</a>
+      </p>
+      <p class="links" style="text-align: center">
+        <a href="/about.html">about this city</a> ·
+        <a href="/how-to-play.html">how to play</a>
+      </p>
+
+      <footer>
+        Original CAPRICCIO by Ethan Mollick, generated with Fable.<br />
+        This version built on top of it — same rules, later century.
+      </footer>
+    </main>
+    <script type="module" crossorigin src="/src/listen.ts"></script>
+  </body>
+</html>
