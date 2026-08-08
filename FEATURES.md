@@ -8,12 +8,12 @@ unfreeze**.
 Every item carries the commit that built it, following the convention B1 and B2
 already used. What is actually outstanding:
 
-| item                      | state                                                                |
-| ------------------------- | -------------------------------------------------------------------- |
-| **A10 gamepad**           | **not started** — the only untouched item on the list                |
-| **A3 folio**              | shipped in part; the contact-sheet export was not built              |
-| **A1 Chronicle**          | **built** — engine `b8b1307`, UI + engraving from the past `122a22d` |
-| **B3 new building types** | **built** — three FURNISH ornaments, `8f1866d`                       |
+| item                      | state                                                                 |
+| ------------------------- | --------------------------------------------------------------------- |
+| **A10 gamepad**           | **built** — `src/23-gamepad.ts`; rates not yet tuned on real hardware |
+| **A3 folio**              | shipped in part; the contact-sheet export was not built               |
+| **A1 Chronicle**          | **built** — engine `b8b1307`, UI + engraving from the past `122a22d`  |
+| **B3 new building types** | **built** — three FURNISH ornaments, `8f1866d`                        |
 
 Everything else below is built. The plans are kept as the record of why, which
 is the same thing B1 and B2 do.
@@ -454,7 +454,7 @@ a mechanic that does not exist.
 Do **not** add a stone-producing building. The scarcity is a pacing device that
 works; only its legibility is broken.
 
-### A10. Gamepad support — NOT STARTED
+### A10. Gamepad support — BUILT in `src/23-gamepad.ts`
 
 Add Web Gamepad API support for the main view.
 
@@ -470,6 +470,24 @@ prompts, no UI, nothing that appears for players without a pad.
 
 Mouse and keyboard must keep working identically at all times; a connected pad
 adds a path, it never takes one away.
+
+**One deliberate departure from the above.** The brief gives the right stick to
+zoom. It is instead the PLACEMENT stick, because every build rule in `11-tools`
+resolves its target by raycasting from a screen point and a pad has no pointer
+to raycast from. Once a tool is chosen the right stick drives a crosshair and
+the triggers keep the zoom; with no tool chosen the right stick falls back to
+zoom, as written. Driving an NDC aim point means the pad enters `hover()` and
+`click()` by the same door the mouse does and inherits snapping, clearance
+gating and the ghost preview without `11-tools` changing at all.
+
+WANDER writes into `WanderMode`'s own key set and yaw/pitch rather than running
+a parallel walker, so pad and keyboard drive one walker that cannot disagree.
+The pad only ever releases keys it pressed itself.
+
+**Not yet done:** the stick rates, deadzone and aim speed are guesses that have
+never been under a real thumb, and the Y axis is not invertible.
+`node tools/gamepad-check.ts` covers the logic — dormancy, zoom direction, aim
+clamping, edge-triggered buttons, the wander handoff — but it cannot judge feel.
 
 ### A11. The world reads as floating — SHIPPED in `4250a75`
 
@@ -956,9 +974,10 @@ The original order, with what actually happened:
 5. ~~**A3 Folio**~~ — built in part, `792390d`; contact-sheet export outstanding
 6. ~~Then reconsider B2~~ — reconsidered and built, `d1d9ae3`
 
-**What is left after the Chronicle:** A10 gamepad and the A3 contact sheet. B3
-shipped as three FURNISH ornaments (`FABLE-BRIEF-10`). That is the whole
-remaining backlog from this document.
+**What is left:** the A3 contact sheet, and tuning A10's stick rates against an
+actual pad. B3 shipped as three FURNISH ornaments (`FABLE-BRIEF-10`) and A10
+shipped as `src/23-gamepad.ts`. That is the whole remaining backlog from this
+document.
 
 ---
 

@@ -47,6 +47,7 @@ import { score } from "./18-music";
 import { Chronicle } from "./20-chronicle";
 import { ChronicleView } from "./21-chronicle-fx";
 import { EmberSystem } from "./22-embers";
+import { GamepadInput } from "./23-gamepad";
 // --- end generated imports ---
 
 const Qe = document.getElementById("app"),
@@ -836,6 +837,10 @@ te.paused = !0;
  * Candle refused to leave. */
 function Nh(i) {
   const t = Math.min(i, 120) / 1e3;
+  // Poll the pad first: it writes into the walk keys, the orbit's spherical
+  // delta and the placement hover, all of which are read further down this
+  // same frame. Polling after them would run the whole pad a frame late.
+  padInput.update(t);
   if (
     ((Aa.value += t),
     ov(Aa.value),
@@ -958,6 +963,19 @@ ie.aspect =
   (Qe.clientWidth || window.innerWidth) /
   (Qe.clientHeight || window.innerHeight);
 ie.updateProjectionMatrix();
+// Gamepad (brief A10). Constructed unconditionally but dormant until a pad
+// connects — see 23-gamepad. It is handed accessors rather than values
+// because `fn` is reassigned by cv() and the pad must read the live mode,
+// not the one that happened to be current at construction.
+const padInput = new GamepadInput({
+  controls: Te,
+  tool: Mn,
+  hud: fe,
+  wander: ni,
+  mode: () => fn,
+  chronicleActive: () => chronicle.active,
+  closeChronicle,
+});
 requestAnimationFrame(cc);
 document.hidden && lc();
 window.CAP = {
