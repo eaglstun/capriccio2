@@ -25,7 +25,9 @@
 //   BUILD / SECTION / PLATE
 //     left stick    orbit the camera
 //     right stick   move the aim point, once a tool is chosen — otherwise
-//                   the camera's second hand: up/down zoom, left/right pan
+//                   walks the camera over the city: left/right strafe,
+//                   up/down forward and back over the ground. How far it
+//                   can go is `maxTargetRadius`, set in 17-bootstrap.
 //     L2 / R2       zoom out / in
 //     A             place at the aim point (a click, at that point exactly)
 //     B             cancel — clears the tool, or returns from the Chronicle
@@ -321,21 +323,36 @@ export class GamepadInput {
       if (down[BTN.A]) h.tool.click(this.aim);
     } else {
       (this.hideCursor(), (this.aimedFor = null));
-      // With no tool selected the right stick is the camera's second hand:
-      // up and down zoom, left and right pan. Pushing forward goes in, which
-      // is why ry < 0 dollies in.
-      if (this.canOrbit && ry) {
-        ry < 0 ? c._dollyIn(dolly(-ry, t)) : c._dollyOut(dolly(ry, t));
-      }
+      // With no tool selected the right stick walks the camera over the city:
+      // left and right strafe, up and down go FORWARD and BACK. Forward is a
+      // move, not a zoom — the triggers already zoom, and a stick that only
+      // shortened the orbit radius could not take you anywhere new.
+      //
       // `_pan` takes PIXEL deltas and divides by the distance to the target,
       // so one stick throw covers the same fraction of the screen whether you
       // are up among the skyline or down between the piers. Panning in world
       // units instead would crawl when zoomed out and lurch when zoomed in.
       //
-      // Negated because `_pan` follows the mouse's grab-the-world convention —
-      // a positive delta pans the camera LEFT. The stick is camera-style, like
-      // the orbit above it: push right, the view goes right.
-      if (this.canPan && rx) c._pan(-rx * 620 * t, 0);
+      // Both are negated because `_pan` follows the mouse's grab-the-world
+      // convention — a positive delta moves the view LEFT and a positive
+      // vertical delta moves it forward, while the stick reads camera-style
+      // like the orbit above it: push right, the view goes right.
+      if (this.canPan && (rx || ry)) {
+        // `_panUp` follows SCREEN up when screenSpacePanning is set, which on
+        // a tilted camera lifts the target into the air instead of moving it
+        // across the ground. Clearing it for this one call switches to
+        // worldUp x cameraRight — the horizontal heading — so forward means
+        // forward over the plain no matter how far the camera is pitched
+        // down. Restored immediately, because the mouse wants the other one.
+        //
+        // How far this may carry you is not decided here: `maxTargetRadius`
+        // on the controls stops the look-at point leaving the terrain, and
+        // OrbitControls applies it inside `update()` for every input at once.
+        const ssp = c.screenSpacePanning;
+        ((c.screenSpacePanning = !1),
+          c._pan(-rx * 620 * t, -ry * 620 * t),
+          (c.screenSpacePanning = ssp));
+      }
     }
 
     (down[BTN.Y] && this.cycleTool(), down[BTN.X] && this.cycleVariant());

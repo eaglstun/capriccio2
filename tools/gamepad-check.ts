@@ -65,12 +65,28 @@ function makeControls() {
     _dollyOut(s: number) {
       this._scaleAcc /= s;
     },
-    // Mirrors the real _pan closely enough to check direction: a POSITIVE
-    // deltaX moves the target left, which is the grab-the-world convention
-    // the mouse uses and the thing the pad has to invert.
-    _targetX: 0,
-    _pan(dx: number, _dy: number) {
-      this._targetX -= dx;
+    // Mirrors the real _pan closely enough to check direction and clamping.
+    // Verified against three r180 in this exact pose: a POSITIVE deltaX moves
+    // the target LEFT, and with screenSpacePanning cleared a POSITIVE deltaY
+    // moves it FORWARD along the ground. Both are the grab-the-world
+    // convention the mouse uses, and both are what the pad has to invert.
+    // The fake camera looks down -Z, so "forward" is -Z and "right" is +X.
+    screenSpacePanning: true,
+    target: { x: 0, y: 0, z: 0 },
+    // The bound 17-bootstrap sets. OrbitControls enforces it inside update()
+    // via target.clampLength, so the fake applies it on every pan — same
+    // effect, minus the damping the direction tests do not care about.
+    maxTargetRadius: 380,
+    /** Records whether the pad cleared screenSpacePanning for its call. */
+    _sspDuringPan: null as boolean | null,
+    _pan(dx: number, dy: number) {
+      this._sspDuringPan = this.screenSpacePanning;
+      ((this.target.x -= dx), (this.target.z -= dy));
+      const r = Math.hypot(this.target.x, this.target.y, this.target.z);
+      if (r > this.maxTargetRadius) {
+        const k = this.maxTargetRadius / r;
+        ((this.target.x *= k), (this.target.y *= k), (this.target.z *= k));
+      }
     },
   };
 }
@@ -78,11 +94,14 @@ function makeControls() {
 function makeHost() {
   const controls = makeControls();
   const calls: string[] = [];
+
   return {
     calls,
     controls,
+
     host: {
       controls: controls as any,
+
       tool: {
         tool: null as string | null,
         variant: "",
@@ -200,50 +219,114 @@ const wake = () => listeners["gamepadconnected"]?.forEach((f) => f());
   );
 }
 
-// --- 3b. right stick pans, camera-style, and only with no tool up ----------
+// --- 3b. right stick walks the camera: strafe, forward/back, and the clamp --
+
+const drive = (axes: number[], frames = 60, tool: string | null = null) => {
+  pads = [];
+  const h = makeHost();
+  const g = new GamepadInput(h.host as any);
+  h.host.tool.tool = tool;
+  pads = [pad({ axes })];
+  wake();
+  for (let i = 0; i < frames; i++) g.update(1 / 60);
+  return h;
+};
 
 {
-  pads = [];
-  const { host, controls } = makeHost();
-  const g = new GamepadInput(host as any);
-  pads = [pad({ axes: [0, 0, 1, 0] })]; // right stick pushed right
-  wake();
-  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  const { controls } = drive([0, 0, 1, 0]); // right stick pushed right
   check(
-    "right stick right pans the view RIGHT",
-    controls._targetX > 0,
-    `targetX=${controls._targetX.toFixed(1)}`,
+    "right stick right strafes the view RIGHT (+x)",
+    controls.target.x > 0 && Math.abs(controls.target.z) < 1e-9,
+    `target x=${controls.target.x.toFixed(1)} z=${controls.target.z.toFixed(1)}`,
   );
 }
 
 {
-  pads = [];
-  const { host, controls } = makeHost();
-  const g = new GamepadInput(host as any);
+  const { controls } = drive([0, 0, -1, 0]);
+  check(
+    "right stick left strafes the view LEFT (-x)",
+    controls.target.x < 0,
+    `target x=${controls.target.x.toFixed(1)}`,
+  );
+}
+
+{
+  // the whole point of the change: forward must MOVE the camera over the
+  // ground, not shorten the orbit radius
+  const { controls } = drive([0, 0, 0, -1]); // stick pushed forward
+  check(
+    "right stick forward MOVES forward (-z), and does not zoom",
+    controls.target.z < 0 && controls._scaleAcc === 1,
+    `target z=${controls.target.z.toFixed(1)} zoomScale=${controls._scaleAcc}`,
+  );
+}
+
+{
+  const { controls } = drive([0, 0, 0, 1]);
+  check(
+    "right stick back MOVES back (+z)",
+    controls.target.z > 0,
+    `target z=${controls.target.z.toFixed(1)}`,
+  );
+}
+
+{
+  // screen-space panning would lift the target into the air on a pitched
+  // camera instead of sliding it along the ground
+  const { controls } = drive([0, 0, 0, -1], 3);
+  check(
+    "the forward pan is taken along the GROUND, not screen-up",
+    controls._sspDuringPan === false,
+    `screenSpacePanning during _pan = ${controls._sspDuringPan}`,
+  );
+  check(
+    "screenSpacePanning is restored afterwards, for the mouse",
+    controls.screenSpacePanning === true,
+    `left as ${controls.screenSpacePanning}`,
+  );
+}
+
+{
+  // shove in one direction far longer than it takes to leave the map, then
+  // diagonally, since the limit is a radius and not a box
+  const { controls } = drive([0, 0, 1, 0], 2400);
+  const r = Math.hypot(controls.target.x, controls.target.z);
+  check(
+    "panning cannot push the look-at point off the playable terrain",
+    r <= 380 + 1e-6,
+    `target radius=${r.toFixed(1)} (limit 380)`,
+  );
+  const d = drive([0, 0, 0.9, -0.9], 2400).controls;
+  check(
+    "the limit holds on a diagonal too, not just on an axis",
+    Math.hypot(d.target.x, d.target.z) <= 380 + 1e-6,
+    `target radius=${Math.hypot(d.target.x, d.target.z).toFixed(1)}`,
+  );
+}
+
+{
+  // and once pinned at the limit you must still be able to come back
+  const h = drive([0, 0, 1, 0], 2400);
+  const g2 = new GamepadInput(h.host as any);
   pads = [pad({ axes: [0, 0, -1, 0] })];
   wake();
-  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  const before = h.controls.target.x;
+  for (let i = 0; i < 60; i++) g2.update(1 / 60);
   check(
-    "right stick left pans the view LEFT",
-    controls._targetX < 0,
-    `targetX=${controls._targetX.toFixed(1)}`,
+    "the limit is a wall, not a trap — inward panning still works",
+    h.controls.target.x < before - 1,
+    `x went ${before.toFixed(1)} -> ${h.controls.target.x.toFixed(1)}`,
   );
 }
 
 {
   // once a tool is up the right stick belongs to the crosshair, so panning
   // must stop dead — otherwise aiming would drag the whole city along
-  pads = [];
-  const { host, controls } = makeHost();
-  const g = new GamepadInput(host as any);
-  host.tool.tool = "anchor";
-  pads = [pad({ axes: [0, 0, 1, 0] })];
-  wake();
-  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  const { controls } = drive([0, 0, 1, 0], 60, "anchor");
   check(
     "a selected tool takes the right stick back from the pan",
-    controls._targetX === 0,
-    `targetX=${controls._targetX}`,
+    controls.target.x === 0 && controls.target.z === 0,
+    `target x=${controls.target.x} z=${controls.target.z}`,
   );
 }
 

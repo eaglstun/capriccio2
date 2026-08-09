@@ -65,6 +65,17 @@ Te.dampingFactor = 0.09;
 Te.maxPolarAngle = Math.PI * 0.49;
 Te.minDistance = 5;
 Te.maxDistance = 520;
+// Keep the look-at point over real ground. The terrain plane reaches 300 along
+// its axes and 424 at its corners; past that is the flat scenery apron, and
+// panning out there leaves you staring at empty plain with the city behind
+// you. 380 sits between the two — clear of the whole buildable area, still
+// short of the edge in every direction.
+//
+// This caps the TARGET, not the eye: the orbit radius rides on top of it, so
+// the camera can still get roughly 900 out and look back at the skyline.
+// OrbitControls applies it inside update(), which means it holds for the mouse
+// and the gamepad alike rather than being enforced per input device.
+Te.maxTargetRadius = 380;
 Te.update();
 const Pe = new DirectionalLight("#ffe9f2", 3.5);
 Pe.castShadow = !0;
