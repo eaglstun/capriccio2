@@ -18,7 +18,14 @@ import {
   type Side,
   Vector3,
 } from "three";
-import { Q0, districtUniforms, e_, engravingUniforms, t_ } from "./00-shaders";
+import {
+  Q0,
+  TERRACE_H,
+  districtUniforms,
+  e_,
+  engravingUniforms,
+  t_,
+} from "./00-shaders";
 // --- end generated imports ---
 
 /**
@@ -48,7 +55,13 @@ function createStoneMaterial(i: StoneMaterialOpts = {}) {
   const t = new MeshLambertMaterial({
       color: 16777215,
       side: i.side ?? DoubleSide,
-      fog: !0,
+      // Dithered materials opt OUT of three's fog chunk and do their own.
+      // fog_fragment runs after opaque_fragment, so it would mix paper into
+      // an output that has already been forced to two values — the wash that
+      // put a third, fourth and fiftieth level onto the 1-bit era. The
+      // engraving shader folds the same FogExp2 term into the luminance it
+      // thresholds instead, so distance survives as dither density.
+      fog: !i.dither,
     }),
     e = new Color(i.stone ?? "#ead4e6");
   return (
@@ -72,6 +85,23 @@ function createStoneMaterial(i: StoneMaterialOpts = {}) {
         (n.uniforms.uBlueNoise = engravingUniforms.uBlueNoise),
         (n.uniforms.uDistrictPos = districtUniforms.uDistrictPos),
         (n.uniforms.uDistrictCol = districtUniforms.uDistrictCol),
+        // The atmosphere the 1-bit branch folds into the luminance it
+        // thresholds. BOUND BY REFERENCE, not copied: J0's resize and its
+        // night/chronicle/paper setters write these shared objects, and a
+        // copy would freeze every dithered surface at its start-up values.
+        //
+        // Leaving them unbound is not a soft failure. An unbound uniform
+        // reads as zero, and `gl_FragCoord.xy / uResE` then divides by zero —
+        // the vignette term goes NaN, the thresholded luminance goes with it,
+        // and every dithered material comes out solid ink. That is what a
+        // missing line here looks like from the outside: black walls with the
+        // post pass's outlines still drawn over them.
+        (n.uniforms.uFogDens = engravingUniforms.uFogDens),
+        (n.uniforms.uPaperLum = engravingUniforms.uPaperLum),
+        (n.uniforms.uNightAmt = engravingUniforms.uNightAmt),
+        (n.uniforms.uVigAmt = engravingUniforms.uVigAmt),
+        (n.uniforms.uChronAmt = engravingUniforms.uChronAmt),
+        (n.uniforms.uResE = engravingUniforms.uResE),
         (n.vertexShader = n.vertexShader
           .replace(
             "#include <common>",
@@ -219,6 +249,25 @@ function n_() {
     // the neon lottery per 7m cell — pink, mercury, acid — and a fire must
     // never come up cyan. One warm colour, driven by the clock like glow is
     // (see os() in 17-bootstrap), with a slow flicker the neon does not get.
+    // the three console game boards' palette — Atari 2600, NES, ZX Spectrum.
+    // ONE material for all of it: every hardware hex rides in a `color`
+    // attribute on the geometry, the way the citizens' clothing does, so the
+    // 2600's eight-step luminance ramp, the NES's two background palettes and
+    // the Spectrum's bright pairs together cost one draw call and one stock
+    // program. Giving each entry its own createStoneMaterial would have
+    // compiled fourteen byte-identical shaders, because `stone` sits in
+    // customProgramCacheKey even though it only ever feeds a uniform.
+    //
+    // No engraving hook, deliberately. All three machines output FLAT
+    // quantised colour; running the copperplate hatch over them would fight
+    // the exact thing being reproduced. Lambert still puts them inside the
+    // city's light, shadow and fog, so a board reads as painted stone at dusk
+    // rather than as a hole cut in the picture.
+    consoleMat = new MeshLambertMaterial({
+      color: "#ffffff",
+      fog: !0,
+      vertexColors: !0,
+    }),
     ember = new MeshBasicMaterial({ color: "#ff9840", fog: !1 });
   ember.toneMapped = !1;
   return (
@@ -292,6 +341,7 @@ float wNoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
       ghostBad: d,
       water: f,
       ember,
+      console: consoleMat,
     }
   );
 }
@@ -528,7 +578,7 @@ function rawTerrainHeight(i, t) {
  */
 function terrainHeightAt(i, t) {
   const e = rawTerrainHeight(i, t),
-    n = 2.3,
+    n = TERRACE_H,
     s = e / n,
     r = Math.floor(s),
     o = s - r,

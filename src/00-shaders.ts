@@ -124,7 +124,19 @@ void main() {
   vec2 suv = vUv + vec2(tear * (0.006 + 0.012 * jag), 0.0);
 
   float depthC = readDepth(suv);
-  vec3 color = texture2D(tDiffuse, suv).rgb;
+  vec4 src = texture2D(tDiffuse, suv);
+  vec3 color = src.rgb;
+
+  // ============ 1-BIT MASK ============
+  // Materials that dithered stamp 0.8 into the marker alpha (see the engraving
+  // shader's gl_FragColor). Those pixels already carry fog, smog and the
+  // vignette as dither density, and they are only allowed two values — so the
+  // grade below skips every part of itself that varies across the surface.
+  // A spatially UNIFORM operation is fine and stays: a flat multiply maps two
+  // colours to two colours. It is the varying ones that put grey in between.
+  // Ramped rather than tested, because LinearFilter smears the marker across
+  // the material boundary and a hard test would leave a seam there.
+  float isDith = smoothstep(0.70, 0.77, src.a) * (1.0 - smoothstep(0.85, 0.93, src.a));
 
   // ============ RGB SEPARATION ============
   // inside the tracking bar the signal drops a generation: a tracking
@@ -351,7 +363,8 @@ void main() {
     vec3 wpC = (uCameraWorld * vec4(pC, 1.0)).xyz;
     float lowness = 1.0 - smoothstep(-18.0, 34.0, wpC.y);
     // at night the smog stops glowing — a lit haze would wash the dark out
-    color = mix(color, vec3(0.50, 0.32, 0.45), fogF * lowness * 0.42 * (1.0 - uNight * 0.7));
+    color = mix(color, vec3(0.50, 0.32, 0.45),
+                fogF * lowness * 0.42 * (1.0 - uNight * 0.7) * (1.0 - isDith));
   }
 
   // ============ NEON BLOOM ============
@@ -374,10 +387,15 @@ void main() {
   float g1 = vnoise(vUv * uResolution * 0.5);
   float g2 = vnoise(vUv * uResolution * 0.11 + 57.0);
   float scan = sin(vUv.y * uResolution.y * 1.5708);
-  color *= 1.0 - (scan * 0.5 + 0.5) * 0.085 * uGrain;
-  color *= 1.0 + (g1 - 0.5) * 0.030 * uGrain;
-  color.r *= 1.0 + (g2 - 0.5) * 0.05 * uGrain;
-  color.b *= 1.0 - (g2 - 0.5) * 0.05 * uGrain;
+  // scanlines, grain and the chroma wobble all vary pixel to pixel, so on a
+  // 1-bit surface they are pure extra levels — and unlike fog they carry no
+  // information worth folding into the dither, they ARE the dither's job.
+  // Zeroed there rather than reduced.
+  float grainA = uGrain * (1.0 - isDith);
+  color *= 1.0 - (scan * 0.5 + 0.5) * 0.085 * grainA;
+  color *= 1.0 + (g1 - 0.5) * 0.030 * grainA;
+  color.r *= 1.0 + (g2 - 0.5) * 0.05 * grainA;
+  color.b *= 1.0 - (g2 - 0.5) * 0.05 * grainA;
 
   // slight cool phosphor tint multiply + dusk magenta
   vec3 tint = mix(vec3(1.0, 0.975, 1.015), vec3(1.03, 0.91, 1.04), uDusk);
@@ -392,13 +410,17 @@ void main() {
   float lumC = dot(color, vec3(0.2126, 0.7152, 0.0722));
   color = mix(color, vec3(lumC), uChronicle * 0.5);
   color = mix(color, color * 0.82 + vec3(0.085, 0.078, 0.10), uChronicle);
-  color *= 1.0 + (g1 - 0.5) * 0.12 * uChronicle;
-  color *= 1.0 - (scan * 0.5 + 0.5) * 0.06 * uChronicle;
+  // the drain and the lift above are flat maps — two colours in, two out — so
+  // they run on 1-bit surfaces unchanged and the replay grade still reads.
+  // These two are the tape's own grain and scanlines, and are not.
+  color *= 1.0 + (g1 - 0.5) * 0.12 * uChronicle * (1.0 - isDith);
+  color *= 1.0 - (scan * 0.5 + 0.5) * 0.06 * uChronicle * (1.0 - isDith);
 
-  // vignette — the Chronicle closes it in a touch
+  // vignette — the Chronicle closes it in a touch. 1-bit surfaces already
+  // took it as density in the material, with these same two constants.
   vec2 vc = vUv - 0.5;
   float vig = 1.0 - dot(vc, vc) * (uVignette + uChronicle * 0.42);
-  color *= vig;
+  color *= mix(vig, 1.0, isDith);
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -598,6 +620,7 @@ class J0 {
       r = Math.round(e * n * this.ss);
     (this.target.setSize(s, r),
       this.postMat.uniforms.uResolution.value.set(s, r),
+      engravingUniforms.uResE.value.set(s, r),
       (this.postMat.uniforms.uLineWeight.value = Math.max(
         1,
         n * this.ss * 0.78,
@@ -619,7 +642,8 @@ class J0 {
    * scene, and stops the smog haze glowing. Separate from dusk on purpose —
    * pushing dusk past its range would have distorted the sunset. */
   setNight(t) {
-    this.postMat.uniforms.uNight.value = t;
+    ((this.postMat.uniforms.uNight.value = t),
+      (engravingUniforms.uNightAmt.value = t));
   }
   setSunDir(t) {
     this.postMat.uniforms.uSunDir.value.copy(t);
@@ -628,11 +652,14 @@ class J0 {
    * copy: chroma drains, grain climbs, the tracking band misbehaves more.
    * Ramped by the bootstrap on enter/exit; zero in normal play. */
   setChronicle(t) {
-    this.postMat.uniforms.uChronicle.value = t;
+    ((this.postMat.uniforms.uChronicle.value = t),
+      (engravingUniforms.uChronAmt.value = t));
   }
   /** The paper colour, which is also the clear colour and the sky. */
   setPaper(t) {
     (this.postMat.uniforms.uPaper.value.copy(t),
+      (engravingUniforms.uPaperLum.value =
+        0.2126 * t.r + 0.7152 * t.g + 0.0722 * t.b),
       this.renderer.setClearColor(t, 1));
   }
   /** Update the per-frame camera/time uniforms and render the scene into the
@@ -647,6 +674,7 @@ class J0 {
       n.uInvProjection.value.copy(e.projectionMatrixInverse),
       n.uCameraWorld.value.copy(e.matrixWorld),
       (n.uFogDensity.value = this.fogDensity),
+      (engravingUniforms.uFogDens.value = this.fogDensity),
       this.renderer.setRenderTarget(this.target),
       this.renderer.render(t, e),
       (this.lastDraws = this.renderer.info.render.calls),
@@ -715,6 +743,16 @@ class J0 {
   }
 }
 /**
+ * The height of one terrace step.
+ *
+ * `terrainHeightAt` quantises raw height into bands this tall, and the ground
+ * contour lines use it as their contour interval — so the lines land on the
+ * strata rather than cutting across them. Two copies of that number would
+ * drift apart the first time anyone tuned the terracing, so `01-materials`
+ * imports this one rather than keeping its own.
+ */
+const TERRACE_H = 2.3;
+/**
  * Uniforms SHARED by every engraved material.
  *
  * Shared objects, not copies — so `syncLightUniforms` updates one place and
@@ -737,6 +775,17 @@ const engravingUniforms = {
   // viewport 2px cells were proportionally far finer than the original)
   uPxScale: { value: 3 },
   uBlueNoise: { value: blueNoiseTex },
+  // --- the sheet's atmosphere, mirrored down into the materials ---
+  // The 1-bit surfaces fold these into the luminance they threshold rather
+  // than receiving them as a wash afterwards, so distance, smog and the
+  // vignette come out as dither DENSITY and the output stays two colours.
+  // Mirrors of J0's post uniforms; J0's setters write both.
+  uFogDens: { value: 0.0021 },
+  uPaperLum: { value: 0.78 },
+  uNightAmt: { value: 0 },
+  uVigAmt: { value: 0.58 },
+  uChronAmt: { value: 0 },
+  uResE: { value: new Vector2(4, 4) },
 };
 // palette by district: each named quarter tints the fabric and the neon
 // inside its radius. Hue goes where the name sends it; the value stays
@@ -857,6 +906,12 @@ uniform float uLocalGain;
 uniform float uDither;
 uniform float uCarvable;
 uniform float uPxScale;
+uniform float uFogDens;
+uniform float uPaperLum;
+uniform float uNightAmt;
+uniform float uVigAmt;
+uniform float uChronAmt;
+uniform vec2 uResE;
 uniform vec3 uDistrictPos[8];
 uniform vec3 uDistrictCol[8];
 
@@ -922,12 +977,98 @@ float hatchAdaptive(vec3 wp, vec3 aw, vec2 dir, float freq, float duty, float wo
   return mix(a, b, lf);
 }
 
+// ---- topographic contours on the natural ground ---------------------------
+//
+// Technique and its measurements: threejs skill, terrain-contour-lines.md.
+//
+// The contour interval is the TERRACE STEP, not a round number. terrainHeightAt
+// quantises height into bands this tall, so a contour every step describes the
+// strata; any other interval cuts across them and reads as a grid laid on top.
+const float TERRACE_H = ${TERRACE_H.toFixed(4)};
+
+// Sub-contours per terrace step. At 1 the only contours are the strata
+// boundaries themselves, which on measurement left the plateaus blank: their
+// contour spacing is ~500 world units, so a whole plateau falls between two
+// lines. Subdividing puts lines on the flats, where most of this map is.
+//
+// The divisor doubles as the index-contour period, which is the point of
+// choosing a power of two: every CONTOUR_DIV-th sub-contour IS a terrace
+// boundary, so the heavy lines fall on the strata and the light ones subdivide
+// them. Any other index period would put heavy lines at heights that mean
+// nothing here.
+const float CONTOUR_DIV = 4.0;
+const float CONTOUR_IV = TERRACE_H / CONTOUR_DIV;
+
+// Hue cycles once across the terrain's full height range, so the spectrum
+// reads as an elevation scale rather than as stripes — hypsometric tinting,
+// which is what a coloured contour map actually does. Measured range of
+// terrainHeightAt over the playable area: -29.84 to 57.39, i.e. 87.2 units
+// and ~38 terrace steps.
+//
+// Only 0.85 of the colour cycle is used, and that is not cosmetic: a full
+// cycle brings the top of the range back around to the hue the bottom started
+// on, so the canyon floor and the highest peaks both come out the same red
+// (#ff403f vs #ff4040 — measured) and the scale stops telling you anything.
+// Stopping at 0.85 leaves the ends clearly apart, red to yellow.
+const float CONTOUR_SPAN = 87.2;
+const float CONTOUR_BASE = 29.8;    // shifts the minimum to hue 0
+const float CONTOUR_ARC = 0.85;     // fraction of the cycle actually used
+
+// cosine palette: a full-saturation rainbow in three cos ops, no texture,
+// no branch, no HSV conversion
+vec3 contourHue(float t) {
+  return 0.5 + 0.5 * cos(6.2831853 * (t + vec3(0.0, 0.3333, 0.6667)));
+}
+
+// One contour level. k is this level's interval multiplier (1, 2, 4...).
+float contourBand(float h, float k, float widthPx) {
+  float iv = CONTOUR_IV * k;
+  float f = h / iv;
+  float w = fwidth(h) / iv;             // intervals per pixel
+  float n = floor(f + 0.5);             // nearest contour
+  // index contours: a level-k contour n sits at base index n*k, so testing that
+  // against CONTOUR_DIV keeps the heavy lines on the terrace boundaries at
+  // EVERY LOD. Pinning to base indices is what stops them migrating to
+  // different heights as the level changes. (At k = CONTOUR_DIV the interval
+  // has coarsened to exactly one terrace step, so every contour is heavy —
+  // which is correct: at that distance every line is a stratum.)
+  float width = widthPx * (mod(n * k, CONTOUR_DIV) < 0.5 ? 2.1 : 1.0);
+  // width is defined in PIXELS, not world units: dividing the distance-to-
+  // contour by the per-pixel footprint is what keeps a contour the same weight
+  // on a shallow slope near the camera and a steep one at the horizon.
+  float d = abs(fract(f - 0.5) - 0.5);
+  float line = 1.0 - smoothstep(width - 0.5, width + 0.5, d / max(w, 1e-6));
+  // Same Nyquist rule as lineAA: below two pixels per interval there is no
+  // line left to draw, only moire, so fade to the average ink the pattern
+  // carries. 2*width*w is the exact mean coverage while widthPx <= 1.0.
+  float duty = clamp(2.0 * width * w, 0.0, 1.0);
+  return mix(line, duty, smoothstep(0.34, 0.5, w));
+}
+
+// Contours with distance LOD. Each coarser level keeps every SECOND contour of
+// the finer one, so the crossfade reads as alternate lines dropping out rather
+// than the whole set dissolving — which is what the old fixed-interval version
+// did once the ground got far enough away.
+float groundContours(vec3 wp, float widthPx) {
+  float w0 = fwidth(wp.y) / CONTOUR_IV;
+  float lod = max(0.0, log2(max(w0, 1e-6) / 0.14));
+  float k0 = exp2(floor(lod));
+  return mix(contourBand(wp.y, k0, widthPx),
+             contourBand(wp.y, k0 * 2.0, widthPx),
+             fract(lod));
+}
+
 // masonry joints + per-block tonal patchwork
 vec2 masonry(vec3 wp, vec3 n, float b) {
   vec3 an = abs(n);
   float ink = 0.0;
   float blockTone = 0.0;
   float ch = uCourseH;
+  // Natural ground carries contours at ANY tilt, so this sits OUTSIDE the
+  // face-orientation chain below: the terrace risers are not level faces, and
+  // the risers are exactly where contours read. The old version lived inside
+  // the an.y > 0.72 branch and so could only ever draw on gentle ground.
+  //
   if (an.y > 0.72 && ch > 1.8) {
     // natural ground: sparse engraved flecks + contour lines on any tilt
     vec2 co = wp.xz;
@@ -940,13 +1081,6 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     float dash = lineAA(s, 0.2);
     float mask = smoothstep(0.58, 0.78, eNoise(co * 0.16));
     ink = dash * mask * 0.5;
-    // contour lines where the ground genuinely tilts (strata edges only)
-    float tilt = 1.0 - n.y;
-    float cw = fwidth(wp.y) + 0.02;
-    float cf = abs(fract(wp.y / 2.3) - 0.5) * 2.3;
-    float contour = 1.0 - smoothstep(0.03, 0.03 + cw, cf);
-    float cfade = 1.0 - smoothstep(0.25, 0.75, cw);   // dissolve in the distance
-    ink = max(ink, contour * smoothstep(0.16, 0.42, tilt) * 0.5 * cfade);
     blockTone = (eNoise(co * 0.05) - 0.5) * 1.4;
   } else if (an.y > 0.72) {
     // pavement grid
@@ -1058,6 +1192,37 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   float jointFade = 0.35 + 0.65 * smoothstep(0.2, 0.5, bb);
   ink = max(ink, mas.x * uJointAlpha * jointFade);
 
+  // Ground contours are composited HERE rather than returned from masonry(),
+  // because everything masonry returns is scaled by uJointAlpha (0.34) and
+  // jointFade (0.35-1.0). A contour handed back through that arrives at 5-15%
+  // ink and then loses the max() against the hatching — which is why the
+  // previous contour lines, which did live inside masonry(), were invisible.
+  // uJointAlpha means "how strong are the masonry joints"; contours are not
+  // joints and must not ride on it.
+  //
+  // Coverage only here — the COLOUR is applied further down, once engraved
+  // exists. ink is a scalar that gets mixed toward the single uInkCol, so
+  // anything folded into it can only ever come out one colour; a rainbow has
+  // to bypass it entirely.
+  //
+  // The slope gate's low end is deliberately almost open. 90% of this map is
+  // plateau — the terracing is that effective — so gating contours off gentle
+  // ground suppresses them across nine tenths of the terrain. It is also
+  // unnecessary: because contour width is defined in PIXELS, flat ground does
+  // not produce fat or wrong lines, it produces lines that are further apart,
+  // which is what a contour map of flat ground should look like. What is left
+  // is a guard against genuinely zero gradient, where a plateau sitting exactly
+  // on a contour level would ink solid. The upper end is real: on a near
+  // vertical face contours converge and resolving them produces mush.
+  float cCov = 0.0;
+  if (uCourseH > 1.8) {
+    float cTilt = 1.0 - abs(wn.y);
+    float cBand = smoothstep(0.008, 0.045, cTilt)
+                * (1.0 - smoothstep(0.55, 0.86, cTilt));
+    if (cBand > 0.002)
+      cCov = clamp(groundContours(vWorldPosE, 0.9) * cBand * 0.92, 0.0, 1.0);
+  }
+
   float age = vToneE.y;
   vec3 stone = uStoneCol * (0.90 + 0.10 * smoothstep(0.2, 0.9, bb));
   stone *= 1.0 + mas.y * 0.085;
@@ -1123,9 +1288,43 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   // the fabric boundary IS the style boundary. Old fabric (board-formed
   // concrete, rock, ground) keeps the burin hatching, as does salvage —
   // panel-seamed sheet, but undithered.
+  float dithered = 0.0;
   if (uDither > 0.5 && uCutting < 0.5) {
+    dithered = 1.0;
     float dl = dot(engraved, vec3(0.2126, 0.7152, 0.0722));
     dl = clamp((dl - 0.5) * 1.45 + 0.56, 0.0, 1.0);
+
+    // ---- the atmosphere is folded IN, not laid on ----
+    // Everything below this branch used to reach a dithered surface as a
+    // smooth wash over the binary pixels: FogExp2 from three's own chunk, then
+    // the post pass's smog haze and vignette. Each of those is a mix toward
+    // some colour by a factor that varies across the surface, so each of them
+    // put grey between the two values the dither is allowed to have — which is
+    // exactly the "extra level of shading" the 1-bit era is not supposed to
+    // own. Nine tenths of a dithered wall was landing somewhere in between.
+    //
+    // The fix is not to delete them; a structure that ignores distance stops
+    // receding and pops out of the picture. It is to apply them HERE, to the
+    // luminance being thresholded, so distance and smog and the corner
+    // falloff come out as dither DENSITY instead of grey. Same information,
+    // two colours. The post pass then skips these three on marked pixels
+    // (the marker in the alpha channel) so they are not paid twice.
+    //
+    // Applied AFTER the contrast stretch on purpose. The stretch models
+    // Atkinson's discarded 2/8 error; running atmosphere through it would
+    // multiply the haze by 1.45 and blow the far field to solid paper.
+    //
+    // The constants are copies of the post pass's, and have to stay copies:
+    // 0.3565 is the luminance of its smog colour vec3(0.50, 0.32, 0.45), and
+    // -18/34 is its lowness ramp. Change one, change both.
+    float fogF = 1.0 - exp(-uFogDens * uFogDens * distE * distE);
+    dl = mix(dl, uPaperLum, fogF);
+    float lowness = 1.0 - smoothstep(-18.0, 34.0, vWorldPosE.y);
+    dl = mix(dl, 0.3565, fogF * lowness * 0.42 * (1.0 - uNightAmt * 0.7));
+    vec2 vgc = gl_FragCoord.xy / uResE - 0.5;
+    dl = clamp(dl * (1.0 - dot(vgc, vgc) * (uVigAmt + uChronAmt * 0.42)),
+               0.0, 1.0);
+
     float bt = eBlueNoise(floor(gl_FragCoord.xy / uPxScale));
     // diffusion tell: error diffusion sharpens edges because the error a
     // contour rejects lands on its neighbours. A screen can't do that, but
@@ -1137,6 +1336,23 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     engraved = dl > bt ? dPaper : uInkCol * 0.92;
   }
 
+  // Rainbow contours, applied last so they survive everything above — and
+  // deliberately AFTER the 1-bit dither branch, which would otherwise crush
+  // them to two colours. Ground is not dithered fabric, so in practice the two
+  // never meet; the ordering makes that explicit rather than incidental.
+  //
+  // Hue comes from world height, not from the contour index, which matters:
+  // the index changes with LOD, so hueing by index would make lines change
+  // colour as the camera moves. Height does not, so a given elevation keeps
+  // its colour from any distance.
+  if (cCov > 0.002) {
+    float cT = clamp((vWorldPosE.y + CONTOUR_BASE) / CONTOUR_SPAN, 0.0, 1.0);
+    vec3 cCol = contourHue(cT * CONTOUR_ARC);
+    // carry the scene's own light so the lines sit in the picture rather than
+    // reading as an overlay pasted on top of it
+    engraved = mix(engraved, cCol * (0.55 + 0.45 * bb), cCov);
+  }
+
   if (uDebugView > 0.5) {
     if (uDebugView < 1.5) engraved = vec3(bb);
     else if (uDebugView < 2.5) engraved = vec3(sunVis);
@@ -1144,7 +1360,13 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
     else engraved = vec3(b);
   }
 
-  gl_FragColor = vec4(engraved, diffuseColor.a);
+  // The alpha channel of the intermediate target is a marker channel, not
+  // opacity — every engraved material is opaque. The figure material already claims 0.5
+  // so citizens get their own outline colour; 0.8 now claims "this pixel is
+  // 1-bit, do not grade it". Everything else stays 1.0. The two markers are
+  // far enough apart that LinearFilter interpolating between them (0.5 -> 0.8)
+  // never lands inside either test band.
+  gl_FragColor = vec4(engraved, dithered > 0.5 ? 0.8 : diffuseColor.a);
 }
 `;
 
@@ -1152,6 +1374,7 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
 export {
   J0,
   Q0,
+  TERRACE_H,
   districtUniforms,
   e_,
   engravingUniforms,

@@ -64,6 +64,7 @@ import System, {
   Vector3D,
 } from "three-nebula";
 import { lerp } from "./01-materials";
+import { BRAZIER_MOUTH_Y } from "./26-brazier";
 
 // three-nebula takes "THREE" as a constructor argument and only ever
 // destructures classes off it. Handing it the real `import * as THREE`
@@ -211,8 +212,11 @@ class EmberSystem {
       if (!this.frustum.intersectsSphere(this.sphere)) continue;
       const em = this.emitters[k++];
       ((em.position.x = a.x),
-        // just above the heaped coals (bed tops out ~1.4 in the builder)
-        (em.position.y = (a.y ?? 0) + 1.45),
+        // just above the heaped coals. Derived from the drum's own measured
+        // rim rather than typed in, so a re-bake of 26-brazier that changes
+        // the mouth height carries the sparks with it instead of leaving them
+        // hanging in the air above a shorter brazier.
+        (em.position.y = (a.y ?? 0) + BRAZIER_MOUTH_Y + 0.13),
         (em.position.z = a.z),
         (em.rate.numPan.a = 1),
         (em.rate.numPan.b = 2),

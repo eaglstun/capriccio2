@@ -23,8 +23,11 @@ docs/                     SIMULATION, PROGRESSION, RENDERING, AUDIO,
                           COMMENTS, VENDOR-MAP, DEPENDENCIES, CHARACTERS
 briefs/                   the brief each Fable pass was written from
 tools/                    split_bundle.py, scope_graph.py, jsmask.py, probe.js,
-                          code_fingerprint.py — plus three that run under node:
-                          gamepad-check.ts, model-preview.ts, bake-head.ts
+                          code_fingerprint.py — plus four that run under node:
+                          gamepad-check.ts, model-preview.ts, bake-head.ts,
+                          bake-brazier.ts
+genassets/                GITIGNORED. The .glb a generator returned, kept as the
+                          input to a bake. Never committed, never shipped
 deploy/                   droplet deploy scripts
 dist/                     build output (gitignored)
 index.html                the game
@@ -135,6 +138,8 @@ those things, and several changes took it further away:
 4. **`20`–`24` were written after all that**: the Chronicle and its post-pass
    lens, the ember system, gamepad support, and `24-citizen-head.ts` — which is
    GENERATED, not hand-written, and carries a header saying so.
+5. **`26-brazier.ts` is the brazier's drum and tripod**, generated the same way
+   and carrying the same header. See "Nothing binary ships" below.
 
 **Never run `python3 tools/split_bundle.py --write`.** It would overwrite the
 whole tree with regenerated JavaScript and destroy the reskin, the score, the
@@ -171,7 +176,22 @@ decoder. 44KB of source instead of a megabyte of asset, and a plain function
 call instead of an async loader — which matters, because `Po()` runs inside a
 synchronous constructor with nowhere to put a promise.
 
-Re-run the bake with `node tools/bake-head.ts`. Do not hand-edit the output.
+`src/26-brazier.ts` is the second, and the pattern is now the pattern: generate
+→ trim → seat and scale → quantise → emit. Same 44KB, same reason for baking
+(`buildOrnament` assembles a structure synchronously). Two things it adds:
+
+- **The bake MEASURES the mesh and exports what it found.** A generated drum
+  does not land on the dimensions the hand built one had, so `BRAZIER_MOUTH_Y/R`
+  come out of the geometry, and the coal bed and the ember emitter in
+  `22-embers.ts` are positioned from those rather than from numbers typed
+  against a shape that no longer exists.
+- **`genassets/` holds the source .glb, and is gitignored.** It is the input to
+  a bake, never part of the build. Keep the file: generators are not
+  deterministic, so re-running the prompt gives a different mesh, and deleting
+  it makes the bake unreproducible.
+
+Re-run either bake with `node tools/bake-head.ts` /
+`node tools/bake-brazier.ts`. Do not hand-edit the output.
 
 ### There is no browser here, so look at things another way
 

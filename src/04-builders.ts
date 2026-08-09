@@ -6,7 +6,14 @@
 // Regenerate: python3 tools/split_bundle.py --write
 
 // --- generated imports ---
-import { BoxGeometry, ConeGeometry, CylinderGeometry } from "three";
+import {
+  BoxGeometry,
+  BufferAttribute,
+  Color,
+  ConeGeometry,
+  CylinderGeometry,
+  PlaneGeometry,
+} from "three";
 import { clamp, lerp, seededRng, terrainHeightAt } from "./01-materials";
 import {
   Hn,
@@ -22,11 +29,14 @@ import {
   buildAnchor,
   buildTree,
   dn,
+  fine,
   newStructureParts,
   setToneAttribute,
   v_,
+  withDetail,
 } from "./03-geometry";
 // --- end generated imports ---
+import { BRAZIER_MOUTH_R, BRAZIER_MOUTH_Y, brazierFrame } from "./26-brazier";
 
 /**
  * A crossing on arches — bridge, aqueduct or gallery.
@@ -124,12 +134,14 @@ function buildSpan(i) {
         k,
         w * (h / 2 - 0.3),
       ]),
-        // neon runner along the parapet crest
-        Eg.box(B - F - 0.3, 0.09, 0.1, [
-          (F + B) / 2 - a / 2,
-          k + L,
-          w * (h / 2 - 0.3),
-        ]));
+        // neon runner along the parapet crest — a 9cm strip, invisible past
+        // the near level and one more merged piece to draw
+        fine() &&
+          Eg.box(B - F - 0.3, 0.09, 0.1, [
+            (F + B) / 2 - a / 2,
+            k + L,
+            w * (h / 2 - 0.3),
+          ]));
     }
   const y = E.merge(),
     yg = Eg.merge();
@@ -518,7 +530,12 @@ function buildVault(i) {
       h,
     ),
     Yt(t, "stone", f));
-  if (s < 0.15) {
+  // Rooftop accretion — tanks, fans, masts. Marked "visual only" below, which
+  // is exactly the licence to drop it: it emits no pocket, no nav point and no
+  // cost, so a level without it is the same vault to the simulation. It is
+  // also the densest thing on a vault, and it sits ON the roof where it stops
+  // breaking the skyline the moment the vault is small.
+  if (s < 0.15 && fine()) {
     // rooftop accretion: tanks, extract fans, masts, neon eaves (visual only)
     const q = seededRng(i.id * 7919 + 141),
       qc = new MeshBuilder(n),
@@ -687,6 +704,268 @@ function buildWall(i) {
   }
   return ((t.cost.stone = Math.round(a * i.h * 0.11)), t);
 }
+// ---------------------------------------------------------------------------
+// THE GAME BOARDS
+//
+// Three boards, three machines. Every hex below is a real hardware palette
+// entry, taken from the `game-consoles` reference shelf, and each board is
+// built to obey the constraint that machine is actually known for rather than
+// merely to wear its colours. The register index is in the comment beside the
+// value so the claim stays checkable.
+//
+// They all paint through the one `console` material — see 01-materials.
+// ---------------------------------------------------------------------------
+
+/** The board's play area, and the heights paint stacks at above a 0.14 slab. */
+const BOARD_SPAN = 2.48,
+  BOARD_FIELD_Y = 0.142,
+  BOARD_MARK_Y = 0.146,
+  BOARD_PIECE_Y = 0.15;
+
+/**
+ * A flat coloured quad, face up — the only primitive the boards are made of.
+ *
+ * The colour goes into a `color` attribute rather than into a material, which
+ * is what lets three palettes share one draw call. `new Color(hex)` converts
+ * the sRGB hardware value into the linear working space on the way in; write
+ * the raw hex bytes instead and every entry lands too dark.
+ *
+ * A NULL builder is the coarse level: the caller still walks the whole board
+ * and still pulls every random number, and only the geometry is dropped. That
+ * is the rule the file header states — a level that draws less must never draw
+ * FEWER RANDOMS, or the board deals itself a different game as it recedes.
+ */
+function paint(
+  b: MeshBuilder | null,
+  w: number,
+  d: number,
+  x: number,
+  y: number,
+  z: number,
+  hex: number,
+) {
+  if (!b) return b;
+  const g = new PlaneGeometry(w, d);
+  (g.rotateX(-Math.PI / 2), g.translate(x, y, z));
+  const n = g.attributes.position.count,
+    a = new Float32Array(n * 3),
+    c = new Color(hex);
+  for (let k = 0; k < n; k++)
+    ((a[k * 3] = c.r), (a[k * 3 + 1] = c.g), (a[k * 3 + 2] = c.b));
+  return (g.setAttribute("color", new BufferAttribute(a, 3)), b.addRaw(g), b);
+}
+
+// Atari 2600, the TIA. Shading on this machine is a move DOWN one hue's
+// luminance column, because that was the cheap always-available operation —
+// so the field is the $C green ramp, one step per row.
+const TIA_GREEN = [
+    0x003c00, 0x205c20, 0x407c40, 0x5c9c5c, 0x74b474, 0x8cd08c, 0xa4e4a4,
+    0xb8fcb8,
+  ],
+  TIA_P0 = 0xb03c3c, // $44, pink
+  TIA_P1 = 0xa4c8fc; // $9E, light blue
+
+/**
+ * The 2600 board — a mirrored playfield.
+ *
+ * Three tells, in the order they do the work. The playfield MIRRORS about the
+ * centre line, because on a 2600 symmetry was free and asymmetry cost a
+ * mid-line register rewrite; every maze on the machine is a reflection.
+ * Playfield chunks are four colour clocks wide and so read as coarse slabs
+ * next to comparatively fine counters — a size disparity almost nobody
+ * reproduces. And colour changes per SCANLINE: never more than four on one
+ * line (background, playfield, player 0, player 1), but a different four on
+ * the next, which is why the rows band.
+ *
+ * The counters are the machine's entire object budget, exactly: two players,
+ * two missiles, one ball. A missile takes its player's colour because it
+ * shares COLUP — one register, no say in the matter — and the ball takes the
+ * playfield's for the same reason.
+ */
+function atariBoard(b: MeshBuilder | null, e: () => number) {
+  const ROWS = 8,
+    COLS = 6,
+    cw = BOARD_SPAN / COLS,
+    ch = BOARD_SPAN / ROWS,
+    h = BOARD_SPAN / 2;
+  paint(b, BOARD_SPAN, BOARD_SPAN, 0, BOARD_FIELD_Y, 0, TIA_GREEN[0]);
+  for (let r = 0; r < ROWS; r++) {
+    // three playfield bits, reflected into six columns
+    const bits = [e() < 0.6, e() < 0.5, e() < 0.42];
+    for (let c = 0; c < COLS; c++)
+      bits[c < COLS / 2 ? c : COLS - 1 - c] &&
+        paint(
+          b,
+          cw,
+          ch,
+          -h + cw * (c + 0.5),
+          BOARD_MARK_Y,
+          -h + ch * (r + 0.5),
+          TIA_GREEN[r],
+        );
+  }
+  for (let k = 0; k < 5; k++) {
+    const col = Math.floor(e() * COLS),
+      row = Math.floor(e() * ROWS),
+      ball = k === 4,
+      sz = k < 2 ? 0.2 : ball ? 0.07 : 0.09;
+    paint(
+      b,
+      sz,
+      sz,
+      -h + cw * (col + 0.5),
+      BOARD_PIECE_Y,
+      -h + ch * (row + 0.5),
+      ball ? TIA_GREEN[row] : k % 2 ? TIA_P1 : TIA_P0,
+    );
+  }
+}
+
+// NES, the 2C02. Two background palettes of three, and the backdrop every
+// palette shares in entry 0.
+const NES_BG = [
+    [0x24188e, 0x0071ef, 0x3cbeff], // $01 $11 $21 — the blue ramp
+    [0xa60000, 0xdb2800, 0xff9a38], // $06 $16 $27 — the warm one
+  ],
+  NES_BACKDROP = 0x000000, // $0F
+  NES_SPRITE = [0xffffff, 0x4ddf49]; // $30, $2A
+
+/**
+ * The NES board — pattern and colour at different resolutions.
+ *
+ * This is the machine's whole signature. Tiles are 8x8, but a palette is
+ * chosen per 16x16 ATTRIBUTE BLOCK, so the pattern moves tile by tile while
+ * the colour under it only changes every second tile. A shape crossing a
+ * block boundary changes colour halfway across itself. That is attribute
+ * clash, and reproducing it is the difference between something that reads as
+ * an NES and something that merely reads as retro.
+ *
+ * The counters are sprites, and sprites carry their OWN palette — so a white
+ * counter stays white over a block whose background just went warm underneath
+ * it. Honouring that split is what makes the clash legible instead of looking
+ * like a bug in the pattern.
+ */
+function nesBoard(b: MeshBuilder | null, e: () => number) {
+  const T = 8,
+    tw = BOARD_SPAN / T,
+    h = BOARD_SPAN / 2,
+    attr: number[] = [];
+  paint(b, BOARD_SPAN, BOARD_SPAN, 0, BOARD_FIELD_Y, 0, NES_BACKDROP);
+  // the attribute grid is half the tile grid in each axis: 4x4 blocks over 8x8
+  for (let k = 0; k < 16; k++) attr.push(e() < 0.5 ? 0 : 1);
+  for (let ty = 0; ty < T; ty++)
+    for (let tx = 0; tx < T; tx++) {
+      // 0 leaves the backdrop showing — every palette's entry 0 is the same
+      // colour, which is why an NES screen has so much of one flat tone in it
+      const shade = Math.floor(e() * 4);
+      shade &&
+        paint(
+          b,
+          tw,
+          tw,
+          -h + tw * (tx + 0.5),
+          BOARD_MARK_Y,
+          -h + tw * (ty + 0.5),
+          NES_BG[attr[(ty >> 1) * 4 + (tx >> 1)]][shade - 1],
+        );
+    }
+  for (let k = 0, np = 5 + Math.floor(e() * 4); k < np; k++) {
+    const tx = Math.floor(e() * T),
+      ty = Math.floor(e() * T);
+    paint(
+      b,
+      tw * 0.62,
+      tw * 0.62,
+      -h + tw * (tx + 0.5),
+      BOARD_PIECE_Y,
+      -h + tw * (ty + 0.5),
+      NES_SPRITE[k % 2],
+    );
+  }
+}
+
+// ZX Spectrum, the ULA. Three bits per colour with blue in the low bit, and a
+// brightness step that lands the dim components at $D8 rather than $FF.
+const ZX_NORMAL = [0xd8d8d8, 0x0000d8, 0xd80000], // white, blue, red  (BRIGHT 0)
+  ZX_BRIGHT = [0x00ffff, 0xff00ff], // cyan, magenta     (BRIGHT 1)
+  ZX_PAPER = 0x000000; // black — the one colour with no bright variant
+
+/**
+ * The Spectrum board — two layers at two resolutions.
+ *
+ * A 1-bit bitmap under a coarse colour layer holding TWO colours per 8x8 cell
+ * that must share one BRIGHT bit. You cannot put bright cyan beside normal
+ * blue inside a cell, so each cell here picks a brightness row and takes both
+ * its colours from it; paper stays black, the one colour that sits in either.
+ *
+ * There is no shading ramp anywhere on this machine — you cannot make a
+ * colour darker, only less bright, once. So a midtone is a CHECKERBOARD drawn
+ * in the cell's own two colours at bitmap resolution, which is why Spectrum
+ * art is full of crosshatch where other machines would put a gradient.
+ *
+ * Most of the board is white-on-black, and that is the design response rather
+ * than a failure: colour goes where it cannot clash. Paint every cell and the
+ * result looks wrong even while obeying every rule. The counters snap to the
+ * cell grid the way Spectrum sprites moved in 8-pixel steps, and each one
+ * wears the ink of the cell it lands in whether that suits it or not — with a
+ * paper ring under it, which is how a sprite stayed visible over a solid cell.
+ */
+function zxBoard(b: MeshBuilder | null, e: () => number) {
+  const C = 4,
+    cw = BOARD_SPAN / C,
+    P = 4,
+    pw = cw / P,
+    h = BOARD_SPAN / 2,
+    inks: number[] = [];
+  paint(b, BOARD_SPAN, BOARD_SPAN, 0, BOARD_FIELD_Y, 0, ZX_PAPER);
+  for (let cy = 0; cy < C; cy++)
+    for (let cx = 0; cx < C; cx++) {
+      // three draws every cell, unconditionally, so the pattern cannot shift
+      // with a branch taken
+      const r1 = e(),
+        r2 = e(),
+        r3 = e(),
+        bright = r1 < 0.28,
+        ink = bright
+          ? ZX_BRIGHT[r2 < 0.5 ? 0 : 1]
+          : ZX_NORMAL[r2 < 0.72 ? 0 : r2 < 0.87 ? 1 : 2],
+        fill = r3 < 0.34 ? 0 : r3 < 0.72 ? 1 : 2;
+      inks.push(ink);
+      if (fill === 2)
+        paint(
+          b,
+          cw,
+          cw,
+          -h + cw * (cx + 0.5),
+          BOARD_MARK_Y,
+          -h + cw * (cy + 0.5),
+          ink,
+        );
+      else if (fill === 1)
+        // the midtone: a checkerboard, because there is nothing between
+        for (let py = 0; py < P; py++)
+          for (let px = 0; px < P; px++)
+            ((px + py) & 1) === 0 &&
+              paint(
+                b,
+                pw,
+                pw,
+                -h + cw * cx + pw * (px + 0.5),
+                BOARD_MARK_Y,
+                -h + cw * cy + pw * (py + 0.5),
+                ink,
+              );
+    }
+  for (let k = 0, np = 4 + Math.floor(e() * 3); k < np; k++) {
+    const cx = Math.floor(e() * C),
+      cy = Math.floor(e() * C),
+      x = -h + cw * (cx + 0.5),
+      z = -h + cw * (cy + 0.5);
+    (paint(b, pw * 2.8, pw * 2.8, x, BOARD_PIECE_Y, z, ZX_PAPER),
+      paint(b, pw * 2, pw * 2, x, BOARD_PIECE_Y + 0.002, z, inks[cy * C + cx]));
+  }
+}
+
 /**
  * Everything FURNISH places — statue, fountain, lantern, cypress, and the B3
  * three: brazier, fallen column, game board — plus the seeded-only obelisk.
@@ -776,38 +1055,92 @@ function buildOrnament(i) {
     // a standing fire in a salvaged drum. Everything else that lights the
     // dark here is cold — sodium, mercury, neon; this is the warm one.
     // Sheet metal on a tripod, burning something nobody asks about.
-    const rot = e() * Math.PI * 2,
-      s = new MeshBuilder(0.4);
-    for (let c = 0; c < 3; c++) {
-      const la = rot + (c / 3) * Math.PI * 2,
-        leg = new BoxGeometry(0.09, 0.74, 0.09);
-      (leg.translate(0, 0.37, 0),
-        leg.rotateZ(0.24),
-        leg.rotateY(la),
-        leg.translate(Math.sin(la) * 0.3, 0, Math.cos(la) * 0.3),
-        s.addRaw(leg));
-    }
-    (s.cylinder(0.44, 0.72, [0, 0.52, 0], 10, 1, 0.52),
-      s.cylinder(0.56, 0.07, [0, 1.24, 0], 10, 1, 0.56),
-      s.box(1.05, 0.05, 0.07, [0, 1.26, 0], rot + 0.35),
-      s.box(1.05, 0.05, 0.07, [0, 1.26, 0], rot + 0.35 + Math.PI / 2));
-    const r = s.merge();
-    (be(r, i.x, n, i.z, 0), Yt(t, "salvage", r));
-    // the fire itself: coals heaped proud of the rim, vent slits mid-drum.
-    // "ember" is its own material — warm, and never the neon lottery.
-    const em = new MeshBuilder(0);
-    (em.cylinder(0.4, 0.13, [0, 1.28, 0], 10, 1, 0.3),
-      em.cylinder(0.22, 0.09, [0.06, 1.41, -0.04], 8, 1, 0.13));
-    for (let c = 0; c < 3; c++) {
-      const va = rot + 0.5 + (c / 3) * Math.PI * 2;
-      em.box(
-        0.17,
-        0.07,
-        0.035,
-        [Math.sin(va) * 0.465, 0.72, Math.cos(va) * 0.465],
-        va,
+    //
+    // The drum and its tripod are a baked mesh — src/26-brazier.ts, generated
+    // with Tripo3D and quantised into source, because nothing binary ships.
+    // It brings riveted seams, punched vents and a welded cross-brace that
+    // three boxes and two cylinders were never going to carry.
+    //
+    // The FIRE is still built here, and deliberately so: it is a different
+    // material, it wants to move independently of the metal, and the mesh's
+    // own mouth measurements are what place it. No magic numbers over the
+    // rim — BRAZIER_MOUTH_Y/R are measured at bake time and everything that
+    // sits on the fire reads them, including the ember emitter in 22-embers.
+    //
+    // NO CROSSED BARS. The hand built version laid two over the mouth, and
+    // they are gone rather than ported: they existed to give a bare cylinder
+    // some structure at the rim, and the baked drum has a rolled rim of its
+    // own doing that job. Re-laid at rim height they vanish under the coals —
+    // four grey nubs; raised clear of the coals they overhang a mouth this
+    // narrow and read as a propeller bolted to a bin. Both were rendered.
+    //
+    // THE FAR LEVEL DOES NOT USE THE BAKED MESH. This is the case that made
+    // the whole exercise worth doing: the drum is 2,627 triangles of rivets
+    // and punched vents, and a brazier across the city is three pixels tall.
+    // Past the middle level it becomes a tapered can on three sticks — about
+    // sixty triangles, holding the same silhouette and the same footprint,
+    // because at that size the silhouette is all that survives anyway.
+    const rot = e() * Math.PI * 2;
+    let frame;
+    if (fine(2)) {
+      frame = brazierFrame();
+      // setToneAttribute rather than pushing it through a MeshBuilder: the
+      // bake emits one indexed geometry, and merging a single mesh to install
+      // the weathering attribute would only cost it its index buffer.
+      setToneAttribute(frame, 1, 0.4);
+    } else {
+      const pr = new MeshBuilder(0.4);
+      for (let c = 0; c < 3; c++) {
+        const la = (c / 3) * Math.PI * 2,
+          leg = new BoxGeometry(0.07, 0.78, 0.07);
+        (leg.translate(0, 0.39, 0),
+          leg.rotateZ(0.2),
+          leg.rotateY(la),
+          leg.translate(Math.sin(la) * 0.24, 0, Math.cos(la) * 0.24),
+          pr.addRaw(leg));
+      }
+      // the measured mouth again — the proxy has to end where the coal bed
+      // starts, or the fire floats off the top of it
+      pr.cylinder(
+        BRAZIER_MOUTH_R * 0.92,
+        BRAZIER_MOUTH_Y - 0.5,
+        [0, 0.5, 0],
+        7,
+        1,
+        BRAZIER_MOUTH_R,
       );
+      frame = pr.merge();
     }
+    // a dozen braziers in a city sharing one silhouette reads as a repeat, so
+    // each is turned by its own seeded angle
+    (be(frame, i.x, n, i.z, rot), Yt(t, "salvage", frame));
+    // the fire itself: a bed of coals plugging the mouth and heaped just proud
+    // of it, with one brighter lump off centre. "ember" is its own material —
+    // warm, and never the neon lottery. The bed is a shade wider than the rim
+    // because the drum is an open shell: the coals are what cap it, and a gap
+    // would look straight down through the brazier to the ground.
+    //
+    // FLAT, and that is the whole trick. A steeper taper over a mouth this
+    // narrow stops reading as a bed of coals and starts reading as a conical
+    // lid — and a tall one swallows the bars laid across it, leaving two grey
+    // nubs poking out of an orange hat.
+    const em = new MeshBuilder(0);
+    (em.cylinder(
+      BRAZIER_MOUTH_R * 1.02,
+      0.12,
+      [0, BRAZIER_MOUTH_Y - 0.09, 0],
+      12,
+      1,
+      BRAZIER_MOUTH_R * 0.86,
+    ),
+      em.cylinder(
+        BRAZIER_MOUTH_R * 0.62,
+        0.05,
+        [BRAZIER_MOUTH_R * 0.18, BRAZIER_MOUTH_Y + 0.02, -0.04],
+        8,
+        1,
+        BRAZIER_MOUTH_R * 0.4,
+      ));
     const eg = em.merge();
     (be(eg, i.x, n, i.z, 0),
       Yt(t, "ember", eg),
@@ -855,53 +1188,45 @@ function buildOrnament(i) {
     (Ri(m, 0, 1.3, 0.82, 1), be(m, i.x, n, i.z, rot), Yt(t, "stoneOld", m));
   } else if (i.kind === "board") {
     // the children's chalk game, made permanent — the ambient line already
-    // knows it stays. A slab barely proud of the paving, lines in plaster
-    // where the chalk was, and a game abandoned mid-move.
+    // knows it stays. A slab barely proud of the paving, and a game abandoned
+    // mid-move, painted in the palette of one of three dead machines.
+    //
+    // WHICH machine is drawn once, before anything else, so it is fixed for
+    // the ornament and identical at every level of detail — a board cannot
+    // change console when the camera pulls back. The coarse levels then walk
+    // the whole pattern anyway with a null builder, pulling every random
+    // number and keeping none of the geometry, which is the rule this file
+    // opens with: draw less, never draw fewer randoms.
     const rot = e() * Math.PI * 2,
+      machine = Math.floor(e() * 3),
       s = new MeshBuilder(0.2);
     s.box(2.9, 0.14, 2.9, [0, 0, 0]);
     const r = s.merge();
     (be(r, i.x, n, i.z, rot), Yt(t, "stone", r));
-    const ln = new MeshBuilder(0);
-    for (let c = 0; c <= 4; c++) {
-      const o = -1.24 + (c * 2.48) / 4;
-      (ln.box(2.53, 0.025, 0.055, [0, 0.14, o]),
-        ln.box(0.055, 0.025, 2.53, [o, 0.14, 0]));
+    // the field and its counters are paint ON a slab — they change no outline
+    // at all, so they are the cheapest thing in the game to drop
+    const px = fine() ? new MeshBuilder(0) : null;
+    machine === 0
+      ? atariBoard(px, e)
+      : machine === 1
+        ? nesBoard(px, e)
+        : zxBoard(px, e);
+    if (px) {
+      const pg = px.merge();
+      (be(pg, i.x, n, i.z, rot), Yt(t, "console", pg));
     }
-    const lg = ln.merge();
-    (be(lg, i.x, n, i.z, rot), Yt(t, "plaster", lg));
-    // counters, two sides, no winner recorded
-    const pa = new MeshBuilder(0),
-      pb = new MeshBuilder(0),
-      used = new Set();
-    for (let c = 0, np = 5 + Math.floor(e() * 4); c < np; c++) {
-      const cell = Math.floor(e() * 16);
-      if (used.has(cell)) continue;
-      used.add(cell);
-      (c % 2 ? pa : pb).cylinder(
-        0.11,
-        0.1,
-        [-0.93 + (cell % 4) * 0.62, 0.14, -0.93 + Math.floor(cell / 4) * 0.62],
-        7,
-      );
-    }
-    const ga = pa.merge(),
-      gb = pb.merge();
-    (be(ga, i.x, n, i.z, rot),
-      be(gb, i.x, n, i.z, rot),
-      Yt(t, "rust", ga),
-      Yt(t, "verdigris", gb),
-      // life gathers where the game is: a pocket at the board's edge.
-      t.pockets.push({
-        kind: "gameboard",
-        pos: [i.x + Math.sin(rot) * 2.6, n, i.z + Math.cos(rot) * 2.6],
-        rotY: rot,
-        area: 5,
-        height: 2.2,
-        shelter: 0.05,
-        light: 0.55,
-        scenic: 0.8,
-      }));
+    // life gathers where the game is: a pocket at the board's edge. The
+    // envelope is untouched — placement scoring must not notice the reskin.
+    t.pockets.push({
+      kind: "gameboard",
+      pos: [i.x + Math.sin(rot) * 2.6, n, i.z + Math.cos(rot) * 2.6],
+      rotY: rot,
+      area: 5,
+      height: 2.2,
+      shelter: 0.05,
+      light: 0.55,
+      scenic: 0.8,
+    });
   } else if (i.kind === "obelisk") {
     const s = new MeshBuilder(0.1);
     (s.box(2.4, 1.1, 2.4, [0, 0, 0]),
@@ -922,13 +1247,29 @@ function buildOrnament(i) {
   return ((t.cost.stone = i.kind === "brazier" ? 2 : 4), t);
 }
 /**
- * The dispatcher: action type -> builder.
+ * The dispatcher: action type -> builder, at a detail level.
  *
  * Returns empty parts for anything unrecognised rather than throwing, so an
  * unknown action from a future save degrades to nothing visible instead of
  * taking the game down.
+ *
+ * DETAIL 0 IS THE ONLY ONE THAT COUNTS FOR ANYTHING BUT PIXELS. Every level
+ * runs the whole builder, so every level also produces nav points, pockets,
+ * water sources and a cost — and if a caller registered those three times the
+ * pathfinding graph would triple, every habitable void would be counted three
+ * times, and the score and the save would both be wrong. `World.buildStruct`
+ * takes the simulation payload from level 0 and nothing but `.pieces` from
+ * the rest. Do not change that without reading it.
+ *
+ * Levels are independently deterministic: each re-seeds from the action id, so
+ * they agree on every random angle they share. Where a level draws fewer
+ * pieces it still pulls the same random numbers and skips — never draws fewer
+ * — so the object does not reshuffle itself as it recedes.
  */
-function buildStructureMesh(i) {
+function buildStructureMesh(i, detail = 0) {
+  return withDetail(detail, () => dispatchBuild(i));
+}
+function dispatchBuild(i) {
   switch (i.t) {
     case "anchor":
       return buildAnchor(i);

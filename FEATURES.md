@@ -1029,6 +1029,78 @@ one ornament that lies down; emits nothing, by the cypress's rule), and the
 pocket where life gathers). The palette picked all three up from the catalogue
 with no HUD change, and the fresh-city baseline did not move.
 
+### B4. Structures get level of detail — SHIPPED IN PART
+
+The rule that structures never swap detail is gone.
+`buildStructureMesh(action, detail)` now emits three real levels,
+`World.updateLod` picks one per frame, and `inspect.html` demonstrates it from
+the same imported rule.
+
+**Chosen by apparent size, not distance.** Citizens are all the same size, so
+for them distance _is_ screen size and `07-citizens` can test distance directly.
+Structures are not, so the test is `radius / distance` — the tangent of the
+angular radius. One shared pair of thresholds then gives a vault its detail and
+takes a brazier's away, with no per-kind table to drift out of step with the
+builders. Thresholds and `pickStructureLevel` live in `03-geometry` so the game
+and the inspector cannot disagree.
+
+| subject           | near -> mid | mid -> far | cull  |
+| ----------------- | ----------- | ---------- | ----- |
+| vault (r 22m)     | 244m        | 629m       | never |
+| wall (r 14m)      | 156m        | 400m       | 3333m |
+| cypress (r 4m)    | 44m         | 114m       | 952m  |
+| brazier (r 0.75m) | 8.3m        | 21.4m      | 179m  |
+
+Triangles across all seventeen structure kinds: **50,621 -> 32,485 -> 19,068**.
+Big things degrade gently (vault 58%/28%, span 60%/38%, wall 86%/66%); small
+things fall off a cliff (brazier 99%/**4%**, game board 4%). At a typical 60m
+build view a brazier draws **96 triangles instead of 2,707**.
+
+**The invariant that matters.** Every builder emits nav points, pockets, water
+sources and cost at every level. Registering those three times would triple the
+pathfinding graph, count every habitable void three times, and put the score and
+the save both out — with no error. `buildStruct` takes the simulation payload
+from level 0 and nothing but `.pieces` from the rest. A harness asserts the
+payload is identical across all three levels for all seventeen kinds.
+
+Also landed: raycasting is filtered to level 0 (three's raycaster ignores
+`.visible`, so without it the placement tool would snap to whichever coarse mesh
+the camera happened to be drawing), and `Yt` now drops empty geometry, which
+caught a crash the first time a level dropped every glow piece from a span.
+
+#### Outstanding
+
+1. **The dissolve is computed but not drawn.** `g.fade` is live and correct on
+   every group and the inspector reports it, but the cull is currently HARD. The
+   stipple wants a dither discard in the engraving shader — screen-door rather
+   than alpha, so there is no transparent pass and no depth sort at exactly the
+   distance the exercise is trying to save money at. Not written because that
+   shader is shared by every stone in the game and cannot be compile-tested
+   without a browser. Note that popping on a _pan_ is already handled:
+   `CULL_IN`/`CULL_OUT` are a hysteresis pair, verified over a 4,000-step
+   jittered sweep that produced one level change rather than strobing. What is
+   missing is the softness, not the stability.
+2. **None of it has been rendered in WebGL.** Typecheck, build, page-script
+   parse, triangle counts and band math are all verified in node; the runtime
+   swap has never been looked at. It is the part that most deserves eyes.
+3. **The brazier's middle level is redundant** — 2,675 triangles against the
+   near level's 2,707, because `26-brazier` bakes one level and `fine(2)` keeps
+   it through the middle. Defensible (at 8.3m a brazier is 114px of screen
+   radius and wants its rivets) but the slot does nothing. `tools/bake-head.ts`
+   already has the grid-clustering to emit a second level if it is wanted.
+
+Verify: fresh city, structures / pockets / navNodes / pop unchanged against the
+pre-LOD baseline, and every meter identical at the same clock hour — the
+simulation must not be able to tell this happened.
+
+#### Tooling note, unrelated but found here
+
+`tools/model-preview.ts` **does not run on Node 24**: the extensionless
+`./01-materials` imports in `src/` no longer resolve under ESM, so it throws
+`ERR_MODULE_NOT_FOUND` before drawing anything. Pre-existing, nothing to do with
+this work. A resolve hook that retries a failed specifier with `.ts` appended is
+enough to fix it.
+
 ---
 
 ## Suggested sequence — worked through
@@ -1043,10 +1115,12 @@ The original order, with what actually happened:
 5. ~~**A3 Folio**~~ — built in part, `792390d`; contact-sheet export outstanding
 6. ~~Then reconsider B2~~ — reconsidered and built, `d1d9ae3`
 
-**What is left:** the A3 contact sheet, and tuning A10's stick rates against an
-actual pad. B3 shipped as three FURNISH ornaments (`FABLE-BRIEF-10`) and A10
-shipped as `src/23-gamepad.ts`. That is the whole remaining backlog from this
-document.
+**What is left:** the A3 contact sheet; tuning A10's stick rates against an
+actual pad; and B4's three outstanding items — the dither fade that turns the
+hard cull into a dissolve, a real browser pass over the structure LOD swap, and
+the redundant middle level on the baked brazier. B3 shipped as three FURNISH
+ornaments (`FABLE-BRIEF-10`), A10 shipped as `src/23-gamepad.ts`, and B4 shipped
+in part. That is the whole remaining backlog from this document.
 
 ---
 

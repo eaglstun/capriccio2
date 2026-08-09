@@ -10,6 +10,13 @@ dist/
 !.yarn/versions
 .pnp.*
 
+# Inputs to the mesh bakes — the .glb a generator handed back, which
+# tools/bake-*.ts turns into a source module. These are the one place a binary
+# is allowed to sit in this tree, and they must never be committed or shipped:
+# what ships is the baked .ts. Keep them, though — re-running a generator does
+# not reproduce the same mesh.
+genassets/
+
 # Python bytecode
 __pycache__/
 *.pyc

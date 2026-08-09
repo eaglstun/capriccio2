@@ -9,6 +9,7 @@
 import {
   Box3,
   BoxGeometry,
+  type Camera,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
@@ -19,6 +20,7 @@ import {
   InstancedMesh,
   Line,
   LineDashedMaterial,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -43,9 +45,23 @@ import {
   terrainHeightAt,
 } from "./01-materials";
 import { NavGraph } from "./02-nav";
-import { Ji, Pa, Ri, buildTree, ec, setToneAttribute } from "./03-geometry";
+import {
+  CULL_IN,
+  CULL_OUT,
+  Ji,
+  Pa,
+  Ri,
+  buildTree,
+  ec,
+  pickStructureLevel,
+  setToneAttribute,
+  structureFade,
+  structureVisible,
+} from "./03-geometry";
 import { buildStructureMesh } from "./04-builders";
 // --- end generated imports ---
+import { PlotterSkyline, type PlotBox } from "./25-plotter";
+import { carWreck } from "./27-car";
 
 /**
  * A Group that counts its own mutations.
@@ -81,6 +97,16 @@ class World {
   nav = new NavGraph();
   pockets: any[] = [];
   structures = new Map<number, any>();
+  /** One entry per structure: its three levels, its sphere, its current level. */
+  lodGroups: {
+    structId: number;
+    meshes: Mesh[][];
+    center: Vector3;
+    radius: number;
+    lod: number;
+    fade: number;
+    culled?: boolean;
+  }[] = [];
   anchors = new Map<string, any>();
   waterSources: any[] = [];
   designations: any[] = [];
@@ -98,6 +124,9 @@ class World {
   // installed by the scenery pass, called once per frame with the clock.
   // `declare` so the property still appears only on first assignment.
   declare sceneTick?: (t: number) => void;
+  // the plotted horizon, installed by the same scenery pass. Held so the
+  // frame loop can advance the pen and so CAP can replay it.
+  declare skylinePlot?: PlotterSkyline;
 
   constructor(t: Scene, e: any) {
     ((this.scene = t),
@@ -194,8 +223,20 @@ class World {
    * building.
    */
   buildStruct(t, e = !0) {
-    const n = buildStructureMesh(t),
+    // LEVEL 0 IS THE STRUCTURE. Levels 1 and 2 are pixels and nothing else:
+    // every builder emits nav points, pockets, water sources and a cost at
+    // every level, and registering those three times would triple the
+    // pathfinding graph, count every habitable void three times over, and put
+    // the score and the save both out. Only `n` is ever read below the mesh
+    // loop — the other two are consumed for `.pieces` and dropped.
+    const n = buildStructureMesh(t, 0),
+      lodParts = [
+        n.pieces,
+        buildStructureMesh(t, 1).pieces,
+        buildStructureMesh(t, 2).pieces,
+      ],
       s = [],
+      lodMeshes: Mesh[][] = [[], [], []],
       // carvable surfaces wear the setting-out scribes: walls always
       // (they take any number of openings), giant piers only until their
       // one carve sets carveAxis — rebuildStruct re-enters here with the
@@ -204,24 +245,42 @@ class World {
       o2 =
         t.t === "wall" ||
         (t.t === "anchor" && t.style === "giant" && !t.carveAxis);
-    for (const a of Object.keys(n.pieces)) {
-      const c = n.pieces[a];
-      if (!c.length) continue;
-      const l = Ul(c),
-        h =
-          a === "glow"
-            ? this.glowMat
-            : o2 && a === "stone"
-              ? this.mats.stoneCarve
-              : this.mats[a],
-        u = new Mesh(l, h);
-      ((u.castShadow = a !== "water" && a !== "glow" && a !== "ember"),
-        (u.receiveShadow = a !== "glow" && a !== "water" && a !== "ember"),
-        (u.userData.structId = t.id),
-        (u.userData.matKey = a),
-        s.push(u),
-        a === "water" ? this.waterGroup.add(u) : this.structGroup.add(u));
+    // Every material key any level emits — a level can legitimately have a key
+    // the others do not (a span keeps its stone at every level but drops its
+    // glow after the first), and iterating level 0's keys alone would silently
+    // discard geometry the coarse levels DID build.
+    const allKeys = new Set<string>();
+    for (const p of lodParts) for (const k of Object.keys(p)) allKeys.add(k);
+    for (const a of allKeys) {
+      const h =
+        a === "glow"
+          ? this.glowMat
+          : o2 && a === "stone"
+            ? this.mats.stoneCarve
+            : this.mats[a];
+      for (let lv = 0; lv < 3; lv++) {
+        const c = lodParts[lv][a];
+        if (!c?.length) continue;
+        const u = new Mesh(Ul(c), h);
+        // `console` is the game boards' paint: flat quads lying on a slab, so
+        // they cast nothing and only ever receive
+        ((u.castShadow =
+          a !== "water" && a !== "glow" && a !== "ember" && a !== "console"),
+          (u.receiveShadow = a !== "glow" && a !== "water" && a !== "ember"),
+          (u.userData.structId = t.id),
+          (u.userData.matKey = a),
+          // read by raycastTargets, which must only ever see level 0 — see
+          // there for why placement would otherwise drift with the camera
+          (u.userData.lod = lv),
+          // only the near level starts visible; the first updateLod call
+          // corrects every group before anything is drawn
+          (u.visible = lv === 0),
+          lodMeshes[lv].push(u),
+          s.push(u),
+          a === "water" ? this.waterGroup.add(u) : this.structGroup.add(u));
+      }
     }
+    this.registerLod(t.id, lodMeshes);
     for (const a of n.water) {
       const c = A_(a.a, a.b, 1.7),
         l = new Mesh(c, this.mats.water);
@@ -411,6 +470,9 @@ class World {
     const e = this.structures.get(t);
     if (e) {
       for (const n of e.meshes) (n.parent?.remove(n), n.geometry.dispose());
+      // drop this structure's LOD group before buildStruct pushes a new one,
+      // or a carve would leave the old group pointing at disposed geometry
+      this.lodGroups = this.lodGroups.filter((g) => g.structId !== t);
       (this.nav.removeStruct(t),
         (this.pockets = this.pockets.filter((n) => n.structId !== t)),
         this.pockets.forEach((n, s) => {
@@ -433,6 +495,9 @@ class World {
       for (const n of e.meshes) (n.parent?.remove(n), n.geometry.dispose());
     for (const e of [...this.waterGroup.children]) this.waterGroup.remove(e);
     (this.structures.clear(),
+      // the groups hold direct references to meshes just disposed above;
+      // leaving them would have updateLod setting .visible on dead objects
+      (this.lodGroups = []),
       (this.pockets = []),
       this.anchors.clear(),
       (this.waterSources = [Vr.springPool.clone()]),
@@ -458,12 +523,89 @@ class World {
       // matrices may be a frame stale for anything added since the last
       // render; the boxes below are world-space, so force them current first
       this.structGroup.updateMatrixWorld(!0);
-      ((this.rtCache = [this.terrainMesh, ...this.structGroup.children]),
+      // LEVEL 0 ONLY. Every structure now has three meshes in this group and
+      // two of them are coarse. Raycasting the coarse ones would mean the
+      // placement tool snapped to whatever the camera happened to be drawing
+      // — a span landing at a different height depending how far away you
+      // stood — and `.visible` is no help, since three's raycaster tests
+      // invisible objects too. Filtering here keeps every ray exact.
+      ((this.rtCache = [
+        this.terrainMesh,
+        ...this.structGroup.children.filter((c) => (c.userData.lod ?? 0) === 0),
+      ]),
         (this.rtBounds = this.rtCache.map((t) => new Box3().setFromObject(t))),
         (this.rtVersion = this.structGroup.version),
         (this.rtTerrain = this.terrainMesh));
     }
     return this.rtCache;
+  }
+  /**
+   * Register a structure's three levels and work out the sphere they live in.
+   *
+   * The sphere is measured from the NEAR level, which is the only one
+   * guaranteed to carry every piece — measuring a coarse level would give a
+   * radius that shrinks as detail drops, and a group would then flicker
+   * between levels purely because choosing one changed the test that chose it.
+   */
+  registerLod(structId: number, meshes: Mesh[][]) {
+    if (!meshes[0].length) return;
+    const box = new Box3();
+    for (const m of meshes[0]) {
+      m.updateMatrixWorld(!0);
+      box.expandByObject(m);
+    }
+    const center = box.getCenter(new Vector3()),
+      radius = box.getSize(new Vector3()).length() / 2;
+    this.lodGroups.push({ structId, meshes, center, radius, lod: 0, fade: 1 });
+  }
+  /**
+   * Choose a detail level for every structure, by APPARENT SIZE.
+   *
+   * Not by distance, which is what the citizens use and what would be wrong
+   * here. Citizens are all the same size, so distance and screen size are the
+   * same number; structures are not. A vault forty metres long and a brazier
+   * one metre tall sit at the same distance and want completely different
+   * answers. `radius / distance` is the tangent of the angular radius, so one
+   * pair of thresholds gives the vault its detail and takes the brazier's
+   * away, with no per-kind table to keep in step with the builders.
+   *
+   * Multiply by `PX` below to read a threshold in pixels of screen radius at
+   * a 1080-tall viewport — which is how they were chosen and how to re-tune
+   * them. They are checked against squared distance to keep the sqrt out of a
+   * loop that runs over every structure in the city every frame.
+   */
+  updateLod(camera: Camera) {
+    const eye = camera.position;
+    for (const g of this.lodGroups) {
+      const d = Math.max(
+        0.001,
+        Math.hypot(g.center.x - eye.x, g.center.y - eye.y, g.center.z - eye.z),
+      );
+      const ang = g.radius / d;
+      // hysteresis, same shape as pickLevel in 07-citizens: a level only ends
+      // when the size passes the far edge of its band, and only comes back at
+      // the near edge, so a structure on a boundary cannot flutter
+      const lv = (g.lod = pickStructureLevel(g.lod, ang));
+      // The dissolve band. `fade` is 1 above CULL_IN, 0 below CULL_OUT, and
+      // ramps between — and it is COMPUTED BUT NOT YET DRAWN WITH. Today the
+      // cull is hard at fade === 0; the stipple that should carry the last
+      // stretch needs a dither discard in the engraving shader, which is the
+      // one piece of this not yet written. `fade` is live and correct, so the
+      // shader has something to read the moment it exists.
+      //
+      // Popping on a pan is already handled without it: CULL_IN and CULL_OUT
+      // are a hysteresis pair like the level bands, so a structure sitting
+      // exactly on the cutoff cannot flicker as the camera drifts. What is
+      // missing is the softness of the transition, not its stability.
+      g.fade = structureFade(ang);
+      // once gone it has to grow back to CULL_IN to return, and while present
+      // it survives down to CULL_OUT — the band is the dead zone, so drifting
+      // across the cutoff cannot strobe a structure on and off
+      const on = structureVisible(!!g.culled, ang);
+      g.culled = !on;
+      for (let i = 0; i < 3; i++)
+        for (const m of g.meshes[i]) m.visible = on && i === lv;
+    }
   }
   /**
    * The subset of `raycastTargets()` that a straight-down ray at (x, z) could
@@ -1030,18 +1172,17 @@ function C_(i) {
       [26, 20, 5.2, 0],
       [-48, -24, 1.9, 0],
     ]) {
+      // one baked wreck per site (27-car), not a shared geometry: Nl() merges
+      // by de-indexing and mutating in place, so a shared buffer would be
+      // transformed six times over
       const cy2 = terrainHeightAt(cx2, cz2),
-        hull = new BoxGeometry(1.9, 0.6, 4.3),
-        cab = new BoxGeometry(1.7, 0.55, 2.1);
-      (hull.translate(0, 0.62, 0),
-        cab.translate(0, 1.15, -0.3),
-        hull.rotateZ(tip),
-        cab.rotateZ(tip),
-        hull.rotateY(rot2),
-        cab.rotateY(rot2),
-        hull.translate(cx2, cy2, cz2),
-        cab.translate(cx2, cy2, cz2),
-        rst.push(hull, cab)); // the wrecks oxidised long ago
+        wreck = carWreck();
+      // already centred on X/Z and seated on y = 0 by the bake, so the lift
+      // the two boxes needed is gone. tip then yaw then place, same order.
+      (wreck.rotateZ(tip),
+        wreck.rotateY(rot2),
+        wreck.translate(cx2, cy2, cz2),
+        rst.push(wreck)); // the wrecks oxidised long ago
     }
     for (const [cx2, cz2, ff] of [
       [-58, 10, 0],
@@ -1227,12 +1368,42 @@ function C_(i) {
   // ---- the megastructure line: dead arcologies on every horizon ----
   // fixed seed, scene-only scenery: never in structGroup, never raycast,
   // emits no pockets and no nav — the game cannot see it
+  //
+  // The towers are DRAWN, not built: pen-plotter linework (25-plotter), swept
+  // by azimuth so a machine inks the horizon once at load. The geometry below
+  // therefore collects placements rather than merging boxes — a unit cube is
+  // chained into pen strokes once, and every tower reuses that decomposition.
+  //
+  // Only the beacons stay solid. They are lights rather than architecture, and
+  // they are the one fog-immune accent out there; as linework they would be
+  // four hairlines at that distance instead of a point of colour.
   {
     const q = seededRng(20260726),
-      xt = [],
-      xs = [],
-      xb = [],
-      xg = [];
+      plot: PlotBox[] = [],
+      xb = [];
+    // geometry-space translate/rotate/translate, expressed as one matrix:
+    // T(px,0,pz) . Ry(rot) . T(0,yLocal,0). Rotation is about Y, so a point on
+    // the Y axis is unmoved by it and this also covers the unrotated bodies.
+    const place = (
+      w: number,
+      h: number,
+      d: number,
+      yLocal: number,
+      rot: number,
+      px: number,
+      pz: number,
+      az: number,
+    ) =>
+      plot.push({
+        w,
+        h,
+        d,
+        az,
+        matrix: new Matrix4()
+          .makeTranslation(px, 0, pz)
+          .multiply(new Matrix4().makeRotationY(rot))
+          .multiply(new Matrix4().makeTranslation(0, yLocal, 0)),
+      });
     for (const [q0, q1, qn, h0, h1] of [
       [352, 420, 26, 40, 130],
       [430, 545, 22, 90, 260],
@@ -1245,70 +1416,81 @@ function C_(i) {
           w = 16 + q() * 36,
           dp = 14 + q() * 26,
           hg = h0 + q() * (h1 - h0),
-          rot = q() * Math.PI,
-          bg = new BoxGeometry(w, hg, dp);
-        (bg.translate(0, hg / 2 - 40, 0),
-          bg.rotateY(rot),
-          bg.translate(px, 0, pz),
-          xt.push(bg));
-        if (q() < 0.5) {
-          const tp = new BoxGeometry(w * 0.55, hg * 0.38, dp * 0.55);
-          (tp.translate(0, hg * 1.17 - 40, 0),
-            tp.rotateY(rot),
-            tp.translate(px, 0, pz),
-            xt.push(tp));
-        }
+          rot = q() * Math.PI;
+        place(w, hg, dp, hg / 2 - 40, rot, px, pz, az);
+        if (q() < 0.5)
+          place(
+            w * 0.55,
+            hg * 0.38,
+            dp * 0.55,
+            hg * 1.17 - 40,
+            rot,
+            px,
+            pz,
+            az,
+          );
         if (q() < 0.45) {
-          const sp = new BoxGeometry(1.8, hg * 0.5, 1.8);
-          (sp.translate(0, hg * 1.24 - 40, 0),
-            sp.rotateY(rot),
-            sp.translate(px, 0, pz),
-            xt.push(sp));
+          place(1.8, hg * 0.5, 1.8, hg * 1.24 - 40, rot, px, pz, az);
           const bc = new BoxGeometry(2.6, 2.6, 2.6);
           (bc.translate(px, hg * 1.49 - 40, pz), xb.push(bc));
         }
         if (q() < 0.4) {
           const ns = 1 + Math.floor(q() * 3);
           for (let j = 0; j < ns; j++) {
-            const off = (q() - 0.5) * w * 0.6,
-              st = new BoxGeometry(1.1, hg * (0.3 + q() * 0.35), 1.1);
-            (st.translate(
-              px - Math.sin(az) * (dp * 0.5 + 2) + Math.cos(az) * off,
+            const off = (q() - 0.5) * w * 0.6;
+            place(
+              1.1,
+              hg * (0.3 + q() * 0.35),
+              1.1,
               hg * 0.45 - 40,
+              0,
+              px - Math.sin(az) * (dp * 0.5 + 2) + Math.cos(az) * off,
               pz - Math.cos(az) * (dp * 0.5 + 2) - Math.sin(az) * off,
-            ),
-              xs.push(st));
+              az,
+            );
           }
         }
       }
     for (let k = 0; k < 8; k++) {
       const az = q() * Math.PI * 2,
-        rad = 370 + q() * 130,
-        gb = new BoxGeometry(80 + q() * 70, 2.6, 4.5);
-      (gb.rotateY(az),
-        gb.translate(Math.sin(az) * rad, 24 + q() * 96, Math.cos(az) * rad),
-        xg.push(gb)); // gantries rust apart from the towers they served
+        rad = 370 + q() * 130;
+      // gantries rust apart from the towers they served
+      place(
+        80 + q() * 70,
+        2.6,
+        4.5,
+        24 + q() * 96,
+        az,
+        Math.sin(az) * rad,
+        Math.cos(az) * rad,
+        az,
+      );
     }
-    const mt = new Mesh(
-      Nl(xt),
-      new MeshBasicMaterial({ color: "#2a1f52", fog: !0 }),
-    );
-    ((mt.castShadow = !1), (mt.receiveShadow = !1), i.scene.add(mt));
-    const ms = new Mesh(
-      Nl(xs),
-      new MeshBasicMaterial({ color: "#5fd7ee", fog: !0 }),
-    );
-    ((ms.castShadow = !1), i.scene.add(ms));
     const mb = new Mesh(
       Nl(xb),
       new MeshBasicMaterial({ color: "#ff4f9a", fog: !1 }),
     );
     ((mb.castShadow = !1), i.scene.add(mb));
-    const mg2 = new Mesh(
-      Nl(xg),
-      new MeshBasicMaterial({ color: "#4d2c1d", fog: !0 }),
-    );
-    ((mg2.castShadow = !1), i.scene.add(mg2));
+    const fog = i.scene.fog as any;
+    ((i.skylinePlot = new PlotterSkyline(plot, {
+      fogColor: fog?.color,
+      fogDensity: fog?.density,
+    })),
+      i.scene.add(...i.skylinePlot.group));
+    // chain rather than replace: the burning-drum tick was installed above
+    const prevTick = i.sceneTick;
+    let last = -1;
+    i.sceneTick = (t2) => {
+      prevTick && prevTick(t2);
+      const dt = last < 0 ? 0 : Math.min(0.1, t2 - last);
+      last = t2;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      i.skylinePlot!.update(
+        dt,
+        window.innerWidth * dpr,
+        window.innerHeight * dpr,
+      );
+    };
   }
   // ---- the perimeter apron: a flat plain running out to the haze ----
   // The terrain mesh is 600x600, so playable ground stops at radius 300 (424

@@ -212,11 +212,17 @@
       <div id="lodbar"><i id="lodfill"></i></div>
       <div id="stats"></div>
       <p class="hint">
-        Three levels now. The bar is the distance axis and the ticks are the
-        real boundaries from 07-citizens — a pair per changeover, because going
-        out and coming back happen at different distances. Sweep and watch: the
-        level always changes on the far tick of a pair leaving and the near tick
-        returning, and never inside the gap.
+        The bar is the distance axis and the ticks are the real boundaries — a
+        pair per changeover, because going out and coming back happen at
+        different distances. Sweep and watch: the level always changes on the
+        far tick of a pair leaving and the near tick returning, and never inside
+        the gap.
+        <br /><br />
+        Citizens switch on DISTANCE (07-citizens), structures on APPARENT SIZE
+        (03-geometry) — which is why a vault holds its detail to 244m while a
+        brazier is coarse by 21m and gone by 179m. Both rules are imported, not
+        copied, so this page cannot disagree with the game. A structure has a
+        third boundary the citizens do not: the cull, where it stops drawing.
       </p>
       <div id="err"></div>
     </div>
@@ -227,6 +233,18 @@
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { Po, pickLevel, LOD_IN2, LOD_OUT2 } from "./src/07-citizens.ts";
+      import { buildStructureMesh } from "./src/04-builders.ts";
+      import { carWreck } from "./src/27-car.ts";
+      import {
+        CULL_IN,
+        CULL_OUT,
+        LOD_IN,
+        LOD_OUT,
+        PX,
+        pickStructureLevel,
+        structureFade,
+        structureVisible,
+      } from "./src/03-geometry.ts";
 
       const $ = (id) => document.getElementById(id);
       const err = $("err");
@@ -296,8 +314,10 @@
       // with the game about when a level changes.
       const OUT = LOD_OUT2.map(Math.sqrt),
         IN = LOD_IN2.map(Math.sqrt),
-        LEVEL_NAME = ["NEAR", "MID", "FAR"],
-        MAXD = 80;
+        LEVEL_NAME = ["NEAR", "MID", "FAR"];
+      // the axis the bar draws. Citizens live inside 80m; a vault does not
+      // change level until 244m, so the range follows the subject.
+      let MAXD = 80;
 
       let current = null,
         wireOverlay = null,
@@ -316,12 +336,14 @@
           holder.add(gh);
           return {
             geo: g,
+            box: g.boundingBox,
             mesh: m,
             ghost: gh,
             tris: g.attributes.position.count / 3,
           };
         });
         current = { levels, label };
+        setRange(80);
         rebuildHelpers();
         frame();
       }
@@ -335,11 +357,94 @@
         holder.add(m);
         const L = {
           geo,
+          box: geo.boundingBox,
           mesh: m,
           ghost: null,
           tris: geo.attributes.position.count / 3,
         };
-        current = { levels: [L, L, L], label };
+        // `still` means there is no ladder to walk: the same build draws at
+        // every distance. It also keeps the frame loop's hands off `visible`
+        // — all three slots hold ONE mesh, so toggling them in a loop lets
+        // the last iteration win and the subject disappears at two distances
+        // out of three.
+        current = { levels: [L, L, L], label, still: true };
+        rebuildHelpers();
+        frame();
+      }
+
+      // Colours standing in for the game's materials. Not the real ones —
+      // those are engraving shaders that want a whole scene around them — but
+      // enough to read a structure as metal, fire, stone and plaster.
+      const MATCOL = {
+        salvage: 0x9aa0a8,
+        ember: 0xff8a3c,
+        glow: 0x6ff5ea,
+        stone: 0xc9c2d4,
+        stoneOld: 0xa89fb4,
+        plaster: 0xe6dff0,
+        rust: 0xb2603a,
+        verdigris: 0x59b39a,
+        gold: 0xe8c46a,
+        green: 0x6fbf7a,
+        water: 0x5fc9e8,
+      };
+
+      /**
+       * A structure, built the way the game builds it.
+       *
+       * buildStructureMesh is IMPORTED, exactly as pickLevel is — this page
+       * takes an action and asks 04-builders for the parts, so it cannot show
+       * a brazier the game would not build. Structures have no level of
+       * detail: one build, every distance.
+       */
+      function setStructure(action, label) {
+        holder.clear();
+        wireOverlay = normalHelper = null;
+        const levels = [0, 1, 2].map((d) => {
+          const parts = buildStructureMesh(action, d);
+          const group = new THREE.Group();
+          const box = new THREE.Box3();
+          let tris = 0,
+            biggest = null;
+          const mats = [];
+          for (const k of Object.keys(parts.pieces))
+            for (const g of parts.pieces[k]) {
+              g.computeBoundingBox();
+              box.union(g.boundingBox);
+              // ember and glow are emissive in the game — they are the light,
+              // not lit by it, so they get a material the key light can't dim
+              const lit = k !== "ember" && k !== "glow";
+              const col = MATCOL[k] ?? 0xd8d2e6;
+              group.add(
+                new THREE.Mesh(
+                  g,
+                  lit
+                    ? new THREE.MeshLambertMaterial({ color: col })
+                    : new THREE.MeshBasicMaterial({ color: col }),
+                ),
+              );
+              const n = g.attributes.position.count / 3;
+              tris += n;
+              if (!biggest || n > biggest.n) biggest = { g, n };
+              mats.push(`${k} ${n | 0}`);
+            }
+          holder.add(group);
+          // helpers hang off the biggest piece of the level — for the brazier
+          // that is the drum, which is the part worth wireframing
+          return { geo: biggest?.g, box, mesh: group, ghost: null, tris, mats };
+        });
+        if (!levels[0].geo) return showErr(`${label} built nothing`);
+        setRange(400);
+        // The sphere comes from the NEAR level for every level, exactly as
+        // World.registerLod does it — measure a coarse level and the radius
+        // shrinks with the detail, so choosing a level would change the test
+        // that chose it.
+        current = {
+          levels,
+          label,
+          structure: true,
+          radius: levels[0].box.getSize(new THREE.Vector3()).length() / 2,
+        };
         rebuildHelpers();
         frame();
       }
@@ -382,12 +487,20 @@
         }
       }
 
+      /** Rescale the distance axis for a subject whose thresholds need it. */
+      function setRange(maxd) {
+        MAXD = maxd;
+        const d = $("dist");
+        d.max = maxd;
+        if (Number(d.value) > maxd) d.value = maxd;
+      }
+
       /** Put the camera at the slider's distance, aimed at the subject. */
       function frame() {
         if (!current) return;
-        const c = current.levels[0].geo.boundingBox.getCenter(
-          new THREE.Vector3(),
-        );
+        // the subject's whole box, not its biggest piece's — a structure is
+        // several pieces, and aiming at the drum alone crops off the tripod
+        const c = current.levels[0].box.getCenter(new THREE.Vector3());
         controls.target.copy(c);
         const d = Number($("dist").value);
         camera.position.set(c.x, c.y + d * 0.16, c.z + d);
@@ -397,7 +510,7 @@
       function updateStats() {
         if (!current) return;
         const act = current.levels[lod];
-        const size = act.geo.boundingBox.getSize(new THREE.Vector3());
+        const size = act.box.getSize(new THREE.Vector3());
         const d = camera.position.distanceTo(controls.target);
         const vh = renderer.domElement.height / renderer.getPixelRatio();
         const px =
@@ -414,27 +527,71 @@
               : d > OUT[OUT.length - 1]
                 ? "distance"
                 : "middle";
+        // A subject with no ladder must not be shown one. Printing NEAR/MID/
+        // FAR against three identical counts would read as a working level
+        // swap, and structures do not have one — they are merged into static
+        // geometry once and drawn at every distance.
+        const ladder = current.still
+          ? `<b>${(act.tris | 0).toLocaleString()}</b> tris, every distance` +
+            (current.mats
+              ? `<br><span style="opacity:.65">${current.mats.join(" · ")}</span>`
+              : "")
+          : current.structure
+            ? current.levels
+                .map(
+                  (L, i) =>
+                    `${LEVEL_NAME[i].toLowerCase()} <b>${L.tris | 0}</b>` +
+                    (i === lod && !current.culled ? " ←" : ""),
+                )
+                .join(" · ") +
+              `<br><span style="opacity:.65">${act.mats.join(" · ")}</span>`
+            : current.levels
+                .map(
+                  (L, i) =>
+                    `${LEVEL_NAME[i].toLowerCase()} <b>${L.tris | 0}</b>` +
+                    (i === lod ? " ←" : ""),
+                )
+                .join(" · ");
+        // a structure's band is its apparent size, which is what selects it
+        if (current.structure)
+          band =
+            `${(current.ang * PX).toFixed(1)} px radius` +
+            (current.culled
+              ? " — CULLED"
+              : current.fade < 1
+                ? ` — dissolving, fade ${current.fade.toFixed(2)}`
+                : "");
         $("stats").innerHTML =
-          `<b>${current.label}</b> — drawing <b>${LEVEL_NAME[lod]}</b><br>` +
-          `${d.toFixed(1)} m · ${px.toFixed(0)} px tall<br>` +
-          `<span style="opacity:.65">${band}</span><br>` +
-          current.levels
-            .map(
-              (L, i) =>
-                `${LEVEL_NAME[i].toLowerCase()} <b>${L.tris | 0}</b>` +
-                (i === lod ? " ←" : ""),
-            )
-            .join(" · ") +
+          `<b>${current.label}</b> — drawing ` +
+          (current.culled
+            ? "<b>NOTHING</b>"
+            : current.still
+              ? "<b>ONE LEVEL</b>"
+              : `<b>${LEVEL_NAME[lod]}</b>`) +
+          `<br>${d.toFixed(1)} m · ${px.toFixed(0)} px tall<br>` +
+          `<span style="opacity:.65">${current.still ? "no level of detail — dropped .glb, one build" : band}</span><br>` +
+          ladder +
           `<br>×132 on screen = ${((act.tris | 0) * 132).toLocaleString()}`;
         $("lodfill").style.right = `${Math.max(0, 100 - (d / MAXD) * 100)}%`;
-        // one tick per boundary edge: the pair for each is the dead band
+        // One tick per boundary edge; the pair for each is the dead band.
+        // A structure's boundaries are apparent SIZES, so they land at a
+        // different distance for every subject — radius / threshold turns each
+        // one back into the metres this axis is drawn in, which is why a vault
+        // and a brazier show their ticks in completely different places.
         const bar = $("lodbar");
         for (const el of bar.querySelectorAll("b[data-gen]")) el.remove();
-        for (let i = 0; i < OUT.length; i++)
-          for (const [v, lab] of [
-            [IN[i], `${IN[i]}`],
-            [OUT[i], `${OUT[i]}`],
-          ]) {
+        const [OUTD, IND] = current?.structure
+          ? [
+              [...LOD_OUT, CULL_OUT].map((a) => current.radius / a),
+              [...LOD_IN, CULL_IN].map((a) => current.radius / a),
+            ]
+          : [OUT, IN];
+        // the label is derived INSIDE the body, not in the iterated literal:
+        // `const [v] of [[x, f(v)]]` reads v inside its own dead zone, which
+        // throws on the first tick and takes the whole frame loop with it
+        for (let i = 0; i < OUTD.length; i++)
+          for (const v of [IND[i], OUTD[i]]) {
+            const lab = v.toFixed(v > 20 ? 0 : 1);
             const b = document.createElement("b");
             b.dataset.gen = "1";
             b.dataset.l = lab;
@@ -463,6 +620,20 @@
       addSubject("citizen 0", (l) => setSubject(0, l));
       addSubject("citizen 1", (l) => setSubject(1, l));
       addSubject("citizen 2", (l) => setSubject(2, l));
+      // Three ids, not one: buildOrnament seeds its PRNG from the action id,
+      // and the brazier spends that seed on the angle it stands at. Three
+      // buttons is how you see that the turn is actually varying.
+      for (const id of [3, 11, 29])
+        addSubject(`brazier ${id}`, (l) =>
+          setStructure({ t: "emb", kind: "brazier", id, x: 0, y: 0, z: 0 }, l),
+        );
+      // The wreck goes through setLoaded, not setStructure: it is a bare baked
+      // geometry with no build and no LOD ladder — the scenery pass merges the
+      // same 6,279 triangles at every distance — so `still` is correct for it.
+      // One id only, because unlike the brazier nothing about it is seeded;
+      // the six in the city differ by placement alone, which is not a property
+      // of the model.
+      addSubject("car wreck", (l) => setLoaded(carWreck(), l));
 
       // --------------------------------------------------------- glb drop
       const drop = $("drop");
@@ -531,17 +702,34 @@
 
         if (current) {
           const was = lod;
-          lod = pickLevel(
-            lod,
-            camera.position.distanceToSquared(controls.target),
-          );
-          for (let i = 0; i < current.levels.length; i++) {
-            const L = current.levels[i];
-            L.mesh.visible = i === lod;
-            if (L.ghost) L.ghost.visible = $("ghost").checked && i !== lod;
+          if (current.structure) {
+            // apparent size, not distance — the same test World.updateLod
+            // uses, from the same imported function
+            const d = Math.max(
+              0.001,
+              camera.position.distanceTo(controls.target),
+            );
+            const ang = current.radius / d;
+            lod = pickStructureLevel(lod, ang);
+            current.culled = !structureVisible(!!current.culled, ang);
+            current.fade = structureFade(ang);
+            current.ang = ang;
+          } else if (!current.still) {
+            lod = pickLevel(
+              lod,
+              camera.position.distanceToSquared(controls.target),
+            );
           }
+          // a still subject holds one build in all three slots, so leave its
+          // visibility alone — a loop over shared meshes would hide it
+          if (!current.still)
+            for (let i = 0; i < current.levels.length; i++) {
+              const L = current.levels[i];
+              L.mesh.visible = !current.culled && i === lod;
+              if (L.ghost) L.ghost.visible = $("ghost").checked && i !== lod;
+            }
           // helpers hang off whichever level is drawing
-          if (was !== lod) rebuildHelpers();
+          if (was !== lod && !current.still) rebuildHelpers();
           updateStats();
         }
         renderer.render(scene, camera);

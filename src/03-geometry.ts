@@ -23,6 +23,142 @@ import {
 import { clamp, seededRng, terrainHeightAt } from "./01-materials";
 // --- end generated imports ---
 
+// ---------------------------------------------------------------- detail
+//
+// THE DETAIL LEVEL A BUILDER IS CURRENTLY EMITTING. 0 near, 1 middle, 2 far.
+//
+// Ambient rather than a parameter, and that is a deliberate trade. Threading a
+// level through every builder would mean touching every call in the six of
+// them and every one of the shared generators below — hundreds of sites, each
+// one a chance to drop it silently and produce a level that is quietly
+// identical to the one above it. Instead `buildStructureMesh` sets it once,
+// builds, and clears it, and the generators that own the segment counts read
+// it from here.
+//
+// The cost of that trade is real and worth stating: this is module state, so a
+// builder must never yield in the middle. They are all synchronous and must
+// stay that way. `withDetail` exists so the level cannot leak out of a build
+// that throws.
+//
+// The scale factors are NOT uniform, and that is the whole point of the
+// exercise. What decides a level is how big a thing is ON SCREEN, and a vault
+// forty metres long still covers real pixels at the distance a brazier has
+// become three. So the geometry that carries a silhouette — arch curves, vault
+// sweeps — degrades gently, while ornament and accretion are simply dropped.
+let DETAIL = 0;
+
+/** How curve segment counts scale at each level. */
+const SEG_SCALE = [1, 0.55, 0.3];
+
+/** The level currently being built. */
+function detail() {
+  return DETAIL;
+}
+
+/**
+ * Build something at a given detail level, and put the level back afterwards
+ * even if the build throws. Nesting is honoured, so a builder that calls
+ * another builder cannot clobber it.
+ */
+function withDetail<T>(d: number, fn: () => T): T {
+  const prev = DETAIL;
+  DETAIL = d;
+  try {
+    return fn();
+  } finally {
+    DETAIL = prev;
+  }
+}
+
+/**
+ * Scale a curve/segment count for the current level.
+ *
+ * `min` is a floor, and it matters: an arch that falls to two segments stops
+ * being an arch, and FEATURES.md is explicit that the arched silhouette is the
+ * game's identity. Nothing here is allowed to take that away — the far level
+ * of a vault is a coarser vault, never a box.
+ */
+function segs(n: number, min = 4) {
+  return Math.max(min, Math.round(n * SEG_SCALE[DETAIL]));
+}
+
+/**
+ * Should a decorative feature be built at all?
+ *
+ * `fine()` is "only at the near level" — rooftop tanks, neon runners, the
+ * figure on the statue's plinth. `fine(2)` is "near and middle, gone only in
+ * the distance" — buttresses, greenery, anything still reading as silhouette
+ * at forty metres.
+ */
+function fine(level = 1) {
+  return DETAIL < level;
+}
+
+// ------------------------------------------------------------------- lod
+//
+// Structure detail thresholds, in APPARENT SIZE: radius / distance, which is
+// the tangent of the object's angular radius. Multiply by PX to read one as a
+// screen radius in pixels on a 1080-tall viewport at the game's field of view,
+// which is how they were picked and how to re-tune them.
+//
+// Each pair is a hysteresis band. OUT is where a level ends as something
+// shrinks; IN is the larger size it has to grow back to before the level
+// returns. The gap between them is what stops a structure sitting on a
+// boundary from flickering as the camera drifts — the same trick, and for the
+// same reason, as LOD_OUT2/LOD_IN2 in 07-citizens.
+//
+//   near -> mid   at ~114 px radius       mid -> far   at ~45 px radius
+//   cull          at ~5 px radius, i.e. about eleven pixels across
+//
+// Grounded against the real camera, which orbits between 5m and 520m (see
+// 17-bootstrap): a 22m-radius vault stays NEAR out to ~244m and never culls,
+// while a brazier is already FAR by 21m and gone by 179m. That asymmetry from
+// one shared pair of thresholds is the whole reason the test is apparent size
+// and not distance.
+//
+// A vault and a brazier are judged by one rule here, and that is the point:
+// the vault keeps its detail across most of the map because it stays big on
+// screen, and the brazier loses its 2,627-triangle drum the moment it stops
+// being worth them. No per-kind table to drift out of step with the builders.
+// (viewportHeight / 2) / tan(fov / 2), at 1080 tall and the game's 46-degree
+// lens. Update it with the lens, not by taste.
+const PX = 1272;
+const LOD_OUT = [0.09, 0.035];
+const LOD_IN = [0.115, 0.05];
+const CULL_OUT = 0.0042;
+const CULL_IN = 0.0075;
+/**
+ * Pick a structure's detail level from its apparent size, with hysteresis.
+ *
+ * Shaped exactly like pickLevel in 07-citizens and for the same reason: one
+ * step per call, and the level only changes at the far edge of a band going
+ * out and the near edge coming back.
+ *
+ * Exported so `inspect.html` can drive its preview from the real rule instead
+ * of a copy that quietly drifts — the same contract the citizen inspector
+ * already keeps.
+ */
+function pickStructureLevel(lod: number, ang: number) {
+  while (lod < LOD_OUT.length && ang < LOD_OUT[lod]) lod++;
+  while (lod > 0 && ang > LOD_IN[lod - 1]) lod--;
+  return lod;
+}
+
+/** Is a structure of this apparent size drawn at all? Hysteretic, so pass in
+ * whether it is currently culled. */
+function structureVisible(culled: boolean, ang: number) {
+  return culled ? ang > CULL_IN : ang > CULL_OUT;
+}
+
+/** How far through the dissolve band a structure is: 1 solid, 0 gone. */
+function structureFade(ang: number) {
+  return ang >= CULL_IN
+    ? 1
+    : ang <= CULL_OUT
+      ? 0
+      : (ang - CULL_OUT) / (CULL_IN - CULL_OUT);
+}
+
 /**
  * Merge many BufferGeometries into one. A local copy of three.js's
  * `mergeGeometries` — vendored so the addon does not need importing.
@@ -262,7 +398,9 @@ class MeshBuilder {
   /** Add a cylinder: radius `t`, height `e`, at `n`, `s` radial segments,
    * tone `r`, top radius `o` (differs from `t` to make a taper or a cone). */
   cylinder(t, e, n, s = 14, r = 1, o = t) {
-    const a = new CylinderGeometry(o, t, e, s);
+    // 5 sides is the floor: below that a column reads as a wedge, and columns
+    // are load-bearing for the look even when they are not for the arch
+    const a = new CylinderGeometry(o, t, e, segs(s, 5));
     return (a.translate(0, e / 2, 0), this.add(a, n, 0, r));
   }
   /** Collapse everything accumulated into one geometry. Call once, at the end. */
@@ -367,7 +505,9 @@ function Hn(
   const u = new ExtrudeGeometry(c, {
     depth: e,
     bevelEnabled: !1,
-    curveSegments: s.curveSeg ?? 20,
+    // the arch curve itself. segs() floors this well above the point where
+    // an arch stops looking arched — see FEATURES.md on the silhouette
+    curveSegments: segs(s.curveSeg ?? 20),
   });
   u.translate(0, 0, -e / 2);
   // rebar at the breaks: bent bars stand proud of every spalled edge
@@ -410,7 +550,7 @@ function Hn(
     const p = new ExtrudeGeometry(g, {
       depth: _,
       bevelEnabled: !1,
-      curveSegments: 20,
+      curveSegments: segs(20),
     });
     (p.translate(f.cx, f.springY, -_ / 2), d.push(p));
     for (const b of [-1, 1]) {
@@ -467,7 +607,12 @@ function g_(i, t, e, n: { base?: boolean; cap?: boolean } = {}) {
   return (Ri(a, 0, Math.min(3, e * 0.4), 0.82, 1), a);
 }
 function Ll(i, t, e, n: { solid?: boolean } = {}) {
-  const r = Math.max(2, Math.round(t / 0.32)),
+  // treads. At distance a flight reads as a ramp with a stepped edge, so the
+  // riser grows rather than the flight losing its length
+  const r = Math.max(
+      2,
+      Math.round(t / (DETAIL ? (DETAIL > 1 ? 1.1 : 0.62) : 0.32)),
+    ),
     o = t / r,
     a = e / r,
     c = new MeshBuilder();
@@ -486,7 +631,7 @@ function __(i, t = 1.05, e = 0.28) {
   );
 }
 function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
-  const s = n.curveSeg ?? 22,
+  const s = segs(n.curveSeg ?? 22),
     r = new Shape();
   (r.moveTo(i, 0),
     r.absarc(0, 0, i, 0, Math.PI, !1),
@@ -498,7 +643,9 @@ function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
     bevelEnabled: !1,
     curveSegments: s,
   });
-  if ((o.rotateY(Math.PI / 2), n.ribs !== !1 && e > 7)) {
+  // the cast-tube joint bands are surface articulation, not silhouette: they
+  // survive the middle level and go in the distance
+  if ((o.rotateY(Math.PI / 2), n.ribs !== !1 && fine(2) && e > 7)) {
     const a = [o],
       c = Math.max(2, Math.round(e / 5.5));
     for (let h = 0; h <= c; h++) {
@@ -513,7 +660,7 @@ function v_(i, t, e, n: { curveSeg?: number; ribs?: boolean } = {}) {
       const f = new ExtrudeGeometry(d, {
         depth: 1.1,
         bevelEnabled: !1,
-        curveSegments: 18,
+        curveSegments: segs(18),
       });
       (f.rotateY(Math.PI / 2),
         f.translate(Math.min(u, e - 1.1), 0, 0),
@@ -554,10 +701,16 @@ function buildTree(i, t) {
       (o += Math.cos(s * ((c + 1) / a) * 0.55) * ((i * 0.99) / a)));
   }
   const c = 5 + Math.floor(t() * 3);
+  // Thin the crown in the distance by SKIPPING fronds, never by drawing fewer
+  // random numbers. Every level pulls the same values in the same order, so a
+  // frond that survives sits at exactly the angle it had at full detail and
+  // the swap does not rotate the tree.
+  const keep = fine(2) ? 1 : 2;
   for (let l = 0; l < c; l++) {
     const h = (l / c) * Math.PI * 2 + t() * 0.6,
-      u = 0.42 + t() * 0.3,
-      d = new BoxGeometry(i * 0.5, 0.055, 0.3);
+      u = 0.42 + t() * 0.3;
+    if (l % keep) continue;
+    const d = new BoxGeometry(i * 0.5, 0.055, 0.3);
     (d.translate(i * 0.25, 0, 0),
       d.rotateZ(-0.45 - u),
       d.rotateY(h),
@@ -709,10 +862,19 @@ function newStructureParts(): StructureParts {
 /** Add geometry `e` to parts `i` under material `t`, installing aTone on the way. */
 function Yt(i, t, e) {
   var n;
+  // A level that dropped every piece of some material merges to an EMPTY
+  // geometry — MeshBuilder.merge() returns a bare BufferGeometry with no
+  // position attribute, and setToneAttribute would read .count off undefined.
+  // Swallowing it here rather than at each call site means adding a `fine()`
+  // guard anywhere can never produce a broken piece: drop the last neon strip
+  // off a span and the span simply has no glow at that level.
+  if (!e?.attributes?.position?.count) return;
   (setToneAttribute(e), ((n = i.pieces)[t] || (n[t] = [])).push(e));
 }
 function Ur(i, t, e, n, s) {
-  if (!n) return;
+  // greenery is scattered clumps sitting ON a surface — it adds nothing to a
+  // silhouette and everything to the triangle count, so it goes first
+  if (!n || !fine(2)) return;
   const r = x_(t, e, s);
   r && Yt(i, "green", r);
 }
@@ -870,8 +1032,17 @@ function buildAnchor(i) {
 
 // --- generated exports ---
 export {
+  CULL_IN,
+  CULL_OUT,
   Cl,
   Hn,
+  LOD_IN,
+  LOD_OUT,
+  PX,
+  detail,
+  fine,
+  segs,
+  withDetail,
   Il,
   Ji,
   Ll,
@@ -888,6 +1059,9 @@ export {
   dn,
   ec,
   newStructureParts,
+  pickStructureLevel,
   setToneAttribute,
+  structureFade,
+  structureVisible,
   v_,
 };

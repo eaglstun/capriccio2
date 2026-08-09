@@ -1025,6 +1025,10 @@ function cc() {
   const i = performance.now();
   (Nh(i - Ns),
     (Ns = i),
+    // Structure detail, chosen AFTER the frame's camera work and before the
+    // draw — the clamp above can still move the eye, and picking a level
+    // against last frame's position would show a level behind on any fast pan.
+    Kt.updateLod(ie),
     // outside the Chronicle this is exactly ke.render; inside, the same
     // engraved frame continues into the Chronicle-only composer chain
     chronicleView.render(je, ie),
@@ -1104,6 +1108,12 @@ window.CAP = {
   // the brazier particle system — render-only; exposed so its budget can be
   // checked from the console (CAP.embers.count())
   embers: emberFx,
+  // the plotted horizon — render-only. CAP.plotter.replay() to watch the pen
+  // cross the skyline again, .finish() to skip to the drawn state, and
+  // .loop = true to leave it redrawing.
+  get plotter() {
+    return Kt.skylinePlot;
+  },
   /**
    * The round-trip test CHRONICLE.md calls non-optional: snapshot the city,
    * scrub to before the first stone and back to the present, exit, and assert
