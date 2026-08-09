@@ -475,10 +475,11 @@ adds a path, it never takes one away.
 zoom. It is instead the PLACEMENT stick, because every build rule in `11-tools`
 resolves its target by raycasting from a screen point and a pad has no pointer
 to raycast from. Once a tool is chosen the right stick drives a crosshair and
-the triggers keep the zoom; with no tool chosen the right stick falls back to
-zoom, as written. Driving an NDC aim point means the pad enters `hover()` and
-`click()` by the same door the mouse does and inherits snapping, clearance
-gating and the ghost preview without `11-tools` changing at all.
+the triggers keep the zoom. With no tool chosen the right stick is the camera's
+second hand instead: up and down zoom, left and right pan. Driving an NDC aim
+point means the pad enters `hover()` and `click()` by the same door the mouse
+does and inherits snapping, clearance gating and the ghost preview without
+`11-tools` changing at all.
 
 WANDER writes into `WanderMode`'s own key set and yaw/pitch rather than running
 a parallel walker, so pad and keyboard drive one walker that cannot disagree.

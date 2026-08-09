@@ -65,6 +65,13 @@ function makeControls() {
     _dollyOut(s: number) {
       this._scaleAcc /= s;
     },
+    // Mirrors the real _pan closely enough to check direction: a POSITIVE
+    // deltaX moves the target left, which is the grab-the-world convention
+    // the mouse uses and the thing the pad has to invert.
+    _targetX: 0,
+    _pan(dx: number, _dy: number) {
+      this._targetX -= dx;
+    },
   };
 }
 
@@ -190,6 +197,53 @@ const wake = () => listeners["gamepadconnected"]?.forEach((f) => f());
     "L2 zooms OUT (radius scale > 1)",
     controls._scaleAcc > 1,
     `scale=${controls._scaleAcc.toFixed(3)}`,
+  );
+}
+
+// --- 3b. right stick pans, camera-style, and only with no tool up ----------
+
+{
+  pads = [];
+  const { host, controls } = makeHost();
+  const g = new GamepadInput(host as any);
+  pads = [pad({ axes: [0, 0, 1, 0] })]; // right stick pushed right
+  wake();
+  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  check(
+    "right stick right pans the view RIGHT",
+    controls._targetX > 0,
+    `targetX=${controls._targetX.toFixed(1)}`,
+  );
+}
+
+{
+  pads = [];
+  const { host, controls } = makeHost();
+  const g = new GamepadInput(host as any);
+  pads = [pad({ axes: [0, 0, -1, 0] })];
+  wake();
+  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  check(
+    "right stick left pans the view LEFT",
+    controls._targetX < 0,
+    `targetX=${controls._targetX.toFixed(1)}`,
+  );
+}
+
+{
+  // once a tool is up the right stick belongs to the crosshair, so panning
+  // must stop dead — otherwise aiming would drag the whole city along
+  pads = [];
+  const { host, controls } = makeHost();
+  const g = new GamepadInput(host as any);
+  host.tool.tool = "anchor";
+  pads = [pad({ axes: [0, 0, 1, 0] })];
+  wake();
+  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  check(
+    "a selected tool takes the right stick back from the pan",
+    controls._targetX === 0,
+    `targetX=${controls._targetX}`,
   );
 }
 

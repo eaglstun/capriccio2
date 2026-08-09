@@ -25,7 +25,7 @@
 //   BUILD / SECTION / PLATE
 //     left stick    orbit the camera
 //     right stick   move the aim point, once a tool is chosen — otherwise
-//                   nudges the zoom, so the stick is never simply dead
+//                   the camera's second hand: up/down zoom, left/right pan
 //     L2 / R2       zoom out / in
 //     A             place at the aim point (a click, at that point exactly)
 //     B             cancel — clears the tool, or returns from the Chronicle
@@ -157,10 +157,13 @@ export class GamepadInput {
    * stops, loudly, in the console — rather than silently doing nothing.
    */
   private canOrbit: boolean;
+  /** Same story for `_pan`, kept separate so losing one does not cost both. */
+  private canPan: boolean;
 
   constructor(host: GamepadHost) {
     this.host = host;
     const c = host.controls as any;
+    this.canPan = typeof c._pan === "function";
     this.canOrbit =
       typeof c._rotateLeft === "function" &&
       typeof c._rotateUp === "function" &&
@@ -169,6 +172,10 @@ export class GamepadInput {
     if (!this.canOrbit)
       console.warn(
         "[gamepad] OrbitControls internals moved; pad orbit is disabled.",
+      );
+    if (!this.canPan)
+      console.warn(
+        "[gamepad] OrbitControls._pan is gone; pad panning is disabled.",
       );
 
     // Some browsers only surface pads that have already been used, so check
@@ -314,12 +321,21 @@ export class GamepadInput {
       if (down[BTN.A]) h.tool.click(this.aim);
     } else {
       (this.hideCursor(), (this.aimedFor = null));
-      // With no tool selected the right stick would otherwise be dead, so it
-      // doubles as a second zoom — the brief's original binding for it.
-      // Pushing the stick forward goes in, which is why ry < 0 dollies in.
+      // With no tool selected the right stick is the camera's second hand:
+      // up and down zoom, left and right pan. Pushing forward goes in, which
+      // is why ry < 0 dollies in.
       if (this.canOrbit && ry) {
         ry < 0 ? c._dollyIn(dolly(-ry, t)) : c._dollyOut(dolly(ry, t));
       }
+      // `_pan` takes PIXEL deltas and divides by the distance to the target,
+      // so one stick throw covers the same fraction of the screen whether you
+      // are up among the skyline or down between the piers. Panning in world
+      // units instead would crawl when zoomed out and lurch when zoomed in.
+      //
+      // Negated because `_pan` follows the mouse's grab-the-world convention —
+      // a positive delta pans the camera LEFT. The stick is camera-style, like
+      // the orbit above it: push right, the view goes right.
+      if (this.canPan && rx) c._pan(-rx * 620 * t, 0);
     }
 
     (down[BTN.Y] && this.cycleTool(), down[BTN.X] && this.cycleVariant());
