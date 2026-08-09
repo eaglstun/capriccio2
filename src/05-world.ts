@@ -38,6 +38,7 @@ import {
   fr,
   i_,
   isFlatGround,
+  lerp,
   seededRng,
   terrainHeightAt,
 } from "./01-materials";
@@ -1309,14 +1310,21 @@ function C_(i) {
     );
     ((mg2.castShadow = !1), i.scene.add(mg2));
   }
-  // ---- the perimeter apron: the plain does not end at the plane edge ----
-  // The terrain mesh is 600x600, so ground stops at radius 300 while the
-  // megastructure line starts at 352 — from a low camera the world visibly
-  // floats. This ring continues `terrainHeightAt` outward (the plateau, the
-  // mesa and the canyon all run off the edge naturally) and lifts into LOW
-  // rolling hills toward the rim, just high enough that the plain has an
-  // edge you cannot see over. Coarse, one merged mesh, one draw call,
-  // scene-only — never in structGroup, so it can never be built on.
+  // ---- the perimeter apron: a flat plain running out to the haze ----
+  // The terrain mesh is 600x600, so playable ground stops at radius 300 (424
+  // at the corners) while the megastructure line starts at 352. Without this
+  // the world visibly ends, and from a low camera it floats.
+  //
+  // This ring used to lift into low rolling hills to close the sightline.
+  // It does not any more: the plain is FLAT, and the edge is hidden by
+  // distance instead of by terrain. FogExp2 at density 0.0021 is ~80% opaque
+  // by radius 600 and ~99.8% by 1200, and the camera's far plane is 1200, so
+  // a plain reaching 1600 dissolves into haze long before it runs out. That
+  // is a horizon rather than a wall, which is the point.
+  //
+  // GAMEPLAY IS UNCHANGED. This is scene-only, exactly as the hills were —
+  // never in `structGroup`, so it is not a raycast target, grows no pockets
+  // and seeds no nav. You cannot build on it and citizens cannot reach it.
   {
     const vn2 = (x2, z2, s2) => {
         const xi = Math.floor(x2),
@@ -1333,23 +1341,60 @@ function C_(i) {
           a2 + (b2 - a2) * u2 + (c2 - a2) * v2 + (a2 - b2 - c2 + d2) * u2 * v2
         );
       },
-      ring = new RingGeometry(284, 610, 112, 12);
+      APRON_IN = 284,
+      APRON_OUT = 1600,
+      // The plain settles to y=0, the height the town itself stands on.
+      //
+      // It has to be faded into rather than butted against. `terrainHeightAt`
+      // keeps generating features forever, so at the map edge it still spans
+      // -30 (canyon) to +57 (mesa) — an 87-unit spread that would meet a flat
+      // plain as a 44-unit cliff the whole way round.
+      //
+      // The fade runs on distance outside the SQUARE playable plane, not on
+      // radius. Radius gets this wrong: the plane reaches 300 along the axes
+      // but 424 at its corners, so a radial fade is already most of the way
+      // done where the corners emerge and barely started at the edges, and
+      // the taper visibly changes width as it goes round. Square distance
+      // gives one constant-width border.
+      //
+      // 200 units adds at most a ~22 degree grade. That is gentler than the
+      // 59 degree cliffs `terrainHeightAt` itself produces inside the map, so
+      // it does not read as artificial — and it is short enough to keep the
+      // far field genuinely flat, which is the whole point. Lengthening it
+      // buys a softer ramp at the cost of the flatness that was asked for.
+      PLAIN_Y = 0,
+      EDGE = 300,
+      FADE_LEN = 200,
+      ring = new RingGeometry(APRON_IN, APRON_OUT, 200, 64);
     ring.rotateX(-Math.PI / 2);
     const rp = ring.attributes.position;
     for (let k = 0; k < rp.count; k++) {
-      const x2 = rp.getX(k),
-        z2 = rp.getZ(k),
-        r2 = Math.hypot(x2, z2),
-        // hills fade in past the plane edge and stay low: mounds top out
-        // around 15-18 units, on the scale of the terraces, not mountains
-        lift = Nn(305, 400, r2),
-        mound =
-          2.5 +
-          10.5 * vn2(x2 * 0.011 + 31.7, z2 * 0.011 + 12.3, 4441) +
-          4 * vn2(x2 * 0.033 + 7.1, z2 * 0.033 + 2.9, 4442),
-        // and the far rim rises a touch more, closing the sightline
-        rim = Nn(430, 600, r2) * 5;
-      rp.setY(k, terrainHeightAt(x2, z2) - 0.9 + lift * mound + rim);
+      const x0 = rp.getX(k),
+        z0 = rp.getZ(k),
+        r0 = Math.hypot(x0, z0);
+      // RingGeometry spaces its rings evenly, which would spend as many
+      // vertices on the dead-flat outer half as on the fade. Redistribute
+      // them by radius^1.6 so the detail sits where the ground still has
+      // shape in it, and the far plain — which needs none — costs almost
+      // nothing. Same vertex count, put where it shows.
+      const u = (r0 - APRON_IN) / (APRON_OUT - APRON_IN),
+        r = APRON_IN + (APRON_OUT - APRON_IN) * Math.pow(u, 1.6),
+        k2 = r0 > 0 ? r / r0 : 1,
+        x2 = x0 * k2,
+        z2 = z0 * k2;
+      (rp.setX(k, x2),
+        rp.setZ(k, z2),
+        // sunk slightly, so that where this underlaps the square terrain
+        // plane (which reaches 424 at its corners) the real ground wins
+        // instead of z-fighting with it
+        rp.setY(
+          k,
+          lerp(
+            terrainHeightAt(x2, z2),
+            PLAIN_Y,
+            Nn(0, FADE_LEN, Math.max(Math.abs(x2), Math.abs(z2)) - EDGE),
+          ) - 0.9,
+        ));
     }
     ring.computeVertexNormals();
     const rt = new Float32Array(rp.count * 2);

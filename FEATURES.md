@@ -517,6 +517,27 @@ Do this one **after** the horizon — the horizon is the thing that actually
 bothers the eye, and clamping the camera without extending the ground would just
 hide one symptom of the same gap.
 
+**Superseded (a): the hills are gone, the plain runs to the haze.** The rolling
+hills did close the sightline, but they closed the view with it — the plain read
+as ringed rather than open. The apron is now FLAT and reaches radius 1600, which
+hides the edge by distance instead: fog is ~80% opaque by 600 and ~99.8% by
+1200, and the camera's far plane is 1200, so the ground dissolves into haze long
+before it runs out.
+
+Two things worth knowing if this is ever revisited. `terrainHeightAt`
+extrapolates badly — far outside the map its smoothstep terms saturate and it
+degenerates into four flat quadrants with hard creases between them, which the
+hills used to hide. And the terrain still spans -30 to +57 at the map edge, so
+the flat plain has to be faded into over 200 units rather than butted against,
+or the join is a 44-unit cliff the whole way round. The fade runs on distance
+outside the SQUARE plane, not on radius: the plane reaches 300 along its axes
+but 424 at its corners, so a radial fade tapers at a visibly different width as
+it goes round.
+
+Gameplay is unchanged — the apron is scene-only, as the hills were. It is not a
+raycast target, grows no pockets and seeds no nav, so nothing can be built on it
+and no citizen can reach it.
+
 ### A12. You cannot tell what is carvable — SHIPPED in `3809ce2`
 
 Walls and vaults are both the new-era fabric, so both render in the same 1-bit
