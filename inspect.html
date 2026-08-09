@@ -209,16 +209,14 @@
       <label class="row">
         <input type="checkbox" id="sweep" /> sweep in and out
       </label>
-      <div id="lodbar">
-        <i id="lodfill"></i><b id="lodnear" data-l="near"></b
-        ><b id="lodfar" data-l="far"></b>
-      </div>
+      <div id="lodbar"><i id="lodfill"></i></div>
       <div id="stats"></div>
       <p class="hint">
-        The bar is the distance axis; the ticks are the real thresholds from
-        07-citizens. Sweep, and the level changes at the FAR tick going out and
-        the NEAR tick coming in — never the same place twice. That gap is the
-        dead band that stops a citizen on the boundary flickering.
+        Three levels now. The bar is the distance axis and the ticks are the
+        real boundaries from 07-citizens — a pair per changeover, because going
+        out and coming back happen at different distances. Sweep and watch: the
+        level always changes on the far tick of a pair leaving and the near tick
+        returning, and never inside the gap.
       </p>
       <div id="err"></div>
     </div>
@@ -228,7 +226,7 @@
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-      import { Po, NEAR_D2, FAR_D2 } from "./src/07-citizens.ts";
+      import { Po, pickLevel, LOD_IN2, LOD_OUT2 } from "./src/07-citizens.ts";
 
       const $ = (id) => document.getElementById(id);
       const err = $("err");
@@ -293,13 +291,13 @@
 
       // -------------------------------------------------------------- lod
       // Remembered between frames on purpose: that memory IS the dead band.
-      let lod = 1;
-      /** Exactly the expression at the tail of Citizens.update(). */
-      const pickLod = (d2) =>
-        lod ? (d2 < NEAR_D2 ? 0 : 1) : d2 > FAR_D2 ? 1 : 0;
-      const NEAR = Math.sqrt(NEAR_D2),
-        FAR = Math.sqrt(FAR_D2),
-        MAXD = 70;
+      let lod = 2;
+      // pickLevel is IMPORTED, not reimplemented — the page cannot disagree
+      // with the game about when a level changes.
+      const OUT = LOD_OUT2.map(Math.sqrt),
+        IN = LOD_IN2.map(Math.sqrt),
+        LEVEL_NAME = ["NEAR", "MID", "FAR"],
+        MAXD = 80;
 
       let current = null,
         wireOverlay = null,
@@ -309,7 +307,7 @@
       function setSubject(v, label) {
         holder.clear();
         wireOverlay = normalHelper = null;
-        const levels = [Po(v, 0), Po(v, 1)].map((g) => {
+        const levels = [Po(v, 0), Po(v, 1), Po(v, 2)].map((g) => {
           g.computeBoundingBox();
           const m = new THREE.Mesh(g, g.attributes.color ? surface : plain);
           holder.add(m);
@@ -341,7 +339,7 @@
           ghost: null,
           tris: geo.attributes.position.count / 3,
         };
-        current = { levels: [L, L], label };
+        current = { levels: [L, L, L], label };
         rebuildHelpers();
         frame();
       }
@@ -398,29 +396,51 @@
 
       function updateStats() {
         if (!current) return;
-        const near = current.levels[0],
-          far = current.levels[1],
-          act = activeLevel();
+        const act = current.levels[lod];
         const size = act.geo.boundingBox.getSize(new THREE.Vector3());
         const d = camera.position.distanceTo(controls.target);
         const vh = renderer.domElement.height / renderer.getPixelRatio();
         const px =
           (size.y / (2 * d * Math.tan((camera.fov * Math.PI) / 360))) * vh;
-        const band =
-          d < NEAR
-            ? "inside the near bound"
-            : d > FAR
-              ? "outside the far bound"
-              : "in the dead band — level holds";
+        // which band is it sitting in, and is it one where the level holds?
+        let band = "";
+        for (let i = 0; i < OUT.length; i++)
+          if (d >= IN[i] && d <= OUT[i])
+            band = `dead band ${IN[i]}-${OUT[i]}m — level holds`;
+        if (!band)
+          band =
+            d < IN[0]
+              ? "close range"
+              : d > OUT[OUT.length - 1]
+                ? "distance"
+                : "middle";
         $("stats").innerHTML =
-          `<b>${current.label}</b> — drawing <b>${lod ? "FAR" : "NEAR"}</b><br>` +
+          `<b>${current.label}</b> — drawing <b>${LEVEL_NAME[lod]}</b><br>` +
           `${d.toFixed(1)} m · ${px.toFixed(0)} px tall<br>` +
           `<span style="opacity:.65">${band}</span><br>` +
-          `near <b>${near.tris | 0}</b> tris · far <b>${far.tris | 0}</b><br>` +
-          `×132 on screen = ${((act.tris | 0) * 132).toLocaleString()}`;
+          current.levels
+            .map(
+              (L, i) =>
+                `${LEVEL_NAME[i].toLowerCase()} <b>${L.tris | 0}</b>` +
+                (i === lod ? " ←" : ""),
+            )
+            .join(" · ") +
+          `<br>×132 on screen = ${((act.tris | 0) * 132).toLocaleString()}`;
         $("lodfill").style.right = `${Math.max(0, 100 - (d / MAXD) * 100)}%`;
-        $("lodnear").style.left = `${(NEAR / MAXD) * 100}%`;
-        $("lodfar").style.left = `${(FAR / MAXD) * 100}%`;
+        // one tick per boundary edge: the pair for each is the dead band
+        const bar = $("lodbar");
+        for (const el of bar.querySelectorAll("b[data-gen]")) el.remove();
+        for (let i = 0; i < OUT.length; i++)
+          for (const [v, lab] of [
+            [IN[i], `${IN[i]}`],
+            [OUT[i], `${OUT[i]}`],
+          ]) {
+            const b = document.createElement("b");
+            b.dataset.gen = "1";
+            b.dataset.l = lab;
+            b.style.left = `${(v / MAXD) * 100}%`;
+            bar.appendChild(b);
+          }
       }
 
       // --------------------------------------------------------- subjects
@@ -511,7 +531,10 @@
 
         if (current) {
           const was = lod;
-          lod = pickLod(camera.position.distanceToSquared(controls.target));
+          lod = pickLevel(
+            lod,
+            camera.position.distanceToSquared(controls.target),
+          );
           for (let i = 0; i < current.levels.length; i++) {
             const L = current.levels[i];
             L.mesh.visible = i === lod;

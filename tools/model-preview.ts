@@ -2,7 +2,7 @@
 //
 //   node tools/model-preview.ts out.ppm            # the three citizens, 3/4 view
 //   node tools/model-preview.ts out.ppm --head     # framed on the head
-//   node tools/model-preview.ts out.ppm --far      # the distant LOD build
+//   node tools/model-preview.ts out.ppm --lod 1   # 0 near, 1 middle, 2 far
 //
 // Then: sips -s format png out.ppm --out out.png
 //
@@ -24,8 +24,15 @@ import { writeFileSync } from "node:fs";
 
 const out = process.argv[2] ?? "preview.ppm";
 const headMode = process.argv.includes("--head");
-// --far draws the distant level, for checking the two share a silhouette
-const far = process.argv.includes("--far") ? 1 : 0;
+// --lod N draws that level (0 near, 1 middle, 2 far), for checking they
+// share a silhouette. --far is kept as a shorthand for the cheapest.
+const lodArg = process.argv.indexOf("--lod");
+const far =
+  lodArg > -1
+    ? Number(process.argv[lodArg + 1])
+    : process.argv.includes("--far")
+      ? 2
+      : 0;
 
 const { Po } = await import("../src/07-citizens.ts");
 

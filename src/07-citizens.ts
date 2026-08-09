@@ -22,7 +22,7 @@ import {
 } from "three";
 import { hashString, r_, seededRng } from "./01-materials";
 import { Co } from "./06-infill";
-import { citizenHead } from "./24-citizen-head";
+import { citizenHead, citizenHeadMid } from "./24-citizen-head";
 // --- end generated imports ---
 
 /**
@@ -75,24 +75,19 @@ class Citizens {
     // from three to six, which is nothing, and an InstancedMesh that draws
     // zero instances costs nothing either — so when the whole population is
     // far away the three near meshes sit at count 0 and are skipped.
-    this.meshes = [
-      Po(0, 0),
-      Po(1, 0),
-      Po(2, 0),
-      Po(0, 1),
-      Po(1, 1),
-      Po(2, 1),
-    ].map((r) => {
-      const o = new InstancedMesh(r, s, Co);
-      return (
-        o.instanceMatrix.setUsage(Lu),
-        (o.castShadow = !0),
-        (o.count = 0),
-        (o.frustumCulled = !1),
-        n.add(o),
-        o
-      );
-    });
+    this.meshes = [0, 1, 2]
+      .flatMap((lod) => [Po(0, lod), Po(1, lod), Po(2, lod)])
+      .map((r) => {
+        const o = new InstancedMesh(r, s, Co);
+        return (
+          o.instanceMatrix.setUsage(Lu),
+          (o.castShadow = !0),
+          (o.count = 0),
+          (o.frustumCulled = !1),
+          n.add(o),
+          o
+        );
+      });
     for (let r = 0; r < Co; r++)
       this.agents.push({
         active: !1,
@@ -106,8 +101,8 @@ class Citizens {
         workNode: -1,
         offset: Math.random() * 1.6 - 0.8,
         bob: Math.random() * 7,
-        // starts far: the first frame is a wide shot, not a close-up
-        lod: 1,
+        // starts at the cheapest level: the first frame is a wide shot
+        lod: 2,
       });
     // a population, not a uniform: clothing colour and build derived
     // deterministically from the agent index — render-side only
@@ -277,7 +272,7 @@ class Citizens {
       // be reassigned to different workplaces the moment they changed level.
       o = [0, 0, 0],
       // cnt is the write cursor per mesh, which is a different thing entirely
-      cnt = [0, 0, 0, 0, 0, 0];
+      cnt = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     // ---- ambient life. PRESENTATION ONLY — nothing here touches routine,
     // pockets or growth; it only changes how a standing body is posed.
     //   - gathered agents pair off with their nearest standing neighbour
@@ -456,7 +451,7 @@ class Citizens {
           dy = this.dummy.position.y - cam.position.y,
           dz = this.dummy.position.z - cam.position.z,
           d2 = dx * dx + dy * dy + dz * dz;
-        c.lod = c.lod ? (d2 < NEAR_D2 ? 0 : 1) : d2 > FAR_D2 ? 1 : 0;
+        c.lod = pickLevel(c.lod, d2);
       } else c.lod = 0;
       const mi = c.lod * 3 + l,
         h = this.meshes[mi],
@@ -559,16 +554,38 @@ function skullCap(seg: number) {
  * matches, nothing visibly changes.
  */
 /**
- * Level thresholds, as squared distances so the frame loop never takes a root.
+ * Where the levels change over, as squared distances so the frame loop never
+ * takes a root.
  *
- * 21m in, 26m out. At a 1080-tall viewport the 260mm head is about 22px at the
- * near bound and 18px at the far one, which is where the face stops resolving.
- * The orbit camera normally sits 100-500m out, so in practice the whole
- * population is far and the near meshes draw nothing; WANDER is what brings
- * the detail in, which is the one place anybody is close enough to see it.
+ * Read as: leave level i for the cheaper one when d > OUT[i], and come back
+ * when d < IN[i]. IN below OUT on every boundary is what gives each its own
+ * dead band — one threshold per boundary would make an agent standing on it
+ * swap build every time it breathed.
+ *
+ *   near -> mid   at 23m out, 19m back
+ *   mid  -> far   at 46m out, 38m back
+ *
+ * At a 1080-tall viewport the 260mm head is about 20px at the first boundary
+ * and 10px at the second. The orbit camera normally sits 100-500m out, so in
+ * practice the whole population is at the far level; WANDER is what brings
+ * the others in.
  */
-const NEAR_D2 = 21 * 21,
-  FAR_D2 = 26 * 26;
+const LOD_OUT2 = [23 * 23, 46 * 46],
+  LOD_IN2 = [19 * 19, 38 * 38];
+
+/**
+ * The level an agent should be at, given the one it is at now.
+ *
+ * Steps one level at a time rather than jumping, so a citizen appearing from
+ * nothing at close range still resolves in a frame or two and the bands are
+ * always respected in order. Exported because inspect.html drives it too —
+ * sharing the function is stronger than copying the expression.
+ */
+function pickLevel(lod: number, d2: number) {
+  while (lod < LOD_OUT2.length && d2 > LOD_OUT2[lod]) lod++;
+  while (lod > 0 && d2 < LOD_IN2[lod - 1]) lod--;
+  return lod;
+}
 
 function farHead() {
   const g = new SphereGeometry(1, 8, 6);
@@ -589,7 +606,10 @@ function Po(i, lod = 0) {
   // At the far level the 3,108-triangle face is spent on something a few
   // pixels tall. An 8x6 ellipsoid on the same bounds is 84 triangles and,
   // past about 25 metres, indistinguishable.
-  const n = lod ? farHead() : headGeometry();
+  // 0 near, 1 middle, 2 far. The middle is the same baked head clustered
+  // down; the far one is an ellipsoid on the same bounding box.
+  const n =
+    lod === 0 ? headGeometry() : lod === 1 ? citizenHeadMid() : farHead();
   const s = new CylinderGeometry(0.19, 0.14, 0.3, 7);
   if ((s.translate(0, 1.25, 0), t.push(e, s, n), i === 1)) {
     const r = new CylinderGeometry(0.025, 0.03, 1.8, 5);
@@ -619,7 +639,7 @@ function Po(i, lod = 0) {
       r.rotateX(-0.3),
       r.translate(0, 1.6, -0.025),
       t.push(r));
-    t.push(skullCap(lod ? 10 : 26));
+    t.push(skullCap(lod === 0 ? 26 : lod === 1 ? 16 : 10));
     // the cone and the cap are ONE garment, so they share a tint — and the
     // tint is what makes them read as worn rather than as more skull. Left at
     // 1 the cap is the same tone as the head it covers and simply looks like
@@ -821,9 +841,10 @@ const Ch = "capriccio-save-v1";
 // --- generated exports ---
 export {
   Ch,
-  FAR_D2,
-  NEAR_D2,
+  LOD_IN2,
+  LOD_OUT2,
   headGeometry,
+  pickLevel,
   Citizens,
   Fl,
   Po,

@@ -154,6 +154,69 @@ console.log(
   `  placed: x ${lo[0].toFixed(3)}..${hi[0].toFixed(3)}  y ${lo[1].toFixed(3)}..${hi[1].toFixed(3)}  z ${lo[2].toFixed(3)}..${hi[2].toFixed(3)}`,
 );
 
+// ---- the middle level ---------------------------------------------------
+// Grid clustering, not three's SimplifyModifier. That was the obvious tool and
+// it does not work on this mesh: asked for 1600 triangles it returned 110, and
+// below that it bailed with "No next vertex" and produced nothing at all —
+// edge collapse cascades here, and the trimmed head has an open boundary at
+// the neck for it to choke on.
+//
+// Clustering cannot degenerate. Snap every vertex to a lattice cell, average
+// the ones that land together, re-index the triangles onto those
+// representatives and drop any that collapsed to a line. The result is chunky
+// rather than elegantly optimised, which at the ten to twenty pixels this
+// level is drawn at is a distinction without a difference. It is also
+// deterministic, so the bake is reproducible.
+function cluster(pos: number[], idx: number[], cells: number) {
+  let lo = [1e9, 1e9, 1e9],
+    hi = [-1e9, -1e9, -1e9];
+  for (let i = 0; i < pos.length; i += 3)
+    for (let k = 0; k < 3; k++) {
+      lo[k] = Math.min(lo[k], pos[i + k]);
+      hi[k] = Math.max(hi[k], pos[i + k]);
+    }
+  const step = Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) / cells;
+  const bucket = new Map<
+    string,
+    { n: number; x: number; y: number; z: number; i: number }
+  >();
+  const cellOf = new Int32Array(pos.length / 3);
+  for (let v = 0; v < pos.length / 3; v++) {
+    const key = [0, 1, 2]
+      .map((k) => Math.floor((pos[v * 3 + k] - lo[k]) / step))
+      .join(",");
+    let b = bucket.get(key);
+    if (!b)
+      ((b = { n: 0, x: 0, y: 0, z: 0, i: bucket.size }), bucket.set(key, b));
+    (b.n++,
+      (b.x += pos[v * 3]),
+      (b.y += pos[v * 3 + 1]),
+      (b.z += pos[v * 3 + 2]));
+    cellOf[v] = b.i;
+  }
+  const rep: number[] = [];
+  for (const b of bucket.values()) rep[b.i * 3] = b.x / b.n;
+  for (const b of bucket.values()) rep[b.i * 3 + 1] = b.y / b.n;
+  for (const b of bucket.values()) rep[b.i * 3 + 2] = b.z / b.n;
+  const out: number[] = [];
+  for (let t = 0; t < idx.length; t += 3) {
+    const a = cellOf[idx[t]],
+      b2 = cellOf[idx[t + 1]],
+      c2 = cellOf[idx[t + 2]];
+    // a triangle whose corners share a cell has collapsed to a point or a
+    // line and contributes nothing but a degenerate face
+    if (a === b2 || b2 === c2 || a === c2) continue;
+    out.push(a, b2, c2);
+  }
+  return { pos: rep, idx: out };
+}
+// 15 cells across the long axis lands near 700 triangles on this head; the
+// count is emitted below so a change here is visible rather than assumed.
+const mid = cluster(pos, idx, 15);
+console.log(
+  `  mid level: ${mid.pos.length / 3} verts, ${mid.idx.length / 3} tris`,
+);
+
 // ---- quantise and emit --------------------------------------------------
 const QLO = [lo[0], lo[1], lo[2]];
 const QSPAN = [hi[0] - lo[0] || 1, hi[1] - lo[1] || 1, hi[2] - lo[2] || 1];
@@ -164,6 +227,15 @@ for (let i = 0; i < pos.length; i += 3)
       ((pos[i + kk] - QLO[kk]) / QSPAN[kk]) * 65535 - 32768,
     );
 const qi = new Uint16Array(idx);
+// the mid level shares the near level's bounding box so both decode with the
+// same LO/SPAN — decimation only removes vertices, it never leaves the hull
+const qpm = new Int16Array(mid.pos.length);
+for (let i = 0; i < mid.pos.length; i += 3)
+  for (let kk = 0; kk < 3; kk++)
+    qpm[i + kk] = Math.round(
+      ((mid.pos[i + kk] - QLO[kk]) / QSPAN[kk]) * 65535 - 32768,
+    );
+const qim = new Uint16Array(mid.idx);
 const b64 = (t: any) =>
   Buffer.from(t.buffer, t.byteOffset, t.byteLength).toString("base64");
 
@@ -194,11 +266,15 @@ import { BufferAttribute, BufferGeometry } from "three";
 
 const TRIS = ${idx.length / 3};
 const VERTS = ${pos.length / 3};
+const MID_TRIS = ${mid.idx.length / 3};
+const MID_VERTS = ${mid.pos.length / 3};
 const LO = [${QLO.map((v) => v.toFixed(6)).join(", ")}];
 const SPAN = [${QSPAN.map((v) => v.toFixed(6)).join(", ")}];
 
 const POS = "${b64(qp)}";
 const IDX = "${b64(qi)}";
+const MID_POS = "${b64(qpm)}";
+const MID_IDX = "${b64(qim)}";
 
 function bytes(s: string) {
   const bin = atob(s),
@@ -207,23 +283,29 @@ function bytes(s: string) {
   return out;
 }
 
-/** The head, as a BufferGeometry positioned in citizen-local space. */
-export function citizenHead() {
-  const qp = new Int16Array(bytes(POS).buffer);
-  const p = new Float32Array(VERTS * 3);
+function build(pos: string, idx: string, verts: number) {
+  const q = new Int16Array(bytes(pos).buffer);
+  const p = new Float32Array(verts * 3);
   for (let i = 0; i < p.length; i += 3)
     for (let k = 0; k < 3; k++)
-      p[i + k] = ((qp[i + k] + 32768) / 65535) * SPAN[k] + LO[k];
+      p[i + k] = ((q[i + k] + 32768) / 65535) * SPAN[k] + LO[k];
   const g = new BufferGeometry();
   return (
     g.setAttribute("position", new BufferAttribute(p, 3)),
-    g.setIndex(new BufferAttribute(new Uint16Array(bytes(IDX).buffer), 1)),
+    g.setIndex(new BufferAttribute(new Uint16Array(bytes(idx).buffer), 1)),
     g.computeVertexNormals(),
     g
   );
 }
 
+/** The head at full detail, in citizen-local space. */
+export const citizenHead = () => build(POS, IDX, VERTS);
+
+/** The same head decimated — for the middle distance. Same bounding box. */
+export const citizenHeadMid = () => build(MID_POS, MID_IDX, MID_VERTS);
+
 export const CITIZEN_HEAD_TRIS = TRIS;
+export const CITIZEN_HEAD_MID_TRIS = MID_TRIS;
 `;
 writeFileSync(OUT, out);
 console.log(`  wrote ${OUT}  (${(out.length / 1024).toFixed(0)} KB of source)`);
