@@ -207,7 +207,7 @@ Leave it out of the Chronicle. It may well be right for something else later.
 ## Still frozen
 
 `pickPocket`, the five stat formulas, `applyAction` itself, the pocket model,
-catalogue `key` values, structure envelopes. `public/` is never edited — it is
+catalogue `key` values, structure envelopes. `legacy/` is never edited — it is
 the original artifact and the reference everything is verified against. Never
 run `split_bundle.py --write`; never delete `src/.hand-edited`. No shipped
 binary assets and no runtime fetches.

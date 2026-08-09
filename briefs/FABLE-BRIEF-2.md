@@ -22,7 +22,7 @@ Everything in `FABLE-BRIEF.md` still applies. The important ones:
 - **No binary assets.** No images, video, audio files, webfonts, runtime
   fetches. Everything procedural. Currently 821KB — **stop and report if you
   pass 2.0MB.**
-- **`public/` is never edited.**
+- **`legacy/` is never edited.**
 - **Never run `tools/split_bundle.py --write`.** `src/` is hand-edited now; a
   guard will refuse, and `src/DO-NOT-REGENERATE.md` explains why. Do not remove
   `src/.hand-edited`.

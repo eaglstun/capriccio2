@@ -93,7 +93,7 @@ Scene-only geometry, merged, **never in `structGroup`**. Fixed seed.
 ## Frozen — unchanged
 
 `pickPocket`, the five stat formulas, `applyAction`, the pocket model, the save
-format, catalogue `key` values, structure envelopes. `public/` never edited.
+format, catalogue `key` values, structure envelopes. `legacy/` never edited.
 Never run `split_bundle.py --write`; never delete `src/.hand-edited`. No shipped
 binary assets or runtime fetches — runtime canvases are fine. Keep the triplanar
 hatching and the dither/engraving style split. No hand-renaming.

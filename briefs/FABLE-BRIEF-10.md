@@ -152,7 +152,7 @@ Existing catalogue `key` values, and the envelopes of existing types.
 deterministic, and every builder keeps seeding its PRNG from the action id —
 that is what makes a replayed city identical.
 
-`public/` is never edited. Never run `split_bundle.py --write`; never delete
+`legacy/` is never edited. Never run `split_bundle.py --write`; never delete
 `src/.hand-edited`. No shipped binary assets and no runtime fetches.
 
 New geometry must be **merged** — the draw-call budget is real, and

@@ -89,7 +89,7 @@ look like a population, not a uniform.
 
 - `pickPocket` weights, the five stat formulas, `applyAction`, the pocket model,
   the save format, catalogue `key` values. Existing saves must load.
-- `public/` is never edited. Never run `split_bundle.py --write`; never delete
+- `legacy/` is never edited. Never run `split_bundle.py --write`; never delete
   `src/.hand-edited`.
 - No shipped binary assets, no runtime fetches. Procedural only.
   (Runtime-generated canvases are procedural. Downloaded images are not.)

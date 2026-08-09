@@ -37,7 +37,7 @@ same.
 ### Repository layout
 
 - `src/` — 18 ES modules, the game's source. **Edit here.**
-- `public/` — the original production build. **Reference only, never edit.**
+- `legacy/` — the original production build. **Reference only, never edit.**
 - `dist/` — build output from `yarn build`.
 - Read `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/SIMULATION.md`,
   `src/README.md` first. They are accurate and were verified against the running
