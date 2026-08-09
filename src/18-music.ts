@@ -853,7 +853,7 @@ class Score {
   out: any;
   t = 0; // seconds since the score began — drives the arrangement
   /** Which section of the form is playing: verse, chorus or bridge. Read by
-   * the /listen page; the game does not use it. */
+   * the /listen.html page; the game does not use it. */
   section = "verse";
   track = 1; // which of the three tracks is playing
   fade = 1; // 1 = full; eased to 0 and back across a track change

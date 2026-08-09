@@ -280,6 +280,15 @@ class Hud {
           <a href="/how-to-play.html" style="color:inherit; text-decoration:none">how to play</a>
           <span style="opacity:0.5; margin:0 8px">·</span>
           <a href="/about.html" style="color:inherit; text-decoration:none">about this city</a>
+          <span style="opacity:0.5; margin:0 8px">·</span>
+          <a href="/listen.html" style="color:inherit; text-decoration:none">listen</a>
+        </div>
+        <!-- The version, straight from package.json via Vite's define — see
+             vite.config.js. It doubles as the way into the changelog, which
+             is why it is a link and not just a caption. Quieter than the row
+             above it: this is a footnote, not a fourth destination. -->
+        <div style="margin-top:11px; font-size:9px; letter-spacing:0.22em; opacity:0.3">
+          <a href="/changelog.html" style="color:inherit; text-decoration:none">v${__APP_VERSION__}</a>
         </div>
       </div>
     `;

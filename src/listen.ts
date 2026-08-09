@@ -1,7 +1,7 @@
-// /listen — the score and the soundscape, with no city under them.
+// /listen.html — the score and the soundscape, with no city under them.
 //
 // NEW; not part of the reconstructed bundle, and not imported by the game.
-// This is a second Vite entry (listen/index.html) that pulls in exactly two
+// This is a second Vite entry (listen.html) that pulls in exactly two
 // of the game's modules — the Strudel score (18-music) and the Web Audio
 // soundscape (15-audio) — and drives them with a simulation state assembled
 // by hand from sliders instead of by the world.
