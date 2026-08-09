@@ -24,7 +24,9 @@
 //
 //   BUILD / SECTION / PLATE
 //     left stick    look: left/right turn ON THE SPOT about the eye,
-//                   up/down pitch about the target. See yawInPlace().
+//                   up/down pitch about the target. The turn-in-place is
+//                   17-bootstrap's — it patches `_rotateLeft` so the mouse
+//                   and touch turn the same way this stick does.
 //     right stick   move the aim point, once a tool is chosen — otherwise
 //                   walks the camera over the city: left/right strafe,
 //                   up/down forward and back over the ground. How far it
@@ -295,15 +297,22 @@ export class GamepadInput {
     // The two axes turn about DIFFERENT pivots, which is deliberate.
     //
     // Left and right yaw about the CAMERA — you turn on the spot, the way you
-    // would standing still and looking around. Orbiting the target instead
-    // swings the eye through a long arc round a pivot somewhere out in the
-    // city, which is disorienting when what you wanted was to look left.
+    // would standing still and looking around. That is not the pad's doing:
+    // 17-bootstrap replaces `_rotateLeft` on the controls so the mouse, touch
+    // and this stick all turn the same way. Calling it here is what keeps the
+    // pad in step with them rather than owning a second implementation.
+    //
+    // The SIGN is the pad's own business, and it is the opposite of what the
+    // orbit wanted. Swinging the eye rightward around the city and turning
+    // your head rightward on the spot are different motions; the stick means
+    // the second one, so pushing right turns the view right.
     //
     // Up and down still pitch about the target, because tilting about the
     // camera would aim you at the sky or into the ground while the city slid
     // out of frame. Pitch wants something to pivot around; yaw does not.
-    if (this.canOrbit && ly) c._rotateUp(-ly * 1.5 * t);
-    if (lx) this.yawInPlace(c, lx * 2.2 * t);
+    if (this.canOrbit && (lx || ly)) {
+      (c._rotateLeft(lx * 2.2 * t), c._rotateUp(-ly * 1.5 * t));
+    }
 
     // Triggers zoom, always.
     const zoom = trigger(pad, BTN.R2) - trigger(pad, BTN.L2);
@@ -369,38 +378,6 @@ export class GamepadInput {
     (down[BTN.Y] && this.cycleTool(), down[BTN.X] && this.cycleVariant());
     ((down[BTN.L1] || down[BTN.LEFT]) && this.cycleMode(-1),
       (down[BTN.R1] || down[BTN.RIGHT]) && this.cycleMode(1));
-  }
-
-  /**
-   * Yaw about the camera instead of about the target: swing the look-at point
-   * around the eye, rather than the eye around the look-at point.
-   *
-   * This works BECAUSE OrbitControls keeps no persistent idea of where the
-   * camera is pointing. Every `update()` opens by recomputing its spherical
-   * coordinates from `position - target` and closes by writing
-   * `position = target + offset`. Rotating the target about the camera leaves
-   * `|position - target|` unchanged and turns its direction by the same angle,
-   * so the offset comes back rotated, the radius is untouched, and the final
-   * assignment puts the camera down exactly where it already was. Nothing has
-   * to be undone afterwards and nothing fights the damping.
-   *
-   * Undamped, unlike `_rotateLeft` — the turn starts and stops with the stick.
-   * That matches the WANDER look, which writes yaw directly for the same
-   * reason: a view that keeps drifting after your thumb comes off overshoots
-   * whatever you were turning to face.
-   *
-   * Horizontal only. Rotating the full 3D offset about world Y is what keeps a
-   * pitched camera pitched — the y component of the offset is never touched.
-   */
-  private yawInPlace(c: any, ang: number) {
-    const p = c.object?.position ?? c.object;
-    if (!p) return;
-    const dx = c.target.x - p.x,
-      dz = c.target.z - p.z,
-      s = Math.sin(ang),
-      k = Math.cos(ang);
-    ((c.target.x = p.x + dx * k - dz * s),
-      (c.target.z = p.z + dx * s + dz * k));
   }
 
   private drawCursor() {

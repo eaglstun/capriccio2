@@ -492,15 +492,34 @@ clean off the playable terrain and end up over empty apron with the city behind
 you. It is applied after `OrbitControls.update()` rather than inside the pad, so
 it holds for mouse panning too.
 
-**The left stick turns on the spot.** Left and right yaw about the CAMERA, not
-about the target: orbiting a pivot out in the city swings the eye through a long
-arc when all you wanted was to look left. `yawInPlace` rotates the look-at point
-around the eye instead, which works only because `OrbitControls.update()` keeps
-no persistent heading — it recomputes its spherical coordinates from
-`position - target` every frame and ends with `position = target + offset`, so a
-rotated target puts the camera back exactly where it was. Up and down still
-pitch about the target, because tilting about the eye aims you at the sky while
-the city slides out of frame.
+**Yaw turns on the spot — mouse, touch and pad alike.** Left and right rotate
+about the CAMERA, not about the target: orbiting a pivot out in the city swings
+the eye through a long arc when all you wanted was to look left.
+
+This is done once, in `17-bootstrap`, by replacing `_rotateLeft` on the controls
+instance rather than per input device. Every device funnels through that one
+method — the mouse from `_handleMouseMoveRotate`, touch from
+`_handleTouchMoveRotate`, the pad's left stick — so patching it is what makes
+them agree. It works only because `OrbitControls.update()` keeps no persistent
+heading: it recomputes its spherical coordinates from `position - target` every
+frame and ends with `position = target + offset`, so a rotated target puts the
+camera back exactly where it was.
+
+The angle convention is deliberately unchanged, so a given drag turns the view
+exactly the way it always did and only the pivot moves. That was checked against
+the stock spherical maths across several poses and angles: the headings agree to
+within 1e-13 of a degree and the eye never moves. The gamepad passes the
+OPPOSITE sign, because swinging the eye rightward around the city and turning
+your head rightward on the spot are different motions and the stick means the
+second.
+
+Up and down still pitch about the target, because tilting about the eye aims you
+at the sky while the city slides out of frame.
+
+One caller is not safe: `update()` itself calls `_rotateLeft` for `autoRotate`,
+after it has already read the spherical coordinates, so the rotation would move
+the eye instead of the view. `autoRotate` is false and unused here; turning it
+on means revisiting the patch.
 
 That is also why the bound above is on the eye and not, as it first was, on the
 look-at point. Turning on the spot sweeps the target round a circle of radius

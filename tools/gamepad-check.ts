@@ -53,8 +53,19 @@ function makeControls() {
     _theta: 0,
     _phi: 0,
     _scaleAcc: 1,
+    // Mirrors the patch 17-bootstrap installs on the real controls: yaw turns
+    // the look-at point around the EYE and leaves the eye alone. The pad only
+    // calls this method — the arithmetic itself is the bootstrap's, and this
+    // is the fake standing in for it. `_theta` is kept purely so a test can
+    // assert the yaw did NOT go through the stock orbit path.
     _rotateLeft(a: number) {
-      this._theta -= a;
+      const p = this.object.position,
+        dx = this.target.x - p.x,
+        dz = this.target.z - p.z,
+        s = Math.sin(a),
+        k = Math.cos(a);
+      ((this.target.x = p.x + dx * k - dz * s),
+        (this.target.z = p.z + dx * s + dz * k));
     },
     _rotateUp(a: number) {
       this._phi -= a;
@@ -172,8 +183,8 @@ function check(name: string, ok: boolean, detail = "") {
   for (let i = 0; i < 10; i++) g.update(1 / 60);
   check(
     "dormant ignores a pad that never fired gamepadconnected",
-    controls._theta === 0 && calls.length === 0,
-    `theta=${controls._theta} calls=${calls.length}`,
+    controls.target.x === 0 && controls.target.z === 0 && calls.length === 0,
+    `target x=${controls.target.x} z=${controls.target.z} calls=${calls.length}`,
   );
 }
 
@@ -264,6 +275,17 @@ const drive = (axes: number[], frames = 60, tool: string | null = null) => {
     "up and down still pitch about the target",
     controls._phi !== 0 && controls.target.x === 0,
     `phi=${controls._phi.toFixed(4)}`,
+  );
+}
+
+{
+  // the yaw must go through _rotateLeft — that is the seam the mouse and
+  // touch share, and bypassing it would leave them orbiting a distant pivot
+  const { controls } = drive([1, 0, 0, 0], 30);
+  check(
+    "yaw goes through _rotateLeft, the seam mouse and touch also use",
+    controls._theta === 0 && controls.target.x !== 0,
+    `stock orbit theta untouched (${controls._theta}), view turned`,
   );
 }
 

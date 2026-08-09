@@ -67,6 +67,60 @@ Te.minDistance = 5;
 Te.maxDistance = 520;
 Te.update();
 /**
+ * TURN ON THE SPOT, for every device at once.
+ *
+ * OrbitControls yaws by swinging the EYE around the look-at point, which drags
+ * the view through a long arc around a pivot somewhere out in the city when
+ * all you wanted was to look left. This replaces the yaw with the opposite
+ * motion: the look-at point swings around the eye, and the eye does not move.
+ *
+ * Patched onto the instance rather than reimplemented per input, because every
+ * device funnels through this one method — the mouse from
+ * `_handleMouseMoveRotate`, touch from `_handleTouchMoveRotate`, and the pad's
+ * left stick. Doing it here is what makes them agree; doing it in the gamepad
+ * module would have left the mouse orbiting a distant point.
+ *
+ * The ANGLE CONVENTION IS UNCHANGED, so a given drag turns the view exactly
+ * the way it did before — only the pivot moves. `_rotateLeft(a)` used to mean
+ * "subtract a from the azimuth", which rotates the offset, and therefore the
+ * heading, by -a about Y. Rotating `target - camera` by -a does the same thing
+ * to the heading, which is what the arithmetic below is.
+ *
+ * It works at all only because `update()` keeps no persistent heading: it
+ * opens by recomputing its spherical coordinates from `position - target` and
+ * closes with `position = target + offset`. Rotating the target leaves
+ * `|position - target|` alone and turns its direction, so the offset comes
+ * back rotated and the camera is set down exactly where it already was.
+ *
+ * Undamped, unlike the original — the turn stops when the input stops. That is
+ * the right feel for a look control and matches WANDER, which writes its yaw
+ * directly for the same reason.
+ *
+ * ONE CALLER IS NOT SAFE HERE: `update()` itself calls `_rotateLeft` for
+ * `autoRotate`, AFTER it has already read the spherical coordinates — so the
+ * rotation would move the eye rather than the view. `autoRotate` is false and
+ * unused in this project. Turning it on means revisiting this.
+ */
+{
+  const spin = (Te as any)._rotateLeft;
+  if (typeof spin !== "function")
+    console.warn(
+      "[camera] OrbitControls._rotateLeft is gone; yaw still orbits the target.",
+    );
+  else
+    (Te as any)._rotateLeft = (angle: number) => {
+      const p = ie.position,
+        g = Te.target,
+        dx = g.x - p.x,
+        dz = g.z - p.z,
+        s = Math.sin(angle),
+        k = Math.cos(angle);
+      // horizontal only: the y components are untouched, which is what keeps
+      // a pitched camera at its pitch through a full turn
+      ((g.x = p.x + dx * k - dz * s), (g.z = p.z + dx * s + dz * k));
+    };
+}
+/**
  * How far the EYE may travel from the middle of the city, horizontally.
  *
  * This used to be `maxTargetRadius = 380`, capping the look-at point instead.
