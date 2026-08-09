@@ -11,12 +11,12 @@ between is documented.
 
 ## The original
 
-**CAPRICCIO was made by [Ethan Mollick](https://www.linkedin.com/in/emollick/)
-with Fable**, one of a series of city builders generated in the manner of
-particular artists. That one took Giovanni Battista Piranesi, the
-eighteenth-century engraver whose imaginary Roman ruins were always grander than
-anything that stood. A _capriccio_ is a painting of buildings that never shared
-a horizon.
+**CAPRICCIO was made by
+[Ethan Mollick](https://en.wikipedia.org/wiki/Ethan_Mollick) with Fable**, one
+of a series of city builders generated in the manner of particular artists. That
+one took Giovanni Battista Piranesi, the eighteenth-century engraver whose
+imaginary Roman ruins were always grander than anything that stood. A
+_capriccio_ is a painting of buildings that never shared a horizon.
 
 It is a genuinely good game. You raise architecture — piers, spans, stairs,
 vaults — and never place a house. The architecture emits **pockets**: habitable
@@ -59,6 +59,21 @@ original running on a separate origin: 24 structures, 48 pockets, 1331 nav
 nodes, 46 population, identical pocket-kind distribution, identical draw calls
 and triangle count.
 
+That was the reconstruction, and it is a fixed historical number. **What ships
+now is a different, larger thing** — the reskin, the score, the tutorial, the
+Chronicle and the sculpted citizens all came after:
+
+| what                      |          raw |    gzipped |
+| ------------------------- | -----------: | ---------: |
+| `main` bundle             |     972.5 kB |   291.7 kB |
+| score (`18-music`)        |     173.5 kB |    62.8 kB |
+| `listen` entry            |       3.6 kB |     1.9 kB |
+| five HTML pages           |      65.1 kB |    20.9 kB |
+| **everything in `dist/`** | **1,215 kB** | **377 kB** |
+
+Still no images, no audio, no fonts and no model files — the growth is all code,
+and the score is a fifth of it.
+
 ## What is frozen, and stays frozen
 
 Every visual pass is checked against these. If any moves, the change is
@@ -71,7 +86,7 @@ reverted:
 | structure envelopes          | pockets derive from action geometry                   |
 | the save format              | an event-sourced action log; old saves must load      |
 | catalogue `key` values       | labels and hints are free, keys are not               |
-| `public/`                    | the original build, kept pristine as reference        |
+| `legacy/`                    | the original build, kept pristine as reference        |
 
 ---
 
@@ -79,7 +94,7 @@ reverted:
 
 | path                   |                                                                  |
 | ---------------------- | ---------------------------------------------------------------- |
-| `public/`              | the original production build, untouched                         |
+| `legacy/`              | the original production build, untouched                         |
 | `src/`                 | 30 modules — the split, plus score, tutorial, Chronicle, gamepad |
 | `tools/`               | the splitter, the scope grapher, runtime probes                  |
 | `deploy/`              | the droplet deploy scripts                                       |
@@ -103,7 +118,7 @@ yarn install
 yarn dev        # or: yarn build && serve dist/
 ```
 
-To play the original for comparison, serve `public/` as its own web root. **Note
+To play the original for comparison, serve `legacy/` as its own web root. **Note
 that `?fresh` deletes the save** — it is a real feature of the game, not a dev
 flag, and the saves are per-origin.
 
@@ -135,15 +150,18 @@ Some of what shifted, none of which announces itself:
   leaves.
 
 The world is dithered as homage. **The plates are the real thing** — true
-Atkinson error diffusion, six neighbours at one eighth each and two eighths
-discarded, exactly as it ran on a Macintosh in 1984.
+[Atkinson error diffusion](https://en.wikipedia.org/wiki/Atkinson_dithering),
+six neighbours at one eighth each and two eighths discarded, exactly as it ran
+on a Macintosh in 1984.
 
 ---
 
 ## Credits
 
-Original CAPRICCIO by **Ethan Mollick**, generated with **Fable**. Score written
-in [Strudel](https://strudel.cc), the JavaScript port of Alex McLean's
-TidalCycles. Rendering by three.js r180.
+Original CAPRICCIO by
+**[Ethan Mollick](https://en.wikipedia.org/wiki/Ethan_Mollick)**, generated with
+**Fable**. Score written in [Strudel](https://strudel.cc), the JavaScript port
+of Alex McLean's [TidalCycles](https://tidalcycles.org). Rendering by
+[three.js](https://threejs.org) r180.
 
 This version is built on top of that one: same rules, later century.

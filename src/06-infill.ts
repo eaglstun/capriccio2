@@ -1,6 +1,6 @@
 // Infill: vernacular buildings and the pickPocket growth engine
 //
-// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// Extracted from legacy/assets/index-DCXbw2vV.js, bundle lines
 // 28218–28493. Statements are verbatim; identifiers are
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write

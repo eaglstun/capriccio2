@@ -34,7 +34,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from jsmask import mask  # noqa: E402
 
 SRC = pathlib.Path("src")
-BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
+BUNDLE = pathlib.Path("legacy/assets/index-DCXbw2vV.js")
 SEAM_LINE = 25400          # vendor is lines 1..SEAM_LINE
 IDENT = re.compile(r"(?<![\w$])([A-Za-z_$][\w$]*)")
 

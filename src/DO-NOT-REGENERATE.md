@@ -1,6 +1,6 @@
 # STOP — do not run `split_bundle.py --write` on this branch
 
-`src/` was originally _generated_ from `public/assets/index-DCXbw2vV.js` by
+`src/` was originally _generated_ from `legacy/assets/index-DCXbw2vV.js` by
 `tools/split_bundle.py`. It is no longer generated, for three reasons now:
 
 1. Files `00`–`17` were **hand-edited** for the vaporwave reskin.

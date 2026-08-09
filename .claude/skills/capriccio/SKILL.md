@@ -46,7 +46,7 @@ survive perfectly intact.
 cd public && python3 -m http.server 8123 --bind 127.0.0.1
 ```
 
-Must be served from `public/` as web root — the bundle requests `/assets/...`
+Must be served from `legacy/` as web root — the bundle requests `/assets/...`
 absolutely. The `type="module"` tag means it is **refused if the MIME type is
 wrong**; it must come back `text/javascript`.
 
@@ -95,6 +95,6 @@ separately, and only player actions are persisted and replayed.
 
 ## Don't
 
-Don't edit `public/assets/index-DCXbw2vV.js`. It is a build artifact and the
+Don't edit `legacy/assets/index-DCXbw2vV.js`. It is a build artifact and the
 only copy of the game; there is no source to regenerate it from. Write findings
 to separate files.

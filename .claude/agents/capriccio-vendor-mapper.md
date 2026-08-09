@@ -10,13 +10,13 @@ description: >-
   property names set, methods called, three.js source cross-reference — and
   reports a confidence level per symbol. It NEVER guesses silently: an
   unidentified symbol is reported as unidentified. It writes findings to
-  `docs/VENDOR-MAP.md`; it does not edit `src/` or `public/`.
+  `docs/VENDOR-MAP.md`; it does not edit `src/` or `legacy/`.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch, Write, Edit
 ---
 
 # CAPRICCIO vendor symbol mapper
 
-The app section of `public/assets/index-DCXbw2vV.js` references **64 distinct
+The app section of `legacy/assets/index-DCXbw2vV.js` references **64 distinct
 symbols** declared in the three.js half (bundle lines 1–25400), over 278
 references. Your job is to name them.
 
@@ -69,7 +69,7 @@ track down.
 
 ## Do not
 
-- Do not edit `public/assets/index-DCXbw2vV.js`. It is the only runnable copy of
+- Do not edit `legacy/assets/index-DCXbw2vV.js`. It is the only runnable copy of
   the game and there is no source to regenerate it from.
 - Do not rewrite `src/` — that is `capriccio-renamer`'s job.
 - Do not add a `package.json` or install anything unless explicitly asked.

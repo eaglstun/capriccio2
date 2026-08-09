@@ -12,9 +12,12 @@ const { version } = JSON.parse(readFileSync("./package.json", "utf8"));
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
-  // public/ holds the ORIGINAL production build — the reference copy of the
-  // game. Vite would otherwise copy all 925KB of it into dist/ as a static
-  // asset, which would be both wasteful and deeply confusing.
+  // The original build lives in legacy/, and the rename is itself most of the
+  // protection: Vite only auto-copies a directory literally called `public`,
+  // which is what it used to be — all 925KB of the reference artifact would
+  // have gone into dist/ as a static asset, wasteful and deeply confusing.
+  // This stays off as well, so nothing gets copied even if a public/ ever
+  // reappears.
   publicDir: false,
   build: {
     // five pages: the game, about/colophon, how to play, the changelog,

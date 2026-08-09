@@ -1,7 +1,8 @@
-# public/ is the pristine downloaded production build — the reference the whole
+# legacy/ is the pristine downloaded production build — the reference the whole
 # reconstruction is verified against. It must stay byte-for-byte as deployed.
-# Never format it.
-public/
+# Never format it. (It was public/ until the rename; Vite auto-copies a
+# directory of that name into dist/, which it is not and must not be.)
+legacy/
 
 # Build output and vendored tooling.
 dist/

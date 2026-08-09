@@ -13,7 +13,7 @@ This directory holds a **downloaded production build**. There is no source.
 ## Layout
 
 ```text
-public/                   the ORIGINAL downloaded build — never edit
+legacy/                   the ORIGINAL downloaded build — never edit
   index.html
   assets/index-DCXbw2vV.js
 src/                      the reconstruction: 30 modules — the split, plus the
@@ -35,9 +35,9 @@ listen.html               the score with no city under it
 inspect.html              DEV ONLY — a model viewer, never built (see below)
 ```
 
-It started as just the two files under `public/`. It is now a real project:
+It started as just the two files under `legacy/`. It is now a real project:
 `package.json`, a Vite build, a git repo, and a deployed site at
-**fable-mvp.gg**. `public/` remains the pristine original and the reference
+**fable-mvp.gg**. `legacy/` remains the pristine original and the reference
 against which everything is verified.
 
 ## Critical facts about the bundle
@@ -69,9 +69,9 @@ size publicly; use the local line numbers only for navigation.
 
 | port | serves    | what it is                                                          |
 | ---- | --------- | ------------------------------------------------------------------- |
-| 8123 | `public/` | **the original game.** Pristine reference build                     |
+| 8123 | `legacy/` | **the original game.** Pristine reference build                     |
 | 8124 | `dist/`   | the current build — **changes whenever anything runs `yarn build`** |
-| 8125 | `public/` | original again, separate origin for fresh-vs-fresh comparison       |
+| 8125 | `legacy/` | original again, separate origin for fresh-vs-fresh comparison       |
 
 **`?fresh` deletes the save on load.** It is a real feature of the game
 (`localStorage.removeItem` at bundle line 30736), not a dev flag. Saves are
@@ -103,7 +103,7 @@ Plug'n'Play, because Vite/Rollup resolve more predictably against a real
 ## Running it
 
 The bundle requests `/assets/...` by absolute path, so it must be served from
-`public/` as the web root. Static server, no build step:
+`legacy/` as the web root. Static server, no build step:
 
 ```sh
 cd public && python3 -m http.server 8123 --bind 127.0.0.1
@@ -152,7 +152,7 @@ pick up three.js's types, not annotate 10,000 lines of extracted bundle code.
 Tightening those flags module by module is phase 2. Do not add annotations to
 satisfy a flag that is still off.
 
-`public/` remains the pristine reference — the artifact as Mollick deployed it,
+`legacy/` remains the pristine reference — the artifact as Mollick deployed it,
 and still the thing to verify against. See `src/README.md`.
 
 ## Two rules that keep coming up

@@ -131,7 +131,7 @@ could not, and what remains unverified.
 
 ## Do not
 
-- Do not edit `public/` — the original build, and the only pristine copy.
+- Do not edit `legacy/` — the original build, and the only pristine copy.
 - Do not run `tools/split_bundle.py --write` or delete `src/.hand-edited`;
   `src/` is hand-edited and regenerating would destroy it silently.
 - Do not add asset files of any kind.

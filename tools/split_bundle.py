@@ -31,7 +31,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from jsmask import mask  # noqa: E402
 
-BUNDLE = pathlib.Path("public/assets/index-DCXbw2vV.js")
+BUNDLE = pathlib.Path("legacy/assets/index-DCXbw2vV.js")
 OUT = pathlib.Path("src")
 RENAMES = OUT / "renames.json"
 VENDOR_IMPORTS = OUT / "vendor-imports.json"
@@ -519,7 +519,7 @@ def main():
         header = (
             f"// {SECTION_TITLES.get(p['kind'], p['kind'])}\n"
             f"//\n"
-            f"// Extracted from public/assets/index-DCXbw2vV.js, bundle lines\n"
+            f"// Extracted from legacy/assets/index-DCXbw2vV.js, bundle lines\n"
             f"// {p['start_line']}–{p['start_line'] + p['body'].count(chr(10)) - 1}. "
             f"Statements are verbatim; identifiers are\n"
             f"// renamed via src/renames.json. Imports and exports are generated.\n"

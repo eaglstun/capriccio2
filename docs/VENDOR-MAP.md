@@ -1,6 +1,6 @@
 # Vendor symbol map — three.js r180
 
-What the mangled vendor identifiers in `public/assets/index-DCXbw2vV.js`
+What the mangled vendor identifiers in `legacy/assets/index-DCXbw2vV.js`
 actually are. Vendor occupies bundle lines 1–25400 (three.js r180 +
 `OrbitControls`); the app is 25401 onward.
 

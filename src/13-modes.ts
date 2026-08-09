@@ -1,6 +1,6 @@
 // SECTION (cut plane) and WANDER (first-person) modes
 //
-// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// Extracted from legacy/assets/index-DCXbw2vV.js, bundle lines
 // 29574–29709. Statements are verbatim; identifiers are
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write

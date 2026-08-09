@@ -10,7 +10,7 @@
 ## What this is
 
 A **reversible reconstruction** of the game code from
-`public/assets/index-DCXbw2vV.js`. Statements are verbatim and in original
+`legacy/assets/index-DCXbw2vV.js`. Statements are verbatim and in original
 order. What IS applied, all of it mechanically and all of it undoable:
 
 - identifier renames from `renames.json` (89 so far)
@@ -73,7 +73,7 @@ each with zero player actions, measured 146, 150 and 179 draws at
 number.
 
 The `96 / 561,016` in the original column is left as recorded when it was taken;
-it has not been re-measured against `public/`. The rows that _are_ stable —
+it has not been re-measured against `legacy/`. The rows that _are_ stable —
 structures, pockets, nav nodes, population, pocket kinds — held exactly on every
 sample and remain the verification figures worth trusting.
 
@@ -82,7 +82,7 @@ hand-written and were never in the bundle. 89 identifiers renamed including all
 48 three.js symbols. `_runtime.ts` is no longer imported by anything — the
 class-field rewrite it was waiting for has happened.
 
-`public/` is still the reference copy — the artifact as Mollick deployed it.
+`legacy/` is still the reference copy — the artifact as Mollick deployed it.
 `dist/` is the reconstruction.
 
 ### Three bugs that only running it could find

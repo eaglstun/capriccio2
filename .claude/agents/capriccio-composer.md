@@ -203,7 +203,7 @@ by ear, say which slider positions you judged it at.
 ## Don't
 
 - Don't add an audio file, or a dependency that fetches one, ever.
-- Don't touch `public/` — it is the pristine original build and the reference.
+- Don't touch `legacy/` — it is the pristine original build and the reference.
 - Don't rewrite track 1. It is the original bed and the anchor the other tracks
   are defined against; changing it moves the reference point for everything.
 - Don't edit renderer, world, or gameplay modules to make a musical idea work.

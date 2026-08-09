@@ -1,6 +1,6 @@
 // Boot sequence, input wiring, quality meters, window.CAP
 //
-// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// Extracted from legacy/assets/index-DCXbw2vV.js, bundle lines
 // 30393–30951. Statements are verbatim; identifiers are
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write

@@ -1,6 +1,6 @@
 // Building catalogue (La) and footprint constants
 //
-// Extracted from public/assets/index-DCXbw2vV.js, bundle lines
+// Extracted from legacy/assets/index-DCXbw2vV.js, bundle lines
 // 28877–28951. Statements are verbatim; identifiers are
 // renamed via src/renames.json. Imports and exports are generated.
 // Regenerate: python3 tools/split_bundle.py --write

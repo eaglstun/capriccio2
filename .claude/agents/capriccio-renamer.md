@@ -9,7 +9,7 @@ description: >-
   `docs/RENDERING.md`, `docs/AUDIO.md`, `docs/DEPENDENCIES.md`) rather than
   inventing vocabulary, applies each rename across ALL files that reference the
   symbol, and verifies reversibility after every batch. It does NOT restructure
-  code, add imports, split files, or touch `public/`. For identifying three.js
+  code, add imports, split files, or touch `legacy/`. For identifying three.js
   symbols use `capriccio-vendor-mapper`.
 tools: Read, Write, Edit, Grep, Glob, Bash
 ---
@@ -27,7 +27,7 @@ Maintain `src/renames.json` as `{mangled: friendly}`. After every batch:
 
 > Applying the **inverse** map to `src/` and concatenating the files in
 > `manifest.json` order must reproduce the original app section of
-> `public/assets/index-DCXbw2vV.js` **byte for byte.**
+> `legacy/assets/index-DCXbw2vV.js` **byte for byte.**
 
 If that check fails you have changed structure, not names. Revert and retry.
 This is what makes renaming safe on code nobody can read yet — it converts
@@ -70,7 +70,7 @@ Cheapest first, because the documentation behind them is strongest:
 
 ## Do not
 
-- Do not touch `public/` — it is the only runnable copy of the game.
+- Do not touch `legacy/` — it is the only runnable copy of the game.
 - Do not add `import`/`export`, split files, or reorder statements. Renaming and
   restructuring are separate jobs; mixing them destroys the invariant that makes
   this safe.

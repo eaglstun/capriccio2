@@ -84,7 +84,7 @@ items on the old frozen list were never about compatibility at all. Sort them:
 - **Structure envelopes still govern pockets.** Changing a footprint changes
   what the city grows, which is a gameplay decision rather than a bug — make it
   deliberately if at all, not as a side effect of restyling.
-- **`public/` is never edited.** It is the original artifact and the reference
+- **`legacy/` is never edited.** It is the original artifact and the reference
   everything is verified against.
 - **Never run `split_bundle.py --write`**; never delete `src/.hand-edited`.
   `src/` is hand-edited and regenerating would silently destroy it.
