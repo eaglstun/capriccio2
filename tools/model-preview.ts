@@ -2,6 +2,7 @@
 //
 //   node tools/model-preview.ts out.ppm            # the three citizens, 3/4 view
 //   node tools/model-preview.ts out.ppm --head     # framed on the head
+//   node tools/model-preview.ts out.ppm --far      # the distant LOD build
 //
 // Then: sips -s format png out.ppm --out out.png
 //
@@ -23,6 +24,8 @@ import { writeFileSync } from "node:fs";
 
 const out = process.argv[2] ?? "preview.ppm";
 const headMode = process.argv.includes("--head");
+// --far draws the distant level, for checking the two share a silhouette
+const far = process.argv.includes("--far") ? 1 : 0;
 
 const { Po } = await import("../src/07-citizens.ts");
 
@@ -176,7 +179,7 @@ const dist = headMode ? 0.72 : 3.4;
 const eyeY = headMode ? 1.5 : 1.15;
 
 for (let vi = 0; vi < VARIANTS.length; vi++) {
-  const geo = Po(VARIANTS[vi]);
+  const geo = Po(VARIANTS[vi], far);
   for (let ai = 0; ai < YAWS.length; ai++) {
     const a = YAWS[ai];
     const eye: V3 = [Math.sin(a) * dist, eyeY, Math.cos(a) * dist];

@@ -28,8 +28,11 @@ import { citizenHead } from "./24-citizen-head";
 /**
  * The population: a fixed pool of agents walking the nav graph.
  *
- * Drawn as THREE InstancedMeshes (three body variants, chosen by agent index
- * % 3) so the whole population costs three draw calls regardless of size.
+ * Drawn as InstancedMeshes so the whole population costs a fixed number of
+ * draw calls regardless of size: three body variants (chosen by agent index
+ * % 3) times two levels of detail, so six. Which level an agent lands in is
+ * decided per frame from its distance to the camera — see the tail of
+ * update() — and a mesh with no instances in it draws nothing.
  * `dummy` is a scratch Object3D used to compose each instance matrix — the
  * standard three.js instancing pattern, and the reason there is no Object3D
  * per citizen.
@@ -41,7 +44,7 @@ import { citizenHead } from "./24-citizen-head";
 class Citizens {
   world: any;
   infill: any;
-  /** Three silhouette variants, each an InstancedMesh. */
+  /** Six InstancedMeshes, indexed `lod * 3 + variant`. */
   meshes: InstancedMesh[];
   agents: any[] = [];
   population = 16;
@@ -68,7 +71,18 @@ class Citizens {
       (this.marker.visible = !1),
       n.add(this.marker));
     const s = t.mats.figure;
-    this.meshes = [Po(0), Po(1), Po(2)].map((r) => {
+    // Six meshes, indexed lod*3 + variant. Two levels doubles the draw calls
+    // from three to six, which is nothing, and an InstancedMesh that draws
+    // zero instances costs nothing either — so when the whole population is
+    // far away the three near meshes sit at count 0 and are skipped.
+    this.meshes = [
+      Po(0, 0),
+      Po(1, 0),
+      Po(2, 0),
+      Po(0, 1),
+      Po(1, 1),
+      Po(2, 1),
+    ].map((r) => {
       const o = new InstancedMesh(r, s, Co);
       return (
         o.instanceMatrix.setUsage(Lu),
@@ -92,6 +106,8 @@ class Citizens {
         workNode: -1,
         offset: Math.random() * 1.6 - 0.8,
         bob: Math.random() * 7,
+        // starts far: the first frame is a wide shot, not a close-up
+        lod: 1,
       });
     // a population, not a uniform: clothing colour and build derived
     // deterministically from the agent index — render-side only
@@ -252,11 +268,16 @@ class Citizens {
    * sin/cos of their own offset — otherwise everyone at a gathering point
    * would occupy exactly the same spot.
    */
-  update(t, e) {
+  update(t, e, cam?) {
     const n = this.workPoints(),
       s = this.gatherPoints(),
       r = Math.random,
-      o = [0, 0, 0];
+      // o counts agents PER VARIANT and is what work-node assignment strides
+      // over; it has to keep counting the way it always did or citizens would
+      // be reassigned to different workplaces the moment they changed level.
+      o = [0, 0, 0],
+      // cnt is the write cursor per mesh, which is a different thing entirely
+      cnt = [0, 0, 0, 0, 0, 0];
     // ---- ambient life. PRESENTATION ONLY — nothing here touches routine,
     // pockets or growth; it only changes how a standing body is posed.
     //   - gathered agents pair off with their nearest standing neighbour
@@ -302,7 +323,6 @@ class Citizens {
     for (const c of this.agents) {
       if ((a++, !c.active)) continue;
       const l = a % 3,
-        h = this.meshes[l],
         u = o[l],
         d = e + c.offset;
       if (c.path.length === 0) {
@@ -420,14 +440,33 @@ class Citizens {
           ),
           (mk.rotation.y += t * 1.4));
       }
-      (this.dummy.scale.set(lk.sx, lk.sy, lk.sx),
-        this.dummy.updateMatrix(),
-        h.setMatrixAt(u, this.dummy.matrix),
-        h.setColorAt(u, a === this.speaker ? this.speakerCol : lk.col),
+      (this.dummy.scale.set(lk.sx, lk.sy, lk.sx), this.dummy.updateMatrix());
+      // Level chosen HERE rather than at the top of the loop, because the
+      // position is only final now — ambient life nudges standing agents by
+      // up to 2.1m after the fact.
+      //
+      // Two thresholds, not one. An agent sitting exactly on a single
+      // boundary would swap build every time it breathed; NEAR and FAR leave
+      // a 5m dead band, so a level only changes when an agent has committed
+      // to crossing it. The head is 260mm, so at a 1080-tall viewport it is
+      // about 22px at NEAR and 18px at FAR — the range where a face stops
+      // being resolvable at all.
+      if (cam) {
+        const dx = this.dummy.position.x - cam.position.x,
+          dy = this.dummy.position.y - cam.position.y,
+          dz = this.dummy.position.z - cam.position.z,
+          d2 = dx * dx + dy * dy + dz * dz;
+        c.lod = c.lod ? (d2 < NEAR_D2 ? 0 : 1) : d2 > FAR_D2 ? 1 : 0;
+      } else c.lod = 0;
+      const mi = c.lod * 3 + l,
+        h = this.meshes[mi],
+        w = cnt[mi]++;
+      (h.setMatrixAt(w, this.dummy.matrix),
+        h.setColorAt(w, a === this.speaker ? this.speakerCol : lk.col),
         (o[l] = u + 1));
     }
-    for (let c = 0; c < 3; c++)
-      ((this.meshes[c].count = o[c]),
+    for (let c = 0; c < this.meshes.length; c++)
+      ((this.meshes[c].count = cnt[c]),
         (this.meshes[c].instanceMatrix.needsUpdate = !0),
         this.meshes[c].instanceColor &&
           (this.meshes[c].instanceColor.needsUpdate = !0));
@@ -468,7 +507,7 @@ function headGeometry() {
  *
  * About 120 triangles on geometry every instance shares.
  */
-function skullCap() {
+function skullCap(seg: number) {
   // the baked skull runs 1.408 (chin) to 1.668 (crown), 264mm across and
   // 342mm deep; sit just outside that
   // 26x18 rather than 14x10. The rim is a per-triangle cut, so its raggedness
@@ -477,7 +516,7 @@ function skullCap() {
   // cap from 136 to 545, which against ~3,200 for the citizen is
   // not worth being clever about.
   const CY = 1.545,
-    g = new SphereGeometry(1, 26, 18);
+    g = new SphereGeometry(1, seg, Math.round(seg * 0.7));
   g.scale(0.143, 0.142, 0.183);
   const p = g.attributes.position,
     idx = g.index!,
@@ -502,13 +541,55 @@ function skullCap() {
   return (g.setIndex(keep), g.translate(0, CY, -0.008), g);
 }
 
-function Po(i) {
+/**
+ * One citizen silhouette, at one level of detail.
+ *
+ * `lod` 0 is the near build with the baked face; 1 is the far one, where the
+ * head becomes an ellipsoid matching the same bounding box. Matching the box
+ * matters more than it sounds: the two have to occupy the same silhouette or
+ * the swap reads as a pop rather than as detail arriving.
+ */
+/**
+ * The far head: an ellipsoid on the SAME bounding box as the baked one.
+ *
+ * The baked skull runs 1.408 to 1.668 and measures 264 x 260 x 342mm, so this
+ * matches those extents rather than being a round ball. Sharing the silhouette
+ * is what stops the level swap reading as a pop — at the distance it happens,
+ * the outline is essentially all that is left of a citizen, so if the outline
+ * matches, nothing visibly changes.
+ */
+/**
+ * Level thresholds, as squared distances so the frame loop never takes a root.
+ *
+ * 21m in, 26m out. At a 1080-tall viewport the 260mm head is about 22px at the
+ * near bound and 18px at the far one, which is where the face stops resolving.
+ * The orbit camera normally sits 100-500m out, so in practice the whole
+ * population is far and the near meshes draw nothing; WANDER is what brings
+ * the detail in, which is the one place anybody is close enough to see it.
+ */
+const NEAR_D2 = 21 * 21,
+  FAR_D2 = 26 * 26;
+
+function farHead() {
+  const g = new SphereGeometry(1, 8, 6);
+  // Crown matched to the baked head at 1.668, but the base carried down to
+  // 1.37 — INSIDE the shoulder cone, whose top is at 1.40. The baked head has
+  // a neck stub filling that notch; an ellipsoid tapering to a point above a
+  // 190mm-wide cone leaves a visible gap and the head reads as floating.
+  // Stretching it down is free, where a neck would be another twenty faces.
+  return (g.scale(0.132, 0.15, 0.171), g.translate(0, 1.52, 0), g);
+}
+
+function Po(i, lod = 0) {
   // how many trailing geometries are headwear rather than body
   let cloth = 0;
   const t = [],
     e = new CylinderGeometry(0.14, 0.26, 1.32, 7);
   e.translate(0, 0.66, 0);
-  const n = headGeometry();
+  // At the far level the 3,108-triangle face is spent on something a few
+  // pixels tall. An 8x6 ellipsoid on the same bounds is 84 triangles and,
+  // past about 25 metres, indistinguishable.
+  const n = lod ? farHead() : headGeometry();
   const s = new CylinderGeometry(0.19, 0.14, 0.3, 7);
   if ((s.translate(0, 1.25, 0), t.push(e, s, n), i === 1)) {
     const r = new CylinderGeometry(0.025, 0.03, 1.8, 5);
@@ -538,7 +619,7 @@ function Po(i) {
       r.rotateX(-0.3),
       r.translate(0, 1.6, -0.025),
       t.push(r));
-    t.push(skullCap());
+    t.push(skullCap(lod ? 10 : 26));
     // the cone and the cap are ONE garment, so they share a tint — and the
     // tint is what makes them read as worn rather than as more skull. Left at
     // 1 the cap is the same tone as the head it covers and simply looks like

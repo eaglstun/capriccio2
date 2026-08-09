@@ -933,7 +933,8 @@ function Nh(i) {
       te.hour >= DAY_END && ((te.hour -= 24), te.day++, (gameState.dirty = !0)),
       os(te.hour),
       V_(hourDelta),
-      ei.update(t, te.hour),
+      // the camera decides each citizen's level of detail — see 07-citizens
+      ei.update(t, te.hour, ie),
       ni.active && ni.update(t),
       (Lo += t),
       Lo > 2.2 &&
