@@ -821,6 +821,8 @@ const Ch = "capriccio-save-v1";
 // --- generated exports ---
 export {
   Ch,
+  FAR_D2,
+  NEAR_D2,
   headGeometry,
   Citizens,
   Fl,

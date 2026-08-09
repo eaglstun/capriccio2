@@ -11,15 +11,17 @@
 
           yarn dev   ->   http://localhost:5173/inspect.html
 
-      What it is for: every model in this project is built in code, so there is
-      no asset file to open in a viewer. This imports the geometry builders
-      straight from src/ and puts them in front of a camera, with the numbers
-      that actually decide things — triangle count, and how many PIXELS TALL
-      the thing is at a given distance, which is the whole argument about
-      whether more detail is worth paying for.
+      Every model in this project is built in code, so there is no asset file to
+      open in a viewer. This imports the geometry builders straight from src/ and
+      puts them in front of a camera, with the numbers that actually decide
+      things: triangle count, how many PIXELS TALL the thing is, and which level
+      of detail the game would draw at this distance.
 
-      It will also open a .glb dropped onto it, so a generated mesh can be put
-      side by side with the procedural one at matched scale.
+      The LOD behaviour is not a mock-up. `Po`, `NEAR_D2` and `FAR_D2` come from
+      07-citizens and the switching expression is the same one at the tail of
+      Citizens.update(), so this page cannot drift from the game.
+
+      Drop a .glb on it to load one beside the procedural builds.
     -->
     <style>
       :root {
@@ -51,13 +53,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 268px;
+        width: 280px;
         height: 100%;
         padding: 16px 16px 24px;
         overflow-y: auto;
-        background: rgba(26, 16, 54, 0.9);
+        background: rgba(26, 16, 54, 0.92);
         border-right: 1px solid rgba(255, 113, 206, 0.5);
-        backdrop-filter: blur(3px);
       }
       h1 {
         margin: 0 0 2px;
@@ -73,7 +74,7 @@
         opacity: 0.6;
       }
       h2 {
-        margin: 20px 0 7px;
+        margin: 20px 0 8px;
         font-size: 10px;
         letter-spacing: 0.22em;
         text-transform: uppercase;
@@ -114,7 +115,7 @@
       #stats {
         font-family: "SF Mono", Menlo, monospace;
         font-size: 11px;
-        line-height: 1.75;
+        line-height: 1.8;
         color: var(--pale);
       }
       #stats b {
@@ -126,7 +127,39 @@
         line-height: 1.55;
         opacity: 0.55;
         font-style: italic;
-        margin-top: 6px;
+        margin-top: 8px;
+      }
+      /* the distance axis, with the two real thresholds marked on it */
+      #lodbar {
+        position: relative;
+        height: 8px;
+        margin: 12px 0 26px;
+        background: rgba(111, 245, 234, 0.12);
+        border: 1px solid rgba(111, 245, 234, 0.35);
+      }
+      #lodfill {
+        position: absolute;
+        inset: 0;
+        right: auto;
+        background: var(--pink);
+        opacity: 0.7;
+      }
+      #lodbar b {
+        position: absolute;
+        top: -5px;
+        width: 1px;
+        height: 17px;
+        background: var(--cyan);
+      }
+      #lodbar b::after {
+        content: attr(data-l);
+        position: absolute;
+        top: 18px;
+        left: -11px;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        color: var(--cyan);
+        opacity: 0.85;
       }
       #drop {
         position: fixed;
@@ -147,7 +180,7 @@
         color: #ff9b6a;
         font-size: 11px;
         white-space: pre-wrap;
-        margin-top: 8px;
+        margin-top: 10px;
       }
     </style>
   </head>
@@ -161,21 +194,31 @@
       <p class="hint">Drop a .glb anywhere to load it beside these.</p>
 
       <h2>Show</h2>
-      <label class="row"
-        ><input type="checkbox" id="wire" /> wireframe over the surface</label
-      >
+      <label class="row"><input type="checkbox" id="wire" /> wireframe</label>
       <label class="row"><input type="checkbox" id="norms" /> normals</label>
-      <label class="row" style="--x: 0">
-        <input type="checkbox" id="grid" checked /> ground grid + 1.7m figure
+      <label class="row">
+        <input type="checkbox" id="grid" checked /> grid + 1.7m figure
       </label>
       <label class="row"><input type="checkbox" id="spin" /> turntable</label>
+      <label class="row">
+        <input type="checkbox" id="ghost" /> ghost the other level
+      </label>
 
-      <h2>Distance</h2>
-      <input type="range" id="dist" min="0.4" max="60" step="0.1" value="1.2" />
+      <h2>Distance &amp; level of detail</h2>
+      <input type="range" id="dist" min="0.6" max="70" step="0.1" value="3" />
+      <label class="row">
+        <input type="checkbox" id="sweep" /> sweep in and out
+      </label>
+      <div id="lodbar">
+        <i id="lodfill"></i><b id="lodnear" data-l="near"></b
+        ><b id="lodfar" data-l="far"></b>
+      </div>
       <div id="stats"></div>
       <p class="hint">
-        Pixels-tall is the number that settles whether detail is worth paying
-        for. The orbit camera sits 5–520 units out; WANDER stands at 1.7.
+        The bar is the distance axis; the ticks are the real thresholds from
+        07-citizens. Sweep, and the level changes at the FAR tick going out and
+        the NEAR tick coming in — never the same place twice. That gap is the
+        dead band that stops a citizen on the boundary flickering.
       </p>
       <div id="err"></div>
     </div>
@@ -185,13 +228,15 @@
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-      import { Po } from "./src/07-citizens.ts";
+      import { Po, NEAR_D2, FAR_D2 } from "./src/07-citizens.ts";
 
-      const err = document.getElementById("err");
+      const $ = (id) => document.getElementById(id);
+      const err = $("err");
       const showErr = (e) => (err.textContent = String(e?.stack || e));
       addEventListener("error", (e) => showErr(e.error || e.message));
+      addEventListener("unhandledrejection", (e) => showErr(e.reason));
 
-      // ---------------------------------------------------------- scene
+      // ------------------------------------------------------------ scene
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       document.body.appendChild(renderer.domElement);
@@ -202,23 +247,35 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.09;
 
-      scene.add(new THREE.HemisphereLight(0xb8fff9, 0x3a1c56, 1.5));
+      scene.add(new THREE.HemisphereLight(0xb8fff9, 0x3a1c56, 1.4));
       const key = new THREE.DirectionalLight(0xffe9f2, 2.2);
       key.position.set(3, 6, 4);
       scene.add(key);
 
       // the game's own figure look: Lambert with vertex colours, because the
-      // face tints ride in the colour attribute and are invisible without it
+      // headwear tint rides in the colour attribute and vanishes without it
       const surface = new THREE.MeshLambertMaterial({
         color: 0xd8d2e6,
         vertexColors: true,
       });
-      const plainSurface = new THREE.MeshLambertMaterial({ color: 0xd8d2e6 });
+      const plain = new THREE.MeshLambertMaterial({ color: 0xd8d2e6 });
+      const ghostMat = new THREE.MeshBasicMaterial({
+        color: 0x6ff5ea,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.25,
+      });
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0x6ff5ea,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5,
+      });
 
       const holder = new THREE.Group();
       scene.add(holder);
 
-      // a 1.7m stick figure and a metre grid, so scale is never a guess
+      // a metre grid and a 1.7m stick, so scale is never a guess
       const ref = new THREE.Group();
       {
         const grid = new THREE.GridHelper(10, 10, 0xff71ce, 0x542a6e);
@@ -234,104 +291,140 @@
       }
       scene.add(ref);
 
-      let wireOverlay = null,
-        normalHelper = null,
-        current = null;
+      // -------------------------------------------------------------- lod
+      // Remembered between frames on purpose: that memory IS the dead band.
+      let lod = 1;
+      /** Exactly the expression at the tail of Citizens.update(). */
+      const pickLod = (d2) =>
+        lod ? (d2 < NEAR_D2 ? 0 : 1) : d2 > FAR_D2 ? 1 : 0;
+      const NEAR = Math.sqrt(NEAR_D2),
+        FAR = Math.sqrt(FAR_D2),
+        MAXD = 70;
 
-      function setSubject(geo, label) {
+      let current = null,
+        wireOverlay = null,
+        normalHelper = null;
+
+      /** Build both levels of a variant once; the loop only toggles them. */
+      function setSubject(v, label) {
+        holder.clear();
+        wireOverlay = normalHelper = null;
+        const levels = [Po(v, 0), Po(v, 1)].map((g) => {
+          g.computeBoundingBox();
+          const m = new THREE.Mesh(g, g.attributes.color ? surface : plain);
+          holder.add(m);
+          const gh = new THREE.Mesh(g, ghostMat);
+          gh.visible = false;
+          holder.add(gh);
+          return {
+            geo: g,
+            mesh: m,
+            ghost: gh,
+            tris: g.attributes.position.count / 3,
+          };
+        });
+        current = { levels, label };
+        rebuildHelpers();
+        frame();
+      }
+
+      /** A dropped .glb: one build, shown at every distance. */
+      function setLoaded(geo, label) {
         holder.clear();
         wireOverlay = normalHelper = null;
         geo.computeBoundingBox();
-        const mat = geo.attributes.color ? surface : plainSurface;
-        const mesh = new THREE.Mesh(geo, mat);
-        holder.add(mesh);
-        current = { geo, mesh, label };
+        const m = new THREE.Mesh(geo, geo.attributes.color ? surface : plain);
+        holder.add(m);
+        const L = {
+          geo,
+          mesh: m,
+          ghost: null,
+          tris: geo.attributes.position.count / 3,
+        };
+        current = { levels: [L, L], label };
         rebuildHelpers();
         frame();
-        updateStats();
       }
+
+      const activeLevel = () => current.levels[lod] ?? current.levels[0];
 
       function rebuildHelpers() {
         if (!current) return;
         if (wireOverlay) (holder.remove(wireOverlay), (wireOverlay = null));
         if (normalHelper) (holder.remove(normalHelper), (normalHelper = null));
-        if (document.getElementById("wire").checked) {
-          wireOverlay = new THREE.Mesh(
-            current.geo,
-            new THREE.MeshBasicMaterial({
-              color: 0x6ff5ea,
-              wireframe: true,
-              transparent: true,
-              opacity: 0.5,
-            }),
-          );
+        const act = activeLevel();
+        if ($("wire").checked) {
+          wireOverlay = new THREE.Mesh(act.geo, wireMat);
           holder.add(wireOverlay);
         }
-        if (document.getElementById("norms").checked) {
-          // VertexNormalsHelper lives in addons; build it inline to keep this
-          // page to two imports
-          const p = current.geo.attributes.position,
-            n = current.geo.attributes.normal;
-          if (n) {
-            const pts = [];
-            const L =
-              current.geo.boundingBox.getSize(new THREE.Vector3()).length() *
-              0.03;
-            for (let i = 0; i < p.count; i++) {
-              const a = new THREE.Vector3().fromBufferAttribute(p, i);
-              const b = a
+        if ($("norms").checked && act.geo.attributes.normal) {
+          const p = act.geo.attributes.position,
+            n = act.geo.attributes.normal,
+            pts = [],
+            L =
+              act.geo.boundingBox.getSize(new THREE.Vector3()).length() * 0.03;
+          for (let i = 0; i < p.count; i++) {
+            const a = new THREE.Vector3().fromBufferAttribute(p, i);
+            pts.push(
+              a,
+              a
                 .clone()
                 .add(
                   new THREE.Vector3()
                     .fromBufferAttribute(n, i)
                     .multiplyScalar(L),
-                );
-              pts.push(a, b);
-            }
-            normalHelper = new THREE.LineSegments(
-              new THREE.BufferGeometry().setFromPoints(pts),
-              new THREE.LineBasicMaterial({ color: 0xff9b6a }),
+                ),
             );
-            holder.add(normalHelper);
           }
+          normalHelper = new THREE.LineSegments(
+            new THREE.BufferGeometry().setFromPoints(pts),
+            new THREE.LineBasicMaterial({ color: 0xff9b6a }),
+          );
+          holder.add(normalHelper);
         }
       }
 
-      /** Point the camera at the subject's centre from the slider distance. */
+      /** Put the camera at the slider's distance, aimed at the subject. */
       function frame() {
         if (!current) return;
-        const box = current.geo.boundingBox;
-        const c = box.getCenter(new THREE.Vector3());
+        const c = current.levels[0].geo.boundingBox.getCenter(
+          new THREE.Vector3(),
+        );
         controls.target.copy(c);
-        const d = Number(document.getElementById("dist").value);
-        camera.position.set(c.x, c.y + d * 0.18, c.z + d);
+        const d = Number($("dist").value);
+        camera.position.set(c.x, c.y + d * 0.16, c.z + d);
         controls.update();
       }
 
       function updateStats() {
         if (!current) return;
-        const g = current.geo;
-        const tris =
-          (g.index ? g.index.count : g.attributes.position.count) / 3;
-        const size = g.boundingBox.getSize(new THREE.Vector3());
+        const near = current.levels[0],
+          far = current.levels[1],
+          act = activeLevel();
+        const size = act.geo.boundingBox.getSize(new THREE.Vector3());
         const d = camera.position.distanceTo(controls.target);
-        // apparent height in pixels = worldHeight / (2 d tan(fov/2)) * viewportH
         const vh = renderer.domElement.height / renderer.getPixelRatio();
         const px =
           (size.y / (2 * d * Math.tan((camera.fov * Math.PI) / 360))) * vh;
-        document.getElementById("stats").innerHTML =
-          `<b>${current.label}</b><br>` +
-          `${g.attributes.position.count} verts · <b>${tris | 0} tris</b><br>` +
-          `size ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)} m<br>` +
-          `camera ${d.toFixed(2)} m<br>` +
-          `<b>${px.toFixed(0)} px tall</b> on screen<br>` +
-          `x132 instances = ${((tris | 0) * 132).toLocaleString()} tris`;
+        const band =
+          d < NEAR
+            ? "inside the near bound"
+            : d > FAR
+              ? "outside the far bound"
+              : "in the dead band — level holds";
+        $("stats").innerHTML =
+          `<b>${current.label}</b> — drawing <b>${lod ? "FAR" : "NEAR"}</b><br>` +
+          `${d.toFixed(1)} m · ${px.toFixed(0)} px tall<br>` +
+          `<span style="opacity:.65">${band}</span><br>` +
+          `near <b>${near.tris | 0}</b> tris · far <b>${far.tris | 0}</b><br>` +
+          `×132 on screen = ${((act.tris | 0) * 132).toLocaleString()}`;
+        $("lodfill").style.right = `${Math.max(0, 100 - (d / MAXD) * 100)}%`;
+        $("lodnear").style.left = `${(NEAR / MAXD) * 100}%`;
+        $("lodfar").style.left = `${(FAR / MAXD) * 100}%`;
       }
 
-      // ---------------------------------------------------------- subjects
-      const subjects = [];
+      // --------------------------------------------------------- subjects
       const addSubject = (label, make) => {
-        subjects.push({ label, make });
         const b = document.createElement("button");
         b.textContent = label;
         b.onclick = () => {
@@ -339,26 +432,24 @@
             el.classList.remove("on");
           b.classList.add("on");
           try {
-            setSubject(make(), label);
+            make(label);
           } catch (e) {
             showErr(e);
           }
         };
-        document.getElementById("subjects").appendChild(b);
+        $("subjects").appendChild(b);
         return b;
       };
+      addSubject("citizen 0", (l) => setSubject(0, l));
+      addSubject("citizen 1", (l) => setSubject(1, l));
+      addSubject("citizen 2", (l) => setSubject(2, l));
 
-      addSubject("citizen 0", () => Po(0));
-      const first = document.querySelector("#subjects button");
-      addSubject("citizen 1", () => Po(1));
-      addSubject("citizen 2", () => Po(2));
-
-      // ---------------------------------------------------------- glb drop
-      const drop = document.getElementById("drop");
-      addEventListener(
-        "dragover",
-        (e) => (e.preventDefault(), drop.classList.add("on")),
-      );
+      // --------------------------------------------------------- glb drop
+      const drop = $("drop");
+      addEventListener("dragover", (e) => {
+        e.preventDefault();
+        drop.classList.add("on");
+      });
       addEventListener("dragleave", () => drop.classList.remove("on"));
       addEventListener("drop", async (e) => {
         e.preventDefault();
@@ -366,8 +457,10 @@
         const f = e.dataTransfer.files[0];
         if (!f) return;
         try {
-          const buf = await f.arrayBuffer();
-          const gltf = await new GLTFLoader().parseAsync(buf, "");
+          const gltf = await new GLTFLoader().parseAsync(
+            await f.arrayBuffer(),
+            "",
+          );
           let biggest = null;
           gltf.scene.traverse((o) => {
             if (
@@ -381,40 +474,57 @@
           if (!biggest) return showErr("no mesh in that file");
           const g = biggest.geometry.clone();
           g.computeVertexNormals();
-          addSubject(f.name.slice(0, 18), () => g).click();
+          addSubject(f.name.slice(0, 18), (l) => setLoaded(g, l)).click();
         } catch (ex) {
           showErr(ex);
         }
       });
 
-      // ---------------------------------------------------------- loop
-      for (const id of ["wire", "norms"])
-        document.getElementById(id).onchange = rebuildHelpers;
-      document.getElementById("grid").onchange = (e) =>
-        (ref.visible = e.target.checked);
-      document.getElementById("dist").oninput = frame;
+      // ------------------------------------------------------------- loop
+      for (const id of ["wire", "norms"]) $(id).onchange = rebuildHelpers;
+      $("grid").onchange = (e) => (ref.visible = e.target.checked);
+      $("dist").oninput = frame;
 
       function resize() {
-        const w = innerWidth - 268,
+        const w = innerWidth - 280,
           h = innerHeight;
         renderer.setSize(w, h);
-        renderer.domElement.style.marginLeft = "268px";
+        renderer.domElement.style.marginLeft = "280px";
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
       }
       addEventListener("resize", resize);
       resize();
 
-      let t = 0;
+      let t = 0,
+        sweepT = 0;
       renderer.setAnimationLoop(() => {
-        if (document.getElementById("spin").checked && current)
-          holder.rotation.y = t += 0.006;
+        if ($("spin").checked && current) holder.rotation.y = t += 0.006;
+        if ($("sweep").checked) {
+          // 0.6m to 70m and back, slow enough to see which tick it flips on
+          sweepT += 0.006;
+          const k = (Math.sin(sweepT) + 1) / 2;
+          $("dist").value = (0.6 + k * (MAXD - 0.6)).toFixed(1);
+          frame();
+        }
         controls.update();
+
+        if (current) {
+          const was = lod;
+          lod = pickLod(camera.position.distanceToSquared(controls.target));
+          for (let i = 0; i < current.levels.length; i++) {
+            const L = current.levels[i];
+            L.mesh.visible = i === lod;
+            if (L.ghost) L.ghost.visible = $("ghost").checked && i !== lod;
+          }
+          // helpers hang off whichever level is drawing
+          if (was !== lod) rebuildHelpers();
+          updateStats();
+        }
         renderer.render(scene, camera);
-        updateStats();
       });
 
-      first.click();
+      document.querySelector("#subjects button").click();
     </script>
   </body>
 </html>
