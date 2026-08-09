@@ -6,12 +6,14 @@ export default defineConfig({
   // asset, which would be both wasteful and deeply confusing.
   publicDir: false,
   build: {
-    // four pages: the game, the about/colophon page, how to play, and /listen
+    // five pages: the game, about/colophon, how to play, the changelog,
+    // and /listen
     rollupOptions: {
       input: {
         main: "index.html",
         about: "about.html",
         howToPlay: "how-to-play.html",
+        changelog: "changelog.html",
         // a directory entry, not listen.html: nginx's `try_files $uri $uri/`
         // serves dist/listen/index.html at the clean URL /listen
         listen: "listen/index.html",

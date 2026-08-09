@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>CAPRICCIO 2 — changelog</title>
+    <meta
+      name="description"
+      content="CAPRICCIO 2 — what changed, and when. From the reconstruction of a 662KB bundle to the city as it stands."
+    />
+    <meta property="og:title" content="CAPRICCIO 2 — changelog" />
+    <meta
+      property="og:description"
+      content="Nine releases, written down after the fact. From a bundle with no source to the city as it stands."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23241448'/%3E%3Cpath d='M6 26 V14 a10 10 0 0 1 20 0 V26 h-5 V15 a5 5 0 0 0 -10 0 V26 Z' fill='%23ff71ce'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --ink: #1a1036;
+        --deep: #241448;
+        --violet: #542a6e;
+        --mauve: #c05490;
+        --pink: #ff71ce;
+        --cyan: #6ff5ea;
+        --pale: #b8fff9;
+        --paper: #f4e9ff;
+        --amber: #ff9b6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100%;
+        background:
+          radial-gradient(
+            120% 80% at 50% 100%,
+            rgba(255, 155, 106, 0.28) 0%,
+            rgba(255, 113, 206, 0.14) 38%,
+            transparent 72%
+          ),
+          linear-gradient(#1a1036 0%, #241448 42%, #3a1c56 78%, #6b2f63 100%);
+        color: var(--paper);
+        font-family:
+          "Avenir Next", "Futura", "Century Gothic", "Helvetica Neue", Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.62;
+        letter-spacing: 0.012em;
+        padding: 0 24px 96px;
+      }
+      /* scanlines, to match the game's post pass */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9;
+        background: repeating-linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.13) 0 1px,
+          transparent 1px 3px
+        );
+        mix-blend-mode: multiply;
+      }
+      main {
+        max-width: 660px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+      header {
+        padding: 88px 0 8px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 7.2vw, 52px);
+        font-weight: 600;
+        letter-spacing: 0.34em;
+        text-indent: 0.34em;
+        color: var(--paper);
+        text-shadow:
+          2px 0 rgba(1, 205, 254, 0.85),
+          -2px 0 rgba(255, 113, 206, 0.85);
+      }
+      .sub {
+        margin: 0.7em 0 0;
+        font-style: italic;
+        color: var(--pale);
+        letter-spacing: 0.04em;
+        opacity: 0.92;
+      }
+      .rule {
+        width: 150px;
+        height: 1px;
+        margin: 34px auto 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--mauve),
+          transparent
+        );
+      }
+      p {
+        margin: 0 0 17px;
+        color: #e6d8f4;
+      }
+      em {
+        color: var(--pale);
+        font-style: italic;
+      }
+      strong {
+        color: var(--paper);
+        font-weight: 600;
+      }
+      a {
+        color: var(--pink);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 113, 206, 0.4);
+      }
+      a:hover {
+        border-bottom-color: var(--pink);
+      }
+      code {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        font-size: 0.86em;
+        color: var(--pale);
+        letter-spacing: 0;
+      }
+      .note {
+        border-left: 2px solid var(--mauve);
+        padding: 2px 0 2px 18px;
+        margin: 26px 0 0;
+        color: var(--pale);
+        font-style: italic;
+      }
+
+      /* --- the releases ---------------------------------------------- */
+
+      /* one continuous rail down the left, with each release pegged to it */
+      .releases {
+        margin: 62px 0 0;
+        padding: 0 0 0 30px;
+        border-left: 1px solid rgba(192, 84, 144, 0.3);
+      }
+      .rel {
+        position: relative;
+        padding: 0 0 52px;
+      }
+      .rel:last-child {
+        padding-bottom: 0;
+      }
+      .rel::before {
+        content: "";
+        position: absolute;
+        left: -35px;
+        top: 8px;
+        width: 9px;
+        height: 9px;
+        border: 1px solid var(--mauve);
+        background: var(--ink);
+        transform: rotate(45deg);
+      }
+      /* the release you are running gets the filled marker */
+      .rel.now::before {
+        background: var(--pink);
+        border-color: var(--pink);
+        box-shadow: 0 0 7px rgba(255, 113, 206, 0.7);
+      }
+      .ver {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 14px;
+        margin: 0 0 3px;
+      }
+      .num {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: var(--paper);
+      }
+      .rel.now .num {
+        color: var(--pink);
+      }
+      .when {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #a894c4;
+      }
+      .tag {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: var(--pink);
+        padding: 2px 8px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      .rel ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .rel li {
+        position: relative;
+        padding: 0 0 11px 22px;
+        color: #e6d8f4;
+      }
+      .rel li::before {
+        content: "—";
+        position: absolute;
+        left: 0;
+        color: var(--mauve);
+      }
+      .rel li:last-child {
+        padding-bottom: 0;
+      }
+
+      footer {
+        margin-top: 66px;
+        padding-top: 26px;
+        border-top: 1px solid rgba(192, 84, 144, 0.3);
+        font-size: 13px;
+        color: #b9a6d0;
+        text-align: center;
+      }
+      .play {
+        display: inline-block;
+        margin-top: 34px;
+        padding: 11px 30px;
+        border: 1px solid var(--pink);
+        color: var(--paper);
+        letter-spacing: 0.26em;
+        font-size: 13px;
+        border-bottom-width: 1px;
+      }
+      .play:hover {
+        background: rgba(255, 113, 206, 0.14);
+      }
+      .links {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        header,
+        main > section,
+        .rel {
+          animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+        }
+        @keyframes rise {
+          from {
+            opacity: 0;
+            transform: translateY(9px);
+          }
+          to {
+            opacity: 1;
+            transform: none;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>CHANGELOG</h1>
+        <p class="sub">what changed, and when</p>
+        <div class="rule"></div>
+      </header>
+
+      <section>
+        <p>
+          This project began as a downloaded build with no source and no source
+          map — a single 662KB file that had to be read backwards before it
+          could be changed at all. What follows is the road from there to the
+          city as it stands.
+        </p>
+        <div class="note">
+          Written after the fact. Nothing was versioned while it was being
+          built, so these numbers were assigned in retrospect by reading the
+          history back. The dates and the work are real; the boundaries between
+          releases are a tidy story imposed on a hundred-odd commits that never
+          knew they were forming one.
+        </div>
+      </section>
+
+      <div class="releases">
+        <section class="rel now">
+          <div class="ver">
+            <span class="num">0.9.0</span>
+            <span class="when">8 August 2026</span>
+            <span class="tag">current</span>
+          </div>
+          <h2>The score alone, the pad, and the horizon</h2>
+          <ul>
+            <li>
+              <strong><a href="/listen">/listen</a></strong> — the score and the
+              soundscape with no city under them, driven by sliders instead of
+              by the world. Two more tracks to hear, and a song form so a track
+              past ninety seconds has somewhere left to go.
+            </li>
+            <li>
+              <strong>Gamepad support.</strong> Plug one in and it wakes; leave
+              it unplugged and nothing about the game changes. The left stick
+              orbits, the right stick walks the camera over the city or drives a
+              crosshair when a tool is up, the shoulders change mode. WANDER
+              gets the stick it always wanted.
+            </li>
+            <li>
+              <strong>The plain runs to the haze.</strong> The perimeter used to
+              rise into low hills to hide the edge of the world. It is flat now
+              and reaches far enough that fog closes it instead — a horizon
+              rather than a wall.
+            </li>
+            <li>
+              <strong>First person stopped hitching.</strong> Three unrelated
+              causes: a ground query testing every structure in the city three
+              times a frame, six vectors allocated per frame, and an autosave
+              serialising the whole city on the main thread every eight seconds.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.8.0</span>
+            <span class="when">30 July 2026</span>
+          </div>
+          <h2>The Chronicle</h2>
+          <ul>
+            <li>
+              <strong>Replay.</strong> Every action carries the day and hour it
+              was taken, so the city can be rebuilt to any moment in its own
+              past and watched from there.
+            </li>
+            <li>
+              A scrub UI, and the ability to <em>engrave from the past</em> — a
+              plate taken inside the Chronicle is marked as a reconstruction
+              rather than passed off as a record.
+            </li>
+            <li>
+              The past renders as a lower-generation signal: the post pass knows
+              when you are looking backwards.
+            </li>
+            <li>
+              Three new things to furnish the city with — a brazier, a fallen
+              column, a game board.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.7.0</span>
+            <span class="when">29–30 July 2026</span>
+          </div>
+          <h2>It becomes TypeScript</h2>
+          <ul>
+            <li>
+              Every module renamed <code>.js</code> → <code>.ts</code>, and all
+              137 <code>defineField</code> shims replaced with real class
+              fields.
+            </li>
+            <li>
+              151 type errors cleared. The compiler now sees three.js's own
+              types rather than a fog of <code>any</code>.
+            </li>
+            <li>
+              Continuous integration enforces the formatter, the types and the
+              build, so none of the above can quietly rot.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.6.0</span>
+            <span class="when">28 July 2026</span>
+          </div>
+          <h2>The legibility pass</h2>
+          <p>
+            Seven complaints, all of the same kind: the game knew something and
+            was not saying it.
+          </p>
+          <ul>
+            <li>
+              Carvable surfaces carry setting-out scribes, so you can see what
+              will accept a CARVE before being refused.
+            </li>
+            <li>Stone says where it comes from, and shows its cap.</li>
+            <li>
+              TIMBER becomes SALVAGE — the field itself, not merely the label.
+            </li>
+            <li>
+              Billboard headlines measure and fit, and every sign gets its own
+              typeface.
+            </li>
+            <li>
+              Tullia says the thing about water twice, and only once you have
+              struggled with it.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.5.0</span>
+            <span class="when">28 July 2026</span>
+          </div>
+          <h2>More to hear, more to do</h2>
+          <ul>
+            <li>
+              Two further score tracks, separated from the original bed on four
+              axes at once — tempo, register, texture and voice — because three
+              tracks differing only in harmony sound like one track.
+            </li>
+            <li>
+              Requests become procedural: they are generated from the state of
+              the city rather than read from a list.
+            </li>
+            <li>Ambient life, and timestamps on the things that happen.</li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.4.0</span>
+            <span class="when">28 July 2026</span>
+          </div>
+          <h2>Night, grandeur, and the findable citizen</h2>
+          <ul>
+            <li>
+              <strong>Night.</strong> The clock runs through midnight instead of
+              stopping at dusk, with the dark hours passing faster.
+            </li>
+            <li>
+              <strong>GRANDEUR counts ornament</strong>, in two independently
+              capped halves, so neither can be farmed against the other.
+            </li>
+            <li>
+              Click a request and the camera goes to whoever is asking. Click a
+              folio slot and it returns to exactly the view that plate was taken
+              from.
+            </li>
+            <li>
+              Inside the tracking band the image separates into RGB rather than
+              dithering; citizens get their own outline colour, carried in an
+              alpha channel that was going spare.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.3.0</span>
+            <span class="when">28 July 2026</span>
+          </div>
+          <h2>The manual and the map</h2>
+          <ul>
+            <li>
+              A <a href="/how-to-play.html">how to play</a> page, linked from
+              the title screen.
+            </li>
+            <li>
+              The simulation, progression, rendering and audio written down —
+              the save format, the nav graph, the infill growth engine, the
+              terrain generator, the placement tool.
+            </li>
+            <li>
+              A record of the cast, and the rules the writing follows when it
+              puts words in their mouths.
+            </li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.2.0</span>
+            <span class="when">27–28 July 2026</span>
+          </div>
+          <h2>CAPRICCIO 2 — the same city, at the end of humanity</h2>
+          <p>
+            Not a sequel and not a remake. Every rule underneath untouched; only
+            the world those rules run in.
+          </p>
+          <ul>
+            <li>
+              The ruins become concrete and rebar rather than marble. A
+              megastructure skyline on every horizon, smog strata, a broken
+              orbital ring, satellites on fixed tracks still transmitting.
+            </li>
+            <li>
+              Evidence of life that stopped: landfill, a tower crane still
+              holding its pallet, an outfall staining the rock with nobody
+              upstream, and billboards still lit and still selling.
+            </li>
+            <li>
+              A slow vaporwave score, synthesised rather than sampled, bound to
+              the simulation. The birds became drones on the same schedule.
+            </li>
+            <li>
+              Districts tint their own fabric; dawn splits from dusk; blue-noise
+              dither replaces the Bayer matrix.
+            </li>
+            <li>
+              The folio made visible — sixteen slots, and the seventeenth plate
+              evicts the oldest.
+            </li>
+            <li>
+              A first-run walkthrough in six beats, taught by doing. It advances
+              when you do the thing, never on a timer, and what you build during
+              it is real and stays.
+            </li>
+            <li>Citizens become a population rather than a uniform.</li>
+          </ul>
+        </section>
+
+        <section class="rel">
+          <div class="ver">
+            <span class="num">0.1.0</span>
+            <span class="when">27 July 2026</span>
+          </div>
+          <h2>The reconstruction</h2>
+          <p>
+            Before anything could be changed, the thing had to be read. It
+            shipped minified, with every identifier destroyed at build time and
+            no source map to undo it.
+          </p>
+          <ul>
+            <li>
+              The bundle split into eighteen modules — a partition verified by
+              reassembling it byte for byte.
+            </li>
+            <li>
+              Forty-eight vendored three.js symbols identified from evidence
+              rather than guessed, and replaced with real imports.
+            </li>
+            <li>
+              Subsystems, state, builders and the save format given names that
+              mean something.
+            </li>
+            <li>
+              It builds and runs at <strong>662,197 bytes</strong> against the
+              original's 662,267 — a difference of one hundredth of one percent.
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <p style="text-align: center">
+        <a class="play" href="/">ENTER THE CITY</a>
+      </p>
+      <p class="links">
+        <a href="/about.html">about this city</a> ·
+        <a href="/how-to-play.html">how to play</a> ·
+        <a href="/listen">listen to the score</a>
+      </p>
+
+      <footer>
+        Original CAPRICCIO by Ethan Mollick, generated with Fable.<br />
+        This version built on top of it — same rules, later century.
+      </footer>
+    </main>
+  </body>
+</html>
