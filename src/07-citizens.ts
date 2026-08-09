@@ -450,7 +450,56 @@ function headGeometry() {
   return citizenHead();
 }
 
+/**
+ * A cap over the back and top of the skull, for the hooded variant.
+ *
+ * DELIBERATELY A CAP AND NOT A HOOD. An earlier version extended the cone
+ * itself down over the head to the shoulders, and a point above a fully
+ * enclosed head with a recessed face is a silhouette this game is not going
+ * anywhere near. The three things that produced it are all avoided here on
+ * purpose: this is ROUNDED rather than pointed and is a separate piece from
+ * the cone, it STOPS above the nape rather than draping to the shoulders, and
+ * the face and jaw stay completely open.
+ *
+ * Built as an ellipsoid a few millimetres proud of the skull with the front
+ * cut away — keep a triangle only if it faces up and back. That cut is what
+ * leaves the face open, and moving CUT toward -1 grows the cap forward over
+ * the brow, which is the direction NOT to take it.
+ *
+ * About 120 triangles on geometry every instance shares.
+ */
+function skullCap() {
+  // the baked skull runs 1.408 (chin) to 1.668 (crown), 264mm across and
+  // 342mm deep; sit just outside that
+  const CY = 1.545,
+    g = new SphereGeometry(1, 14, 10);
+  g.scale(0.143, 0.142, 0.183);
+  const p = g.attributes.position,
+    idx = g.index!,
+    // up and back: the direction the cap covers
+    NX = 0,
+    NY = 0.38,
+    NZ = -0.925,
+    CUT = -0.3,
+    keep: number[] = [];
+  for (let f = 0; f < idx.count; f += 3) {
+    const a = idx.getX(f),
+      b = idx.getX(f + 1),
+      c = idx.getX(f + 2);
+    let dx = 0,
+      dy = 0,
+      dz = 0;
+    for (const v of [a, b, c])
+      ((dx += p.getX(v)), (dy += p.getY(v)), (dz += p.getZ(v)));
+    const l = Math.hypot(dx, dy, dz) || 1;
+    if ((dx * NX + dy * NY + dz * NZ) / l > CUT) keep.push(a, b, c);
+  }
+  return (g.setIndex(keep), g.translate(0, CY, -0.008), g);
+}
+
 function Po(i) {
+  // how many trailing geometries are headwear rather than body
+  let cloth = 0;
   const t = [],
     e = new CylinderGeometry(0.14, 0.26, 1.32, 7);
   e.translate(0, 0.66, 0);
@@ -471,35 +520,32 @@ function Po(i) {
     const o = new SphereGeometry(0.14, 6, 5);
     (o.scale(1, 0.75, 1), o.translate(-0.2, 0.82, 0), t.push(o));
   } else {
-    // Re-seated for the baked head, which reaches 1.668 where the old sphere
-    // stopped at 1.59. Left where it was it sat INSIDE the skull; raised to
-    // 1.60 its base was still wider than the head at face height and read as a
-    // shroud over the eyes. Narrower and higher, so it caps the crown.
-    // Tilted back rather than standing straight up. The pivot matters: the
-    // cone is built centred, so it is first moved so its BASE sits at the
-    // origin, then leaned, then seated. Rotating it where it stands would
-    // swing the base forward through the forehead as the point went back.
-    // 0.3 radians is about 17 degrees — enough to read as worn rather than
-    // balanced, short of a jaunty angle.
-    // Narrower than it was, because tilting changes what the base ring does.
-    // Standing straight up, a 150mm base sat symmetrically around the skull
-    // and read as a brim. Leaned back, its front edge rises to where the head
-    // has narrowed, pokes out past the brow and reads as a flap across the
-    // forehead. 110mm keeps the ring inside the crown through the lean.
+    // The cone, leaned back off the crown. Pivoted about its BASE — moved so
+    // the base sits at the origin, leaned, then seated — because rotating it
+    // where it stands swings the base forward through the forehead as the
+    // point goes back. 0.3 radians, about 17 degrees.
+    //
+    // 110mm wide, not the 150mm it was upright: leaning raises the front of
+    // the base ring to where the skull has narrowed, and a wider ring pushes
+    // past the brow and reads as a flap across the forehead.
     const r = new ConeGeometry(0.11, 0.32, 7);
     (r.translate(0, 0.16, 0),
       r.rotateX(-0.3),
       r.translate(0, 1.6, -0.025),
       t.push(r));
+    t.push(skullCap());
+    // the cone and the cap are ONE garment, so they share a tint — and the
+    // tint is what makes them read as worn rather than as more skull. Left at
+    // 1 the cap is the same tone as the head it covers and simply looks like
+    // a bigger head, which is what "too much of the back of the head is
+    // showing" actually was.
+    cloth = 2;
   }
-  // No flat eye and mouth marks any more: the sculpted head carries its own
-  // eyelids and lips, and a dark quad laid over them fights the relief instead
-  // of reading as a feature. The tint machinery stays — it costs nothing and
-  // the next thing that needs a dark mark will want it.
-  return O_(
-    t,
-    t.map(() => 1),
-  );
+  // Every piece is untinted except the headwear, which is darker so it reads
+  // as cloth over the skull rather than as part of it.
+  const tints = t.map(() => 1);
+  for (let q = 0; q < cloth; q++) tints[tints.length - 1 - q] = 0.55;
+  return O_(t, tints);
 }
 /**
  * Merge to one non-indexed buffer, carrying a flat tint per source geometry.
