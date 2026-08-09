@@ -37,7 +37,7 @@
 // That loop is now TRACK 1 of three. All three stay rooted on A, so a
 // track change is a mode change, not a key change:
 //   track 1 — A minor, calm            · the original bed, ~67bpm
-//   track 2 — A Dorian, TECHNO         · Am9 D6/9 Am9 Gadd9, 124bpm,
+//   track 2 — A Dorian, TECHNO         · a 16-bar progression, 124bpm,
 //             four-on-the-floor, clap on 2 and 4, open hats on every
 //             off-beat, an acid bassline sweeping on perlin. Its kit
 //             builds through three stages: pulse, drop, roll.
@@ -277,7 +277,9 @@ function kit(stage, duskAmt) {
 
 // ------------------------------------------------------------ track 2: Dorian
 // A Dorian — natural minor with the raised 6th. That F# turns the IV chord
-// major, and Am -> D is the signature sound of the mode. Driving: ~80bpm,
+// major, and Am -> D is the signature sound of the mode. The progression is
+// sixteen bars long (see BARS_DORIAN); the first four are the old loop and
+// the other twelve are what it was missing. Driving: ~80bpm,
 // backbeat on 2 and 4, accented hats on sixteenths, a kick that pushes off
 // the and-of-4 into the next bar, and the BASS carrying it — a syncopated
 // riff (root / 5th / b7 / octave), not roots. Ghosts, open hats, a ride and
@@ -290,24 +292,114 @@ function kit(stage, duskAmt) {
 // — the two never share a scheduler, so neither undermines the other.
 
 // [chord voicing, bass riff (8 eighth-note slots, 0 = rest)] per bar.
-// Loop: Am9 | D6/9 | Am9 | Gadd9. Every riff note is in A Dorian.
+//
+// SIXTEEN bars, not four. The old loop was Am9 | D6/9 | Am9 | Gadd9 and
+// nothing else — under eight seconds at 124bpm, so you heard the same four
+// chords about eight times a minute. That is a hook with no song attached to
+// it. What follows keeps those four bars intact as phrase A (they ARE the
+// hook; throwing them away would be fixing the wrong thing) and gives them
+// somewhere to go.
+//
+// A Dorian is A B C D E F# G, so the diatonic chords are:
+//   i Am · ii Bm · III C · IV D · v Em · vi° F#m7b5 · VII G
+// Every chord below is one of those seven. Nothing is borrowed, because the
+// F# already does all the work a borrowed chord would: it is what makes the
+// IV major and the v minor, and it is the whole reason this track is not
+// track 1. Sixteen bars of colour inside one mode beats four bars plus a
+// modulation.
+//
+//   A  1–4    Am9 · D6/9 · Am9 · Gadd9        the hook, untouched
+//   B  5–8    Am11 · D6/9 · Cmaj7 · Bm7       same two bars, then it leaves
+//   C  9–12   Em7 · F#m7b5 · Gmaj7 · D6/9     the departure — v vi° VII IV
+//   D  13–16  Am9 · Cmaj7 · Bm7 · Em9         home, then ii–v turning back
+//
+// Phrase B opens on bars 1–2 again on purpose: the ear is told "same again",
+// commits to it, and is then walked off the tonic at bar 7. A parallel period
+// that diverges is the cheapest way to make sixteen bars feel composed rather
+// than merely long. Phrase D closes ii–v–i (Bm7 · Em9 → Am9), which is the
+// strongest cadence available without leaving the mode — Dorian has no
+// leading tone, so v is minor and the turn is inevitable rather than urgent.
+// That suits a track that is going to do it again in thirty seconds.
+//
+// Bar 10 is the one to listen for: F#m7b5 is F# A C E, which is an Am triad
+// with the mode's raised 6th underneath it. The pad barely moves off bar 9;
+// the BASS is what tilts the chord. Harmonising the note that defines the
+// mode, with the mode's rarest chord, once per sixteen bars.
+//
+// Voicing order is load-bearing and is not merely ascending pitch: lowPad
+// reads indices 0 and 2 (kept root-and-fifth so the octave-down doubling
+// never lands on a 7th in the bass), stabsDorian reads 1, 2 and 4 an octave
+// up (so index 4 stays at or below 72 or the stabs shriek), and arp walks
+// 0 2 4 2 1 3 4 3.
 const BARS_DORIAN = [
+  // ---- A · the hook, exactly as it was
   [
     [57, 60, 64, 67, 71],
     [33, 0, 0, 45, 43, 0, 40, 0],
-  ], // Am9   · A . . A' G . E .
+  ], // Am9      · A . . A' G . E .
   [
     [50, 54, 57, 59, 64],
     [38, 0, 0, 50, 48, 0, 45, 48],
-  ], // D6/9  · D . . D' C . A C
+  ], // D6/9     · D . . D' C . A C
   [
     [57, 60, 64, 67, 71],
     [33, 0, 45, 0, 43, 33, 0, 40],
-  ], // Am9   · A . A' . G A . E
+  ], // Am9      · A . A' . G A . E
   [
     [43, 47, 50, 57, 62],
     [31, 0, 0, 43, 42, 0, 38, 42],
-  ], // Gadd9 · G . . G' F# . D F#
+  ], // Gadd9    · G . . G' F# . D F#
+  // ---- B · answers A, then walks off the tonic
+  [
+    [57, 62, 64, 67, 71],
+    [33, 0, 45, 0, 40, 0, 43, 45],
+  ], // Am11     · the 11th (D) replaces the 3rd — same chord, suspended
+  [
+    [50, 54, 57, 59, 64],
+    [38, 0, 42, 0, 45, 0, 50, 45],
+  ], // D6/9     · riff climbs through the F# this time
+  [
+    [48, 52, 55, 59, 67],
+    [36, 0, 0, 48, 47, 0, 43, 0],
+  ], // Cmaj7    · III — the first bar that is not A or D or G
+  [
+    [47, 50, 54, 57, 62],
+    [35, 0, 0, 47, 45, 0, 42, 45],
+  ], // Bm7      · ii, and phrase B ends unresolved on it
+  // ---- C · the departure
+  [
+    [52, 55, 59, 62, 67],
+    [40, 0, 0, 52, 50, 0, 47, 0],
+  ], // Em7      · v — minor, because Dorian has no leading tone
+  [
+    [54, 57, 64, 60, 69],
+    [42, 0, 54, 0, 52, 0, 48, 45],
+  ], // F#m7b5   · vi° = Am6/F#. The raised 6th, harmonised, once
+  [
+    [43, 47, 50, 54, 62],
+    [43, 0, 47, 0, 50, 0, 54, 50],
+  ], // Gmaj7    · Gadd9's F# sibling — the A swapped for the maj7
+  [
+    [50, 54, 57, 59, 64],
+    [38, 38, 0, 45, 0, 50, 45, 42],
+  ], // D6/9     · busiest riff in the loop, driving the return
+  // ---- D · home, then ii–v back to the top
+  [
+    [57, 60, 64, 67, 71],
+    [33, 0, 0, 45, 43, 0, 40, 0],
+  ], // Am9      · bar 1's voicing AND bar 1's riff — unmistakable
+  [
+    [48, 52, 55, 59, 67],
+    [36, 0, 48, 0, 47, 0, 43, 47],
+  ], // Cmaj7    · III
+  [
+    [47, 50, 54, 57, 62],
+    [35, 0, 47, 0, 45, 0, 42, 45],
+  ], // Bm7      · ii
+  [
+    [52, 55, 59, 62, 66],
+    [40, 0, 52, 0, 47, 0, 50, 47],
+  ], // Em9      · v. Bass lands on B2, a step above the A1 that follows
 ];
 
 /** Track 2's pad. Deliberately NOT track 1's pad: darker, quieter, drier and
@@ -511,8 +603,10 @@ function kitDorian(stage, duskAmt) {
   if (stage === 1) return stack(...base, hats8acc(0.15));
   base.push(claps24(0.34), ohatsOff(0.13), ghosts(0.06));
   if (stage === 2) return stack(...base, hats8acc(0.15));
-  // eight bars of kit against a four-bar chord loop, so the fill lands on
-  // alternating halves of the harmony
+  // eight bars of kit against the sixteen-bar chord loop, so the fill lands
+  // exactly twice a pass — on bar 8, where phrase B leaves you hanging on the
+  // Bm7, and on bar 16, where the Em9 turns back to the top. Both are places
+  // the harmony is already moving, which is where a fill belongs.
   const bar = stack(...base, hats16(0.15)),
     fill = stack(...base, hats16(0.15), tomFill());
   return cat(bar, bar, bar, bar, bar, bar, bar, fill);
@@ -809,7 +903,9 @@ const FORM = [
 // Bars per section, per track. Track 2 gets sixteen because that is the
 // unit techno is built in and because its bars are half the length of the
 // others'; every value is a multiple of that track's harmonic loop, so a
-// section boundary always falls on a chord-loop boundary.
+// section boundary always falls on a chord-loop boundary. Since track 2's
+// progression is now sixteen bars too, its section and its harmony turn over
+// together: one pass of the changes per verse, chorus or breakdown.
 const SECTION_BARS = { 1: 8, 2: 16, 3: 8 };
 
 /**

@@ -17,7 +17,6 @@ import {
   Mesh,
   Object3D,
   OctahedronGeometry,
-  PlaneGeometry,
   SphereGeometry,
   Vector3,
 } from "three";
@@ -433,68 +432,102 @@ class Citizens {
           (this.meshes[c].instanceColor.needsUpdate = !0));
   }
 }
-/** Head centre and radius, shared by the sphere and everything placed on it. */
+/** Head centre, and the height the sculpt is scaled to fill. */
 const HEAD_Y = 1.46,
-  HEAD_R = 0.13;
+  HEAD_H = 0.26;
 
 /**
- * One flat mark lying on the head, aimed out along the surface normal.
+ * The head, ported from the karaoke-headset project's mannequin-head factory
+ * (`assets/threejs/mannequin-head.js`) — an idealised bald ovoid sculpted by
+ * displacing a sphere with a sum of gaussian and ramp terms.
  *
- * Spherical placement rather than a position, because the head is a sphere and
- * a feature given (yaw, pitch) stays on it however the numbers are nudged —
- * which is the whole point when the faces have to be iterated on blind.
+ * Brought across rather than rewritten because it is the same TECHNIQUE the
+ * hand-rolled attempt here was reaching for, done properly: the anatomy is
+ * authored — a jaw tapering to a chin, a high forehead, a nose ridge that
+ * widens toward the tip, a brow that blends into the bridge, lips with a
+ * crease between them, closed eyelids with a lash line — rather than a few
+ * bumps guessed at from a rendering.
  *
- * A quad, two triangles. Small spheres would be truer and cost twenty times
- * as much for a feature that is a couple of pixels across at the distance the
- * game is normally played from; at the distance where it ISN'T, a flat mark on
- * a faceted head reads as engraving, which is the house style anyway.
+ * It also fits this project's one hard rule without any adaptation: it is
+ * geometry built in code, so it ships zero bytes. The same directory holds
+ * .glb versions of this head; those are assets and cannot come here.
  *
- * `+0.006` floats it clear of the surface. The head is a 7x6 sphere, so its
- * facets sit as much as 13mm inside the ideal radius at the equator — the
- * offset only has to beat zero, and this beats it without standing off.
+ * NOT YET OPTIMISED, deliberately. The source sphere is 48x36 — 3,456
+ * triangles, against about 90 for the sphere it replaces — and every one of
+ * the 132 instances carries it. That is the next problem, not this one.
+ *
+ * Changes from the original: the neck stub is dropped, because the citizens
+ * already have a shoulder cone the head sits into; the material and the idle
+ * animation are dropped, because the population is instanced and cannot have
+ * either per head; and the result is scaled to the head this game already had
+ * and moved up to sit on the shoulders.
  */
-function faceMark(yaw: number, pitch: number, w: number, h: number) {
-  const g = new PlaneGeometry(w, h);
-  // PlaneGeometry faces +Z. Pitch about X, then yaw about Y, leaves the normal
-  // pointing exactly along the direction computed below.
-  (g.rotateX(-pitch), g.rotateY(yaw));
-  const cp = Math.cos(pitch),
-    d = HEAD_R + 0.006;
-  return (
-    g.translate(
-      Math.sin(yaw) * cp * d,
-      HEAD_Y + Math.sin(pitch) * d,
-      Math.cos(yaw) * cp * d,
-    ),
-    g
-  );
-}
+function headGeometry() {
+  const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+  const smoothstep = (e0: number, e1: number, x: number) => {
+    const t = clamp01((x - e0) / (e1 - e0));
+    return t * t * (3 - 2 * t);
+  };
+  const g = (d: number, w: number) => Math.exp(-(d / w) * (d / w));
 
-/**
- * The face. Local +Z is forward — `dummy.lookAt` aims +Z down the direction of
- * travel — so the marks sit on the +Z side and a citizen walking away shows
- * the back of their head.
- *
- * The band that is actually visible is narrower than the head: the shoulder
- * cone is wider than the skull below y=1.40, so anything under about -27
- * degrees of pitch is swallowed, and variant 0's hat takes the crown. These
- * three sit inside that band.
- */
-function faceMarks() {
-  const EYE = 0.2;
-  return [
-    { g: faceMark(-0.37, 0.08, 0.029, 0.017), tint: EYE },
-    { g: faceMark(0.37, 0.08, 0.029, 0.017), tint: EYE },
-    { g: faceMark(0, -0.19, 0.034, 0.008), tint: 0.28 },
-  ];
+  // half-extents of the head ovoid, in metres, as authored
+  const SX = 0.078,
+    SY = 0.108,
+    SZ = 0.099;
+
+  const geo = new SphereGeometry(1, 48, 36);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i),
+      u = pos.getY(i), // -1 chin .. +1 crown on the unit sphere
+      z = pos.getZ(i);
+
+    // jaw -> chin taper: narrow x AND z through the lower half
+    const t = clamp01(-u),
+      taperW = 1 - 0.42 * Math.pow(t, 1.4);
+    let bx = x * taperW,
+      bz = z * taperW;
+
+    // only the front hemisphere carries facial relief
+    const front = smoothstep(-0.15, 0.45, z);
+
+    const noseV = g(u - 0.02, 0.16),
+      noseW = 0.09 + 0.05 * smoothstep(0.2, -0.15, u),
+      nose = 0.2 * noseV * g(x, noseW);
+    const brow = 0.05 * g(u - 0.22, 0.07) * g(x, 0.42);
+    const chin = 0.045 * g(u + 0.55, 0.16) * g(x, 0.28);
+    const lipFull = 0.028 * g(u + 0.4, 0.07) * g(x, 0.2);
+    const lipCrease = 0.018 * g(u + 0.4, 0.012) * g(x, 0.2);
+
+    let lid = 0,
+      eyeCrease = 0;
+    for (let sgn = -1; sgn <= 1; sgn += 2) {
+      const ex = x - sgn * 0.38,
+        almond = Math.exp(
+          -(
+            (ex / 0.16) * (ex / 0.16) +
+            ((u - 0.03) / 0.09) * ((u - 0.03) / 0.09)
+          ),
+        );
+      lid += 0.018 * almond;
+      eyeCrease += 0.012 * g(u - 0.015, 0.008) * g(ex, 0.1);
+    }
+
+    bz += front * (nose + brow + chin + lipFull + lid - lipCrease - eyeCrease);
+    pos.setXYZ(i, bx * SX, u * SY, bz * SZ);
+  }
+  ((pos.needsUpdate = !0), geo.computeVertexNormals());
+  // scale the authored 216mm head to the 260mm one this game already had, so
+  // the silhouette does not change, then sit it on the shoulders
+  const k = HEAD_H / (SY * 2);
+  return (geo.scale(k, k, k), geo.translate(0, HEAD_Y, 0), geo);
 }
 
 function Po(i) {
   const t = [],
     e = new CylinderGeometry(0.14, 0.26, 1.32, 7);
   e.translate(0, 0.66, 0);
-  const n = new SphereGeometry(0.13, 7, 6);
-  n.translate(0, 1.46, 0);
+  const n = headGeometry();
   const s = new CylinderGeometry(0.19, 0.14, 0.3, 7);
   if ((s.translate(0, 1.25, 0), t.push(e, s, n), i === 1)) {
     const r = new CylinderGeometry(0.025, 0.03, 1.8, 5);
@@ -514,11 +547,14 @@ function Po(i) {
     const r = new ConeGeometry(0.17, 0.34, 7);
     (r.translate(0, 1.52, -0.02), t.push(r));
   }
-  // The face goes on last so the tints line up with the trailing geometries.
-  const marks = faceMarks(),
-    tints = t.map(() => 1);
-  for (const m of marks) (t.push(m.g), tints.push(m.tint));
-  return O_(t, tints);
+  // No flat eye and mouth marks any more: the sculpted head carries its own
+  // eyelids and lips, and a dark quad laid over them fights the relief instead
+  // of reading as a feature. The tint machinery stays — it costs nothing and
+  // the next thing that needs a dark mark will want it.
+  return O_(
+    t,
+    t.map(() => 1),
+  );
 }
 /**
  * Merge to one non-indexed buffer, carrying a flat tint per source geometry.

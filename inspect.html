@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAPRICCIO — model inspector</title>
+    <!--
+      DEV ONLY. Deliberately NOT listed in vite.config.js's rollupOptions.input,
+      so `yarn build` never emits it and it cannot reach a deploy by accident.
+      It only exists under `yarn dev`:
+
+          yarn dev   ->   http://localhost:5173/inspect.html
+
+      What it is for: every model in this project is built in code, so there is
+      no asset file to open in a viewer. This imports the geometry builders
+      straight from src/ and puts them in front of a camera, with the numbers
+      that actually decide things — triangle count, and how many PIXELS TALL
+      the thing is at a given distance, which is the whole argument about
+      whether more detail is worth paying for.
+
+      It will also open a .glb dropped onto it, so a generated mesh can be put
+      side by side with the procedural one at matched scale.
+    -->
+    <style>
+      :root {
+        --ink: #1a1036;
+        --pink: #ff71ce;
+        --cyan: #6ff5ea;
+        --pale: #b8fff9;
+        --paper: #f4e9ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        background: linear-gradient(#1a1036 0%, #241448 55%, #3a1c56 100%);
+        color: var(--paper);
+        font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+        font-size: 13px;
+      }
+      canvas {
+        display: block;
+      }
+      #ui {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 268px;
+        height: 100%;
+        padding: 16px 16px 24px;
+        overflow-y: auto;
+        background: rgba(26, 16, 54, 0.9);
+        border-right: 1px solid rgba(255, 113, 206, 0.5);
+        backdrop-filter: blur(3px);
+      }
+      h1 {
+        margin: 0 0 2px;
+        font-size: 13px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      .sub {
+        margin: 0 0 18px;
+        font-size: 11px;
+        font-style: italic;
+        opacity: 0.6;
+      }
+      h2 {
+        margin: 20px 0 7px;
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--pink);
+        border-top: 1px solid rgba(255, 113, 206, 0.25);
+        padding-top: 12px;
+      }
+      button {
+        font-family: inherit;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--paper);
+        background: none;
+        border: 1px solid rgba(111, 245, 234, 0.45);
+        padding: 6px 9px;
+        margin: 0 4px 5px 0;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--cyan);
+      }
+      button.on {
+        background: var(--pink);
+        border-color: var(--pink);
+        color: var(--ink);
+      }
+      label.row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 7px;
+        cursor: pointer;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--pink);
+      }
+      #stats {
+        font-family: "SF Mono", Menlo, monospace;
+        font-size: 11px;
+        line-height: 1.75;
+        color: var(--pale);
+      }
+      #stats b {
+        color: var(--paper);
+        font-weight: 600;
+      }
+      .hint {
+        font-size: 10.5px;
+        line-height: 1.55;
+        opacity: 0.55;
+        font-style: italic;
+        margin-top: 6px;
+      }
+      #drop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(26, 16, 54, 0.82);
+        border: 2px dashed var(--pink);
+        font-size: 15px;
+        letter-spacing: 0.2em;
+        z-index: 20;
+      }
+      #drop.on {
+        display: flex;
+      }
+      #err {
+        color: #ff9b6a;
+        font-size: 11px;
+        white-space: pre-wrap;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <h1>Model inspector</h1>
+      <p class="sub">dev only — never in a build</p>
+
+      <h2>Subject</h2>
+      <div id="subjects"></div>
+      <p class="hint">Drop a .glb anywhere to load it beside these.</p>
+
+      <h2>Show</h2>
+      <label class="row"
+        ><input type="checkbox" id="wire" /> wireframe over the surface</label
+      >
+      <label class="row"><input type="checkbox" id="norms" /> normals</label>
+      <label class="row" style="--x: 0">
+        <input type="checkbox" id="grid" checked /> ground grid + 1.7m figure
+      </label>
+      <label class="row"><input type="checkbox" id="spin" /> turntable</label>
+
+      <h2>Distance</h2>
+      <input type="range" id="dist" min="0.4" max="60" step="0.1" value="1.2" />
+      <div id="stats"></div>
+      <p class="hint">
+        Pixels-tall is the number that settles whether detail is worth paying
+        for. The orbit camera sits 5–520 units out; WANDER stands at 1.7.
+      </p>
+      <div id="err"></div>
+    </div>
+    <div id="drop">DROP A .GLB</div>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { Po } from "./src/07-citizens.ts";
+
+      const err = document.getElementById("err");
+      const showErr = (e) => (err.textContent = String(e?.stack || e));
+      addEventListener("error", (e) => showErr(e.error || e.message));
+
+      // ---------------------------------------------------------- scene
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(46, 1, 0.01, 4000);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.09;
+
+      scene.add(new THREE.HemisphereLight(0xb8fff9, 0x3a1c56, 1.5));
+      const key = new THREE.DirectionalLight(0xffe9f2, 2.2);
+      key.position.set(3, 6, 4);
+      scene.add(key);
+
+      // the game's own figure look: Lambert with vertex colours, because the
+      // face tints ride in the colour attribute and are invisible without it
+      const surface = new THREE.MeshLambertMaterial({
+        color: 0xd8d2e6,
+        vertexColors: true,
+      });
+      const plainSurface = new THREE.MeshLambertMaterial({ color: 0xd8d2e6 });
+
+      const holder = new THREE.Group();
+      scene.add(holder);
+
+      // a 1.7m stick figure and a metre grid, so scale is never a guess
+      const ref = new THREE.Group();
+      {
+        const grid = new THREE.GridHelper(10, 10, 0xff71ce, 0x542a6e);
+        grid.material.opacity = 0.35;
+        grid.material.transparent = true;
+        ref.add(grid);
+        const stick = new THREE.Mesh(
+          new THREE.BoxGeometry(0.02, 1.7, 0.02),
+          new THREE.MeshBasicMaterial({ color: 0x6ff5ea }),
+        );
+        stick.position.set(1.2, 0.85, 0);
+        ref.add(stick);
+      }
+      scene.add(ref);
+
+      let wireOverlay = null,
+        normalHelper = null,
+        current = null;
+
+      function setSubject(geo, label) {
+        holder.clear();
+        wireOverlay = normalHelper = null;
+        geo.computeBoundingBox();
+        const mat = geo.attributes.color ? surface : plainSurface;
+        const mesh = new THREE.Mesh(geo, mat);
+        holder.add(mesh);
+        current = { geo, mesh, label };
+        rebuildHelpers();
+        frame();
+        updateStats();
+      }
+
+      function rebuildHelpers() {
+        if (!current) return;
+        if (wireOverlay) (holder.remove(wireOverlay), (wireOverlay = null));
+        if (normalHelper) (holder.remove(normalHelper), (normalHelper = null));
+        if (document.getElementById("wire").checked) {
+          wireOverlay = new THREE.Mesh(
+            current.geo,
+            new THREE.MeshBasicMaterial({
+              color: 0x6ff5ea,
+              wireframe: true,
+              transparent: true,
+              opacity: 0.5,
+            }),
+          );
+          holder.add(wireOverlay);
+        }
+        if (document.getElementById("norms").checked) {
+          // VertexNormalsHelper lives in addons; build it inline to keep this
+          // page to two imports
+          const p = current.geo.attributes.position,
+            n = current.geo.attributes.normal;
+          if (n) {
+            const pts = [];
+            const L =
+              current.geo.boundingBox.getSize(new THREE.Vector3()).length() *
+              0.03;
+            for (let i = 0; i < p.count; i++) {
+              const a = new THREE.Vector3().fromBufferAttribute(p, i);
+              const b = a
+                .clone()
+                .add(
+                  new THREE.Vector3()
+                    .fromBufferAttribute(n, i)
+                    .multiplyScalar(L),
+                );
+              pts.push(a, b);
+            }
+            normalHelper = new THREE.LineSegments(
+              new THREE.BufferGeometry().setFromPoints(pts),
+              new THREE.LineBasicMaterial({ color: 0xff9b6a }),
+            );
+            holder.add(normalHelper);
+          }
+        }
+      }
+
+      /** Point the camera at the subject's centre from the slider distance. */
+      function frame() {
+        if (!current) return;
+        const box = current.geo.boundingBox;
+        const c = box.getCenter(new THREE.Vector3());
+        controls.target.copy(c);
+        const d = Number(document.getElementById("dist").value);
+        camera.position.set(c.x, c.y + d * 0.18, c.z + d);
+        controls.update();
+      }
+
+      function updateStats() {
+        if (!current) return;
+        const g = current.geo;
+        const tris =
+          (g.index ? g.index.count : g.attributes.position.count) / 3;
+        const size = g.boundingBox.getSize(new THREE.Vector3());
+        const d = camera.position.distanceTo(controls.target);
+        // apparent height in pixels = worldHeight / (2 d tan(fov/2)) * viewportH
+        const vh = renderer.domElement.height / renderer.getPixelRatio();
+        const px =
+          (size.y / (2 * d * Math.tan((camera.fov * Math.PI) / 360))) * vh;
+        document.getElementById("stats").innerHTML =
+          `<b>${current.label}</b><br>` +
+          `${g.attributes.position.count} verts · <b>${tris | 0} tris</b><br>` +
+          `size ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)} m<br>` +
+          `camera ${d.toFixed(2)} m<br>` +
+          `<b>${px.toFixed(0)} px tall</b> on screen<br>` +
+          `x132 instances = ${((tris | 0) * 132).toLocaleString()} tris`;
+      }
+
+      // ---------------------------------------------------------- subjects
+      const subjects = [];
+      const addSubject = (label, make) => {
+        subjects.push({ label, make });
+        const b = document.createElement("button");
+        b.textContent = label;
+        b.onclick = () => {
+          for (const el of document.querySelectorAll("#subjects button"))
+            el.classList.remove("on");
+          b.classList.add("on");
+          try {
+            setSubject(make(), label);
+          } catch (e) {
+            showErr(e);
+          }
+        };
+        document.getElementById("subjects").appendChild(b);
+        return b;
+      };
+
+      addSubject("citizen 0", () => Po(0));
+      const first = document.querySelector("#subjects button");
+      addSubject("citizen 1", () => Po(1));
+      addSubject("citizen 2", () => Po(2));
+
+      // ---------------------------------------------------------- glb drop
+      const drop = document.getElementById("drop");
+      addEventListener(
+        "dragover",
+        (e) => (e.preventDefault(), drop.classList.add("on")),
+      );
+      addEventListener("dragleave", () => drop.classList.remove("on"));
+      addEventListener("drop", async (e) => {
+        e.preventDefault();
+        drop.classList.remove("on");
+        const f = e.dataTransfer.files[0];
+        if (!f) return;
+        try {
+          const buf = await f.arrayBuffer();
+          const gltf = await new GLTFLoader().parseAsync(buf, "");
+          let biggest = null;
+          gltf.scene.traverse((o) => {
+            if (
+              o.isMesh &&
+              (!biggest ||
+                o.geometry.attributes.position.count >
+                  biggest.geometry.attributes.position.count)
+            )
+              biggest = o;
+          });
+          if (!biggest) return showErr("no mesh in that file");
+          const g = biggest.geometry.clone();
+          g.computeVertexNormals();
+          addSubject(f.name.slice(0, 18), () => g).click();
+        } catch (ex) {
+          showErr(ex);
+        }
+      });
+
+      // ---------------------------------------------------------- loop
+      for (const id of ["wire", "norms"])
+        document.getElementById(id).onchange = rebuildHelpers;
+      document.getElementById("grid").onchange = (e) =>
+        (ref.visible = e.target.checked);
+      document.getElementById("dist").oninput = frame;
+
+      function resize() {
+        const w = innerWidth - 268,
+          h = innerHeight;
+        renderer.setSize(w, h);
+        renderer.domElement.style.marginLeft = "268px";
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      addEventListener("resize", resize);
+      resize();
+
+      let t = 0;
+      renderer.setAnimationLoop(() => {
+        if (document.getElementById("spin").checked && current)
+          holder.rotation.y = t += 0.006;
+        controls.update();
+        renderer.render(scene, camera);
+        updateStats();
+      });
+
+      first.click();
+    </script>
+  </body>
+</html>

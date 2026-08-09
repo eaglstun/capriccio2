@@ -3,9 +3,11 @@ name: vaporwave
 description:
   Reference for building things that look and feel vaporwave — the
   washed-pastel, mall-nostalgia, Windows-95-and-Greek-statuary aesthetic. Use
-  when asked for a vaporwave (or synthwave / outrun / mallsoft / Y2K) look in
-  UI, CSS, poster art, 3D scenes, shaders, or copy; when picking neon/pastel
-  palettes and retro type; or when judging whether something reads as the real
+  when asked for a vaporwave (or synthwave / outrun / mallsoft / future funk /
+  Y2K) look in UI, CSS, poster art, 3D scenes, shaders, or copy; when picking
+  neon/pastel palettes and retro type; when writing, synthesizing, or judging
+  music in the genre — slowed and chopped loops, tape artifacts, period synth
+  patches, subgenre tempo; or when judging whether something reads as the real
   thing or as a pile of clichés.
 ---
 
@@ -17,11 +19,12 @@ music, stock 3D renders — and plays it back slowed down, half-broken, and too
 pink. Irony and sincerity at the same time; that tension is the whole point.
 Strip either one and you get a cheap gradient.
 
-| file                     | contents                                                     |
-| ------------------------ | ------------------------------------------------------------ |
-| `references/palettes.md` | named palettes with hex, mixing ratios, CSS gradients        |
-| `references/shaders.md`  | GLSL + three.js: scanlines, chromatic aberration, PS1 wobble |
-| `references/canon.md`    | the source material, neighboring genres, further reading     |
+| file                     | contents                                                      |
+| ------------------------ | ------------------------------------------------------------- |
+| `references/palettes.md` | named palettes with hex, mixing ratios, CSS gradients         |
+| `references/shaders.md`  | GLSL + three.js: scanlines, chromatic aberration, PS1 wobble  |
+| `references/canon.md`    | the source material, neighboring genres, further reading      |
+| `references/music.md`    | the sound: slowing, chopping, tape artifacts, listening canon |
 
 ## The one rule that matters
 
@@ -71,6 +74,13 @@ interlacing. The image should feel like a copy of a copy.
 pitched-down, chopped, looping samples that never resolve, and the visual motion
 should match — 15–20 second drifts, endless loops, no easing that implies
 snappiness. Nothing here is in a hurry.
+
+**Sound.** The genre was music before it was an image, and the visual rules are
+translations of the audio ones: slowed with the pitch (not time-stretched),
+chopped to a fragment that never resolves, drowned in reverb, muffled, and left
+pitch-unstable. If you are writing, synthesizing, or judging the actual audio —
+or picking a subgenre, which changes the tempo and the whole method — see
+`references/music.md`.
 
 **Copy.** Corporate voice with the meaning removed. Product names, license
 agreements, hold-music politeness, mission statements about nothing.
