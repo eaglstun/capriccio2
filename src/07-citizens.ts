@@ -471,8 +471,13 @@ function headGeometry() {
 function skullCap() {
   // the baked skull runs 1.408 (chin) to 1.668 (crown), 264mm across and
   // 342mm deep; sit just outside that
+  // 26x18 rather than 14x10. The rim is a per-triangle cut, so its raggedness
+  // is the size of one triangle — the only way to smooth it without snapping
+  // vertices to the cut line is to make the triangles smaller. This takes the
+  // cap from 136 to 545, which against ~3,200 for the citizen is
+  // not worth being clever about.
   const CY = 1.545,
-    g = new SphereGeometry(1, 14, 10);
+    g = new SphereGeometry(1, 26, 18);
   g.scale(0.143, 0.142, 0.183);
   const p = g.attributes.position,
     idx = g.index!,
