@@ -17,6 +17,7 @@ import {
   Mesh,
   Object3D,
   OctahedronGeometry,
+  PlaneGeometry,
   SphereGeometry,
   Vector3,
 } from "three";
@@ -432,6 +433,62 @@ class Citizens {
           (this.meshes[c].instanceColor.needsUpdate = !0));
   }
 }
+/** Head centre and radius, shared by the sphere and everything placed on it. */
+const HEAD_Y = 1.46,
+  HEAD_R = 0.13;
+
+/**
+ * One flat mark lying on the head, aimed out along the surface normal.
+ *
+ * Spherical placement rather than a position, because the head is a sphere and
+ * a feature given (yaw, pitch) stays on it however the numbers are nudged —
+ * which is the whole point when the faces have to be iterated on blind.
+ *
+ * A quad, two triangles. Small spheres would be truer and cost twenty times
+ * as much for a feature that is a couple of pixels across at the distance the
+ * game is normally played from; at the distance where it ISN'T, a flat mark on
+ * a faceted head reads as engraving, which is the house style anyway.
+ *
+ * `+0.006` floats it clear of the surface. The head is a 7x6 sphere, so its
+ * facets sit as much as 13mm inside the ideal radius at the equator — the
+ * offset only has to beat zero, and this beats it without standing off.
+ */
+function faceMark(yaw: number, pitch: number, w: number, h: number) {
+  const g = new PlaneGeometry(w, h);
+  // PlaneGeometry faces +Z. Pitch about X, then yaw about Y, leaves the normal
+  // pointing exactly along the direction computed below.
+  (g.rotateX(-pitch), g.rotateY(yaw));
+  const cp = Math.cos(pitch),
+    d = HEAD_R + 0.006;
+  return (
+    g.translate(
+      Math.sin(yaw) * cp * d,
+      HEAD_Y + Math.sin(pitch) * d,
+      Math.cos(yaw) * cp * d,
+    ),
+    g
+  );
+}
+
+/**
+ * The face. Local +Z is forward — `dummy.lookAt` aims +Z down the direction of
+ * travel — so the marks sit on the +Z side and a citizen walking away shows
+ * the back of their head.
+ *
+ * The band that is actually visible is narrower than the head: the shoulder
+ * cone is wider than the skull below y=1.40, so anything under about -27
+ * degrees of pitch is swallowed, and variant 0's hat takes the crown. These
+ * three sit inside that band.
+ */
+function faceMarks() {
+  const EYE = 0.2;
+  return [
+    { g: faceMark(-0.37, 0.08, 0.029, 0.017), tint: EYE },
+    { g: faceMark(0.37, 0.08, 0.029, 0.017), tint: EYE },
+    { g: faceMark(0, -0.19, 0.034, 0.008), tint: 0.28 },
+  ];
+}
+
 function Po(i) {
   const t = [],
     e = new CylinderGeometry(0.14, 0.26, 1.32, 7);
@@ -457,24 +514,49 @@ function Po(i) {
     const r = new ConeGeometry(0.17, 0.34, 7);
     (r.translate(0, 1.52, -0.02), t.push(r));
   }
-  return O_(t);
+  // The face goes on last so the tints line up with the trailing geometries.
+  const marks = faceMarks(),
+    tints = t.map(() => 1);
+  for (const m of marks) (t.push(m.g), tints.push(m.tint));
+  return O_(t, tints);
 }
-function O_(i) {
+/**
+ * Merge to one non-indexed buffer, carrying a flat tint per source geometry.
+ *
+ * The tint becomes a vertex colour, which is the only way to get a DARK mark
+ * on a citizen: the whole population is three InstancedMeshes and each
+ * instance already spends its one colour on clothing, so features cannot be
+ * coloured per instance. Vertex colour multiplies underneath that, so a mark
+ * at 0.2 comes out dark against whatever the citizen happens to be wearing
+ * rather than fighting it.
+ *
+ * Costs three floats per vertex on a geometry that is shared by every
+ * instance — not per citizen — plus the multiply three already does when
+ * vertexColors is on.
+ */
+function O_(i, tints?: number[]) {
   let t = 0;
   const e = i.map((a) => a.toNonIndexed());
   for (const a of e) t += a.attributes.position.count;
   const n = new Float32Array(t * 3),
-    s = new Float32Array(t * 3);
+    s = new Float32Array(t * 3),
+    c = new Float32Array(t * 3);
   let r = 0;
-  for (const a of e)
+  for (let k = 0; k < e.length; k++) {
+    const a = e[k],
+      cnt = a.attributes.position.count,
+      tint = tints?.[k] ?? 1;
     (n.set(a.attributes.position.array, r * 3),
       s.set(a.attributes.normal.array, r * 3),
-      (r += a.attributes.position.count),
+      c.fill(tint, r * 3, (r + cnt) * 3),
+      (r += cnt),
       a.dispose());
+  }
   const o = new BufferGeometry();
   return (
     o.setAttribute("position", new BufferAttribute(n, 3)),
     o.setAttribute("normal", new BufferAttribute(s, 3)),
+    o.setAttribute("color", new BufferAttribute(c, 3)),
     o
   );
 }

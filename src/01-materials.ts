@@ -184,7 +184,16 @@ function n_() {
     }),
     l = new MeshBasicMaterial({ color: "#1c1440", fog: !0 }),
     // near-white base: the citizens' per-instance colours carry the clothing
-    h = new MeshLambertMaterial({ color: "#d8d2e6", fog: !0 }),
+    // vertexColors is what puts eyes on a citizen. The population is three
+    // InstancedMeshes and each instance spends its one colour on clothing, so
+    // a dark feature cannot come from instanceColor — it multiplies in
+    // underneath instead. Every geometry drawn with this material carries a
+    // colour attribute (see O_ in 07-citizens); nothing else uses it.
+    h = new MeshLambertMaterial({
+      color: "#d8d2e6",
+      fog: !0,
+      vertexColors: !0,
+    }),
     u = new MeshBasicMaterial({
       color: "#35d4e0",
       transparent: !0,
