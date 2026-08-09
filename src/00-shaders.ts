@@ -884,12 +884,21 @@ float eBlueNoise(vec2 cell) {
 
 float lineAA(float s, float duty) {
   float w = fwidth(s);
-  if (w > 0.62) return duty * 0.85;        // too dense on screen → flat tone, no moiré
   float f = fract(s);
   float d = abs(f - 0.5);
   float hw = duty * 0.5;
   float v = 1.0 - smoothstep(hw - w, hw + w, d);
-  return v;
+  // Past Nyquist a hatch stops being lines and becomes a beat pattern against
+  // the pixel grid. w is periods per pixel, so w = 0.5 is exactly two pixels
+  // per period — the point beyond which there is no line left to draw, only
+  // moire. Fade to the flat tone the hatch averages to.
+  //
+  // This used to cut over at w > 0.62, which is BELOW Nyquist — it let the
+  // hatch run a third of an octave into the beating before giving up — and it
+  // did so with a hard branch, which draws its own visible arc across the
+  // ground where the two regimes meet. A crossfade costs a smoothstep and a
+  // mix, has no divergent branch, and takes no extra samples.
+  return mix(v, duty * 0.85, smoothstep(0.34, 0.5, w));
 }
 
 float hatchLine(vec2 co, vec2 dir, float freq, float duty, float wob) {
@@ -922,7 +931,12 @@ vec2 masonry(vec3 wp, vec3 n, float b) {
   if (an.y > 0.72 && ch > 1.8) {
     // natural ground: sparse engraved flecks + contour lines on any tilt
     vec2 co = wp.xz;
-    float s = dot(co, normalize(vec2(1.0, 0.42))) * 1.6;
+    // 1.0 puts a line every metre. It was 1.6 — a line every 62cm — which is
+    // finer than the ground reads at any normal camera height and crosses into
+    // the beating range close enough to the eye to be obvious. The terrain is
+    // the largest surface in frame and the flattest, so it is where hatch
+    // density shows up first; the walls keep theirs.
+    float s = dot(co, normalize(vec2(1.0, 0.42))) * 1.0;
     float dash = lineAA(s, 0.2);
     float mask = smoothstep(0.58, 0.78, eNoise(co * 0.16));
     ink = dash * mask * 0.5;
