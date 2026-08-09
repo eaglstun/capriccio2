@@ -73,22 +73,35 @@ function makeControls() {
     // The fake camera looks down -Z, so "forward" is -Z and "right" is +X.
     screenSpacePanning: true,
     target: { x: 0, y: 0, z: 0 },
-    // The bound 17-bootstrap sets. OrbitControls enforces it inside update()
-    // via target.clampLength, so the fake applies it on every pan — same
-    // effect, minus the damping the direction tests do not care about.
-    maxTargetRadius: 380,
+    // The camera the pad yaws around. Sat back down +z looking toward the
+    // origin, so "forward" is -z and "right" is +x.
+    object: { position: { x: 0, y: 90, z: 200 } },
     /** Records whether the pad cleared screenSpacePanning for its call. */
     _sspDuringPan: null as boolean | null,
     _pan(dx: number, dy: number) {
       this._sspDuringPan = this.screenSpacePanning;
+      // Pan moves the eye and the look-at point together — that rigidity is
+      // what the bootstrap's CAM_LIMIT clamp relies on, so model both.
       ((this.target.x -= dx), (this.target.z -= dy));
-      const r = Math.hypot(this.target.x, this.target.y, this.target.z);
-      if (r > this.maxTargetRadius) {
-        const k = this.maxTargetRadius / r;
-        ((this.target.x *= k), (this.target.y *= k), (this.target.z *= k));
-      }
+      ((this.object.position.x -= dx), (this.object.position.z -= dy));
+      camLimit(this);
     },
   };
+}
+
+/**
+ * What 17-bootstrap does after every OrbitControls.update(): hold the EYE
+ * inside CAM_LIMIT and carry the target by the same delta.
+ */
+const CAM_LIMIT = 560;
+function camLimit(c: any) {
+  const p = c.object.position,
+    r = Math.hypot(p.x, p.z);
+  if (r <= CAM_LIMIT) return;
+  const k = CAM_LIMIT / r,
+    dx = p.x * k - p.x,
+    dz = p.z * k - p.z;
+  ((p.x += dx), (p.z += dz), (c.target.x += dx), (c.target.z += dz));
 }
 
 function makeHost() {
@@ -168,6 +181,18 @@ function check(name: string, ok: boolean, detail = "") {
 
 const wake = () => listeners["gamepadconnected"]?.forEach((f) => f());
 
+/** Wake a fresh pad holding `axes` and run it for `frames` frames. */
+const drive = (axes: number[], frames = 60, tool: string | null = null) => {
+  pads = [];
+  const h = makeHost();
+  const g = new GamepadInput(h.host as any);
+  h.host.tool.tool = tool;
+  pads = [pad({ axes })];
+  wake();
+  for (let i = 0; i < frames; i++) g.update(1 / 60);
+  return h;
+};
+
 {
   pads = [];
   const { host, controls } = makeHost();
@@ -177,9 +202,68 @@ const wake = () => listeners["gamepadconnected"]?.forEach((f) => f());
   check("wakes on gamepadconnected", g.present === true);
   g.update(1 / 60);
   check(
-    "left stick orbits",
-    controls._theta !== 0,
-    `theta=${controls._theta.toFixed(4)}`,
+    "left stick turns the view",
+    controls.target.x !== 0 || controls.target.z !== 200,
+    `target x=${controls.target.x.toFixed(2)} z=${controls.target.z.toFixed(2)}`,
+  );
+}
+
+// --- 2b. the left stick yaws about the CAMERA, not about the target --------
+
+{
+  // the eye must not budge, however far you turn
+  const { controls } = drive([1, 0, 0, 0], 600);
+  const p = controls.object.position;
+  check(
+    "yawing on the spot never moves the eye",
+    Math.hypot(p.x - 0, p.z - 200) < 1e-9,
+    `camera x=${p.x.toFixed(6)} z=${p.z.toFixed(6)} (started 0, 200)`,
+  );
+}
+
+{
+  // and the thing it looks at must swing round the eye at constant distance
+  const h0 = makeHost();
+  const r0 = Math.hypot(
+    h0.controls.target.x - h0.controls.object.position.x,
+    h0.controls.target.z - h0.controls.object.position.z,
+  );
+  const { controls } = drive([1, 0, 0, 0], 600);
+  const r1 = Math.hypot(
+    controls.target.x - controls.object.position.x,
+    controls.target.z - controls.object.position.z,
+  );
+  check(
+    "the look-at point orbits the eye at a fixed distance",
+    Math.abs(r1 - r0) < 1e-9,
+    `${r0.toFixed(4)} -> ${r1.toFixed(4)}`,
+  );
+}
+
+{
+  // a full turn has to come back to where it started, or the yaw is lossy
+  const perFrame = 2.2 / 60;
+  const frames = Math.round((2 * Math.PI) / perFrame);
+  const { controls } = drive([1, 0, 0, 0], frames);
+  // The whole-frame count cannot land exactly on 2pi, so the residual is the
+  // leftover fraction of one frame's turn swept at radius 200 — a couple of
+  // units. Anything much larger would mean the yaw is losing angle each step.
+  const slack = 200 * perFrame;
+  check(
+    "a full revolution returns the view to its heading",
+    Math.hypot(controls.target.x, controls.target.z) < slack,
+    `off by ${Math.hypot(controls.target.x, controls.target.z).toFixed(2)}, one frame sweeps ${slack.toFixed(2)}`,
+  );
+}
+
+{
+  // pitch is deliberately still a target-pivot orbit, so it must still be
+  // going through the controls rather than through the new yaw
+  const { controls } = drive([0, 1, 0, 0]);
+  check(
+    "up and down still pitch about the target",
+    controls._phi !== 0 && controls.target.x === 0,
+    `phi=${controls._phi.toFixed(4)}`,
   );
 }
 
@@ -221,23 +305,12 @@ const wake = () => listeners["gamepadconnected"]?.forEach((f) => f());
 
 // --- 3b. right stick walks the camera: strafe, forward/back, and the clamp --
 
-const drive = (axes: number[], frames = 60, tool: string | null = null) => {
-  pads = [];
-  const h = makeHost();
-  const g = new GamepadInput(h.host as any);
-  h.host.tool.tool = tool;
-  pads = [pad({ axes })];
-  wake();
-  for (let i = 0; i < frames; i++) g.update(1 / 60);
-  return h;
-};
-
 {
   const { controls } = drive([0, 0, 1, 0]); // right stick pushed right
   check(
     "right stick right strafes the view RIGHT (+x)",
-    controls.target.x > 0 && Math.abs(controls.target.z) < 1e-9,
-    `target x=${controls.target.x.toFixed(1)} z=${controls.target.z.toFixed(1)}`,
+    controls.target.x > 0 && controls.object.position.x > 0,
+    `target x=${controls.target.x.toFixed(1)} camera x=${controls.object.position.x.toFixed(1)}`,
   );
 }
 
@@ -288,19 +361,35 @@ const drive = (axes: number[], frames = 60, tool: string | null = null) => {
 
 {
   // shove in one direction far longer than it takes to leave the map, then
-  // diagonally, since the limit is a radius and not a box
+  // diagonally, since the limit is a radius and not a box. The bound is on
+  // the EYE now, not the look-at point — you may look anywhere, you may not
+  // travel off the map.
+  const eyeR = (c: any) => Math.hypot(c.object.position.x, c.object.position.z);
+
   const { controls } = drive([0, 0, 1, 0], 2400);
-  const r = Math.hypot(controls.target.x, controls.target.z);
   check(
-    "panning cannot push the look-at point off the playable terrain",
-    r <= 380 + 1e-6,
-    `target radius=${r.toFixed(1)} (limit 380)`,
+    "panning cannot carry the eye off the playable terrain",
+    eyeR(controls) <= CAM_LIMIT + 1e-6,
+    `camera radius=${eyeR(controls).toFixed(1)} (limit ${CAM_LIMIT})`,
   );
   const d = drive([0, 0, 0.9, -0.9], 2400).controls;
   check(
     "the limit holds on a diagonal too, not just on an axis",
-    Math.hypot(d.target.x, d.target.z) <= 380 + 1e-6,
-    `target radius=${Math.hypot(d.target.x, d.target.z).toFixed(1)}`,
+    eyeR(d) <= CAM_LIMIT + 1e-6,
+    `camera radius=${eyeR(d).toFixed(1)}`,
+  );
+}
+
+{
+  // the reason the bound moved: turning on the spot sweeps the look-at point
+  // far outside any sane cap, so a cap on the TARGET would have fired
+  // mid-turn and dragged the eye with it
+  const { controls } = drive([1, 0, 0, 0], 600);
+  const far = Math.hypot(controls.target.x, controls.target.z);
+  check(
+    "turning is never bounded — the look-at point may leave the map",
+    far > CAM_LIMIT * 0.3,
+    `look-at reached radius ${far.toFixed(1)} while the eye stayed put`,
   );
 }
 

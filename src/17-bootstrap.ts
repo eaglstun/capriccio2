@@ -65,18 +65,26 @@ Te.dampingFactor = 0.09;
 Te.maxPolarAngle = Math.PI * 0.49;
 Te.minDistance = 5;
 Te.maxDistance = 520;
-// Keep the look-at point over real ground. The terrain plane reaches 300 along
-// its axes and 424 at its corners; past that is the flat scenery apron, and
-// panning out there leaves you staring at empty plain with the city behind
-// you. 380 sits between the two — clear of the whole buildable area, still
-// short of the edge in every direction.
-//
-// This caps the TARGET, not the eye: the orbit radius rides on top of it, so
-// the camera can still get roughly 900 out and look back at the skyline.
-// OrbitControls applies it inside update(), which means it holds for the mouse
-// and the gamepad alike rather than being enforced per input device.
-Te.maxTargetRadius = 380;
 Te.update();
+/**
+ * How far the EYE may travel from the middle of the city, horizontally.
+ *
+ * This used to be `maxTargetRadius = 380`, capping the look-at point instead.
+ * That stopped working the moment the pad started yawing about the camera:
+ * turning on the spot sweeps the target round a circle of radius
+ * `|target - camera|` centred on the eye, so it reaches `|camera| + that`,
+ * which from an ordinary spot — camera 300 out, looking 250 ahead — is 550 and
+ * well past any useful cap. The clamp would have fired mid-turn and dragged
+ * the camera with it, which is the opposite of standing still and looking
+ * round.
+ *
+ * Capping the eye instead says the thing actually meant: you may look wherever
+ * you like, you may not TRAVEL off the map. 560 clears the terrain plane's
+ * corners at 424 and reaches into the megastructure ring at 352-545, so the
+ * long shot back at the skyline still frames, but stops well short of the far
+ * flat where there is nothing to see.
+ */
+const CAM_LIMIT = 560;
 const Pe = new DirectionalLight("#ffe9f2", 3.5);
 Pe.castShadow = !0;
 Pe.shadow.mapSize.set(Is ? 2048 : 4096, Is ? 2048 : 4096);
@@ -934,6 +942,23 @@ function Nh(i) {
   // damping so OrbitControls never fights the correction.
   if (!ni.active) {
     Te.update();
+    // Hold the eye inside CAM_LIMIT, and carry the target the same distance
+    // so the pair moves rigidly. Panning drives both by the same delta, so
+    // pulling both back by the same delta cancels it exactly and the camera
+    // sits still against the wall rather than creeping along it — and since
+    // nothing accumulates, holding the stick into the limit stays stable.
+    //
+    // Yawing on the spot never trips this: it does not move the eye at all.
+    const camR = Math.hypot(ie.position.x, ie.position.z);
+    if (camR > CAM_LIMIT) {
+      const k = CAM_LIMIT / camR,
+        dx = ie.position.x * k - ie.position.x,
+        dz = ie.position.z * k - ie.position.z;
+      ((ie.position.x += dx),
+        (ie.position.z += dz),
+        (Te.target.x += dx),
+        (Te.target.z += dz));
+    }
     const Wv = terrainHeightAt(ie.position.x, ie.position.z) + 1.7;
     ie.position.y < Wv && ((ie.position.y = Wv), ie.lookAt(Te.target));
   }

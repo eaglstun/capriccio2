@@ -23,11 +23,12 @@
 // drives an aim point and the triggers keep the zoom.
 //
 //   BUILD / SECTION / PLATE
-//     left stick    orbit the camera
+//     left stick    look: left/right turn ON THE SPOT about the eye,
+//                   up/down pitch about the target. See yawInPlace().
 //     right stick   move the aim point, once a tool is chosen — otherwise
 //                   walks the camera over the city: left/right strafe,
 //                   up/down forward and back over the ground. How far it
-//                   can go is `maxTargetRadius`, set in 17-bootstrap.
+//                   can go is `CAM_LIMIT`, applied in 17-bootstrap.
 //     L2 / R2       zoom out / in
 //     A             place at the aim point (a click, at that point exactly)
 //     B             cancel — clears the tool, or returns from the Chronicle
@@ -287,12 +288,22 @@ export class GamepadInput {
       rx = axis(pad.axes[2] ?? 0),
       ry = axis(pad.axes[3] ?? 0);
 
-    // Left stick orbits. Rate is per second so it does not depend on frame
-    // rate; 2.2 rad/s is a little under a full turn in three seconds at the
-    // rim, which is brisk without being hard to stop on a target.
-    if (this.canOrbit && (lx || ly)) {
-      (c._rotateLeft(-lx * 2.2 * t), c._rotateUp(-ly * 1.5 * t));
-    }
+    // Left stick looks around. Rates are per second so they do not depend on
+    // frame rate; 2.2 rad/s is a little under a full turn in three seconds,
+    // brisk without being hard to stop on something.
+    //
+    // The two axes turn about DIFFERENT pivots, which is deliberate.
+    //
+    // Left and right yaw about the CAMERA — you turn on the spot, the way you
+    // would standing still and looking around. Orbiting the target instead
+    // swings the eye through a long arc round a pivot somewhere out in the
+    // city, which is disorienting when what you wanted was to look left.
+    //
+    // Up and down still pitch about the target, because tilting about the
+    // camera would aim you at the sky or into the ground while the city slid
+    // out of frame. Pitch wants something to pivot around; yaw does not.
+    if (this.canOrbit && ly) c._rotateUp(-ly * 1.5 * t);
+    if (lx) this.yawInPlace(c, lx * 2.2 * t);
 
     // Triggers zoom, always.
     const zoom = trigger(pad, BTN.R2) - trigger(pad, BTN.L2);
@@ -345,9 +356,9 @@ export class GamepadInput {
         // forward over the plain no matter how far the camera is pitched
         // down. Restored immediately, because the mouse wants the other one.
         //
-        // How far this may carry you is not decided here: `maxTargetRadius`
-        // on the controls stops the look-at point leaving the terrain, and
-        // OrbitControls applies it inside `update()` for every input at once.
+        // How far this may carry you is not decided here: `CAM_LIMIT` in
+        // 17-bootstrap holds the eye on the terrain after every update, for
+        // every input at once rather than per device.
         const ssp = c.screenSpacePanning;
         ((c.screenSpacePanning = !1),
           c._pan(-rx * 620 * t, -ry * 620 * t),
@@ -358,6 +369,38 @@ export class GamepadInput {
     (down[BTN.Y] && this.cycleTool(), down[BTN.X] && this.cycleVariant());
     ((down[BTN.L1] || down[BTN.LEFT]) && this.cycleMode(-1),
       (down[BTN.R1] || down[BTN.RIGHT]) && this.cycleMode(1));
+  }
+
+  /**
+   * Yaw about the camera instead of about the target: swing the look-at point
+   * around the eye, rather than the eye around the look-at point.
+   *
+   * This works BECAUSE OrbitControls keeps no persistent idea of where the
+   * camera is pointing. Every `update()` opens by recomputing its spherical
+   * coordinates from `position - target` and closes by writing
+   * `position = target + offset`. Rotating the target about the camera leaves
+   * `|position - target|` unchanged and turns its direction by the same angle,
+   * so the offset comes back rotated, the radius is untouched, and the final
+   * assignment puts the camera down exactly where it already was. Nothing has
+   * to be undone afterwards and nothing fights the damping.
+   *
+   * Undamped, unlike `_rotateLeft` — the turn starts and stops with the stick.
+   * That matches the WANDER look, which writes yaw directly for the same
+   * reason: a view that keeps drifting after your thumb comes off overshoots
+   * whatever you were turning to face.
+   *
+   * Horizontal only. Rotating the full 3D offset about world Y is what keeps a
+   * pitched camera pitched — the y component of the offset is never touched.
+   */
+  private yawInPlace(c: any, ang: number) {
+    const p = c.object?.position ?? c.object;
+    if (!p) return;
+    const dx = c.target.x - p.x,
+      dz = c.target.z - p.z,
+      s = Math.sin(ang),
+      k = Math.cos(ang);
+    ((c.target.x = p.x + dx * k - dz * s),
+      (c.target.z = p.z + dx * s + dz * k));
   }
 
   private drawCursor() {

@@ -487,10 +487,27 @@ Two things about that walk. `_panUp` follows SCREEN up unless
 `screenSpacePanning` is cleared, which on a pitched camera lifts the look-at
 point into the air rather than sliding it over the ground; the pad clears it for
 its own call and restores it, because the mouse wants the other behaviour. And
-the walk is bounded by `maxTargetRadius`, set to 380 in `17-bootstrap` — without
-it you can pan clean off the playable terrain and end up looking at empty apron
-with the city behind you. That bound is a property of the controls rather than
-of the pad, so it holds for mouse panning too.
+the walk is bounded by `CAM_LIMIT` in `17-bootstrap` — without it you can travel
+clean off the playable terrain and end up over empty apron with the city behind
+you. It is applied after `OrbitControls.update()` rather than inside the pad, so
+it holds for mouse panning too.
+
+**The left stick turns on the spot.** Left and right yaw about the CAMERA, not
+about the target: orbiting a pivot out in the city swings the eye through a long
+arc when all you wanted was to look left. `yawInPlace` rotates the look-at point
+around the eye instead, which works only because `OrbitControls.update()` keeps
+no persistent heading — it recomputes its spherical coordinates from
+`position - target` every frame and ends with `position = target + offset`, so a
+rotated target puts the camera back exactly where it was. Up and down still
+pitch about the target, because tilting about the eye aims you at the sky while
+the city slides out of frame.
+
+That is also why the bound above is on the eye and not, as it first was, on the
+look-at point. Turning on the spot sweeps the target round a circle of radius
+`|target - camera|` centred on the eye, reaching `|camera|` plus that — 550 from
+an ordinary spot. A cap on the target would have fired mid-turn and dragged the
+camera with it. Capping the eye says the thing actually meant: look wherever you
+like, do not travel off the map.
 
 WANDER writes into `WanderMode`'s own key set and yaw/pitch rather than running
 a parallel walker, so pad and keyboard drive one walker that cannot disagree.
