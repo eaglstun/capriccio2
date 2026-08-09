@@ -287,6 +287,41 @@ void main() {
 
     float edge = max(depthEdge, normalEdge);
 
+    // ---- soften the line: a wider, fainter ring around it -------------
+    // A silhouette is a STEP in depth, so the smoothsteps above never get to
+    // feather it — a pixel either straddles the discontinuity or it does not,
+    // and the line lands hard-edged at full strength. Widening those two
+    // ramps cannot fix that: two pixels out from the boundary both taps sit
+    // on the same surface, the gradient is zero, and there is nothing to
+    // ramp. Spreading the line needs WIDER TAPS; there is no free version.
+    //
+    // So the depth edge is run a second time at a larger radius and folded in
+    // at reduced strength. Each line keeps its core and gains a band of
+    // half-lit pixels either side — a glow rather than true antialiasing,
+    // which is the cheaper of the two the brief allowed.
+    //
+    // COST, stated honestly: four more depth taps, which DOUBLES the four
+    // distinct ones this block already samples. (It writes eight, but they
+    // are the same four coordinates twice over and any compiler folds them.)
+    // Still no second target, no blur pass and no extra draw, and still much
+    // cheaper than the alternative: really antialiasing the line means
+    // raising the supersample factor past 1.4, which costs the square of
+    // whatever it goes to across the WHOLE frame, on top of a pixel ratio
+    // already capped at 1.75 — the frame is drawn at up to 2.45x scale as it
+    // is. (No backticks in here: this whole shader is a template literal.)
+    //
+    // GLOW_LEVEL 0.0 removes it entirely and lets the compiler drop the four
+    // fetches with it. Raise GLOW_SPREAD for a wider, weaker halo.
+    const float GLOW_LEVEL = 0.45;
+    const float GLOW_SPREAD = 2.4;
+    vec2 g1 = o1 * GLOW_SPREAD;
+    vec2 g2 = o2 * GLOW_SPREAD;
+    float gEdge = abs(linDepth(readDepth(suv + g1)) - linDepth(readDepth(suv - g1)))
+                + abs(linDepth(readDepth(suv + g2)) - linDepth(readDepth(suv - g2)));
+    // same threshold as the core, so the halo tracks it with distance instead
+    // of blooming out of the far city where the lines are meant to be dying
+    edge = max(edge, smoothstep(depthThresh, depthThresh * 2.0, gEdge) * GLOW_LEVEL);
+
     // ============ CITIZEN MASK ============
     // the figure material writes a marker alpha (0.5) into the otherwise
     // unused alpha channel of the RGBA intermediate; every other material
