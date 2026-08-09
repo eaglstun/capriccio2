@@ -22,6 +22,7 @@ import {
 } from "three";
 import { hashString, r_, seededRng } from "./01-materials";
 import { Co } from "./06-infill";
+import { citizenHead } from "./24-citizen-head";
 // --- end generated imports ---
 
 /**
@@ -437,90 +438,16 @@ const HEAD_Y = 1.46,
   HEAD_H = 0.26;
 
 /**
- * The head, ported from the karaoke-headset project's mannequin-head factory
- * (`assets/threejs/mannequin-head.js`) — an idealised bald ovoid sculpted by
- * displacing a sphere with a sum of gaussian and ramp terms.
+ * The head. The geometry lives in 24-citizen-head, baked from
+ * karaoke-headset's Tripo-generated mannequin — see tools/bake-head.ts for
+ * what was done to it and why it is baked rather than loaded.
  *
- * Brought across rather than rewritten because it is the same TECHNIQUE the
- * hand-rolled attempt here was reaching for, done properly: the anatomy is
- * authored — a jaw tapering to a chin, a high forehead, a nose ridge that
- * widens toward the tip, a brow that blends into the bridge, lips with a
- * crease between them, closed eyelids with a lash line — rather than a few
- * bumps guessed at from a rendering.
- *
- * It also fits this project's one hard rule without any adaptation: it is
- * geometry built in code, so it ships zero bytes. The same directory holds
- * .glb versions of this head; those are assets and cannot come here.
- *
- * NOT YET OPTIMISED, deliberately. The source sphere is 48x36 — 3,456
- * triangles, against about 90 for the sphere it replaces — and every one of
- * the 132 instances carries it. That is the next problem, not this one.
- *
- * Changes from the original: the neck stub is dropped, because the citizens
- * already have a shoulder cone the head sits into; the material and the idle
- * animation are dropped, because the population is instanced and cannot have
- * either per head; and the result is scaled to the head this game already had
- * and moved up to sit on the shoulders.
+ * Kept as a named function here because it is what Po and the model inspector
+ * both reach for, and because the previous two attempts at this — flat marks,
+ * then a gaussian-displaced sphere — both lived behind this same name.
  */
 function headGeometry() {
-  const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-  const smoothstep = (e0: number, e1: number, x: number) => {
-    const t = clamp01((x - e0) / (e1 - e0));
-    return t * t * (3 - 2 * t);
-  };
-  const g = (d: number, w: number) => Math.exp(-(d / w) * (d / w));
-
-  // half-extents of the head ovoid, in metres, as authored
-  const SX = 0.078,
-    SY = 0.108,
-    SZ = 0.099;
-
-  const geo = new SphereGeometry(1, 48, 36);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i),
-      u = pos.getY(i), // -1 chin .. +1 crown on the unit sphere
-      z = pos.getZ(i);
-
-    // jaw -> chin taper: narrow x AND z through the lower half
-    const t = clamp01(-u),
-      taperW = 1 - 0.42 * Math.pow(t, 1.4);
-    let bx = x * taperW,
-      bz = z * taperW;
-
-    // only the front hemisphere carries facial relief
-    const front = smoothstep(-0.15, 0.45, z);
-
-    const noseV = g(u - 0.02, 0.16),
-      noseW = 0.09 + 0.05 * smoothstep(0.2, -0.15, u),
-      nose = 0.2 * noseV * g(x, noseW);
-    const brow = 0.05 * g(u - 0.22, 0.07) * g(x, 0.42);
-    const chin = 0.045 * g(u + 0.55, 0.16) * g(x, 0.28);
-    const lipFull = 0.028 * g(u + 0.4, 0.07) * g(x, 0.2);
-    const lipCrease = 0.018 * g(u + 0.4, 0.012) * g(x, 0.2);
-
-    let lid = 0,
-      eyeCrease = 0;
-    for (let sgn = -1; sgn <= 1; sgn += 2) {
-      const ex = x - sgn * 0.38,
-        almond = Math.exp(
-          -(
-            (ex / 0.16) * (ex / 0.16) +
-            ((u - 0.03) / 0.09) * ((u - 0.03) / 0.09)
-          ),
-        );
-      lid += 0.018 * almond;
-      eyeCrease += 0.012 * g(u - 0.015, 0.008) * g(ex, 0.1);
-    }
-
-    bz += front * (nose + brow + chin + lipFull + lid - lipCrease - eyeCrease);
-    pos.setXYZ(i, bx * SX, u * SY, bz * SZ);
-  }
-  ((pos.needsUpdate = !0), geo.computeVertexNormals());
-  // scale the authored 216mm head to the 260mm one this game already had, so
-  // the silhouette does not change, then sit it on the shoulders
-  const k = HEAD_H / (SY * 2);
-  return (geo.scale(k, k, k), geo.translate(0, HEAD_Y, 0), geo);
+  return citizenHead();
 }
 
 function Po(i) {
@@ -544,8 +471,21 @@ function Po(i) {
     const o = new SphereGeometry(0.14, 6, 5);
     (o.scale(1, 0.75, 1), o.translate(-0.2, 0.82, 0), t.push(o));
   } else {
-    const r = new ConeGeometry(0.17, 0.34, 7);
-    (r.translate(0, 1.52, -0.02), t.push(r));
+    // Re-seated for the baked head, which reaches 1.668 where the old sphere
+    // stopped at 1.59. Left where it was it sat INSIDE the skull; raised to
+    // 1.60 its base was still wider than the head at face height and read as a
+    // shroud over the eyes. Narrower and higher, so it caps the crown.
+    // Tilted back rather than standing straight up. The pivot matters: the
+    // cone is built centred, so it is first moved so its BASE sits at the
+    // origin, then leaned, then seated. Rotating it where it stands would
+    // swing the base forward through the forehead as the point went back.
+    // 0.3 radians is about 17 degrees — enough to read as worn rather than
+    // balanced, short of a jaunty angle.
+    const r = new ConeGeometry(0.15, 0.3, 7);
+    (r.translate(0, 0.15, 0),
+      r.rotateX(-0.3),
+      r.translate(0, 1.57, -0.02),
+      t.push(r));
   }
   // No flat eye and mouth marks any more: the sculpted head carries its own
   // eyelids and lips, and a dark quad laid over them fights the relief instead
@@ -744,6 +684,7 @@ const Ch = "capriccio-save-v1";
 // --- generated exports ---
 export {
   Ch,
+  headGeometry,
   Citizens,
   Fl,
   Po,
