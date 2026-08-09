@@ -481,10 +481,15 @@ function Po(i) {
     // swing the base forward through the forehead as the point went back.
     // 0.3 radians is about 17 degrees — enough to read as worn rather than
     // balanced, short of a jaunty angle.
-    const r = new ConeGeometry(0.15, 0.3, 7);
-    (r.translate(0, 0.15, 0),
+    // Narrower than it was, because tilting changes what the base ring does.
+    // Standing straight up, a 150mm base sat symmetrically around the skull
+    // and read as a brim. Leaned back, its front edge rises to where the head
+    // has narrowed, pokes out past the brow and reads as a flap across the
+    // forehead. 110mm keeps the ring inside the crown through the lean.
+    const r = new ConeGeometry(0.11, 0.32, 7);
+    (r.translate(0, 0.16, 0),
       r.rotateX(-0.3),
-      r.translate(0, 1.57, -0.02),
+      r.translate(0, 1.6, -0.025),
       t.push(r));
   }
   // No flat eye and mouth marks any more: the sculpted head carries its own
