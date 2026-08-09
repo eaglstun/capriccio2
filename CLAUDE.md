@@ -16,14 +16,23 @@ This directory holds a **downloaded production build**. There is no source.
 public/                   the ORIGINAL downloaded build — never edit
   index.html
   assets/index-DCXbw2vV.js
-src/                      the reconstruction: 18 ES modules + score + tutorial
+src/                      the reconstruction: 30 modules — the split, plus the
+                          score, tutorial, Chronicle, embers, gamepad and the
+                          baked citizen head
 docs/                     SIMULATION, PROGRESSION, RENDERING, AUDIO,
-                          COMMENTS, VENDOR-MAP, DEPENDENCIES
+                          COMMENTS, VENDOR-MAP, DEPENDENCIES, CHARACTERS
 briefs/                   the brief each Fable pass was written from
-tools/                    split_bundle.py, scope_graph.py, jsmask.py, probe.js
+tools/                    split_bundle.py, scope_graph.py, jsmask.py, probe.js,
+                          code_fingerprint.py — plus three that run under node:
+                          gamepad-check.ts, model-preview.ts, bake-head.ts
 deploy/                   droplet deploy scripts
 dist/                     build output (gitignored)
-index.html  about.html    the two pages
+index.html                the game
+about.html                colophon
+how-to-play.html          the manual
+changelog.html            the release history
+listen.html               the score with no city under it
+inspect.html              DEV ONLY — a model viewer, never built (see below)
 ```
 
 It started as just the two files under `public/`. It is now a real project:
@@ -115,7 +124,7 @@ Python's `http.server` gets this right.
 
 `src/` began as the app section cut into 18 files by `tools/split_bundle.py` — a
 lossless partition verified by byte-identical reassembly. It is no longer any of
-those things, and three separate changes took it further away:
+those things, and several changes took it further away:
 
 1. The **vaporwave reskin** hand-edited `00`–`17`.
 2. **`18-music.ts` and `19-tutorial.ts`** were written from scratch; they were
@@ -123,6 +132,9 @@ those things, and three separate changes took it further away:
 3. The **TypeScript conversion** renamed every module `.js` → `.ts`, replaced
    all 137 `defineField(this, ...)` calls with real class fields, and added
    annotations the splitter cannot emit.
+4. **`20`–`24` were written after all that**: the Chronicle and its post-pass
+   lens, the ember system, gamepad support, and `24-citizen-head.ts` — which is
+   GENERATED, not hand-written, and carries a header saying so.
 
 **Never run `python3 tools/split_bundle.py --write`.** It would overwrite the
 whole tree with regenerated JavaScript and destroy the reskin, the score, the
@@ -142,6 +154,48 @@ satisfy a flag that is still off.
 
 `public/` remains the pristine reference — the artifact as Mollick deployed it,
 and still the thing to verify against. See `src/README.md`.
+
+## Two rules that keep coming up
+
+### Nothing binary ships
+
+Every stone, citizen and sound is generated in code at load. There are no
+images, no audio, no fonts and no models, and `about.html` says so publicly.
+That is not a preference, it is the thing the project is.
+
+It does NOT mean generated meshes are off limits — it means they cannot arrive
+as files. `src/24-citizen-head.ts` is a worked example: the citizens' head was
+generated with Tripo3D, and `tools/bake-head.ts` parses the .glb, trims and
+orients it, and emits it as base64 16-bit position and index data with a
+decoder. 44KB of source instead of a megabyte of asset, and a plain function
+call instead of an async loader — which matters, because `Po()` runs inside a
+synchronous constructor with nowhere to put a promise.
+
+Re-run the bake with `node tools/bake-head.ts`. Do not hand-edit the output.
+
+### There is no browser here, so look at things another way
+
+Two tools exist because the loop "build the site and squint at the game" is slow
+and often unavailable:
+
+- `node tools/model-preview.ts out.ppm [--head] [--lod N]` — a dependency-free
+  software rasteriser that imports a geometry straight from `src/` and writes a
+  contact sheet of variants against angles. `sips -s format png` to view. Its
+  180-degree column exists to catch a model facing the wrong way, which it has.
+- `inspect.html` — a real WebGL viewer under `yarn dev` only. Deliberately
+  absent from `vite.config.js`'s inputs, so `yarn build` never emits it and it
+  cannot reach a deploy. Nothing links to it. It imports `pickLevel` from
+  `07-citizens` rather than reimplementing it, so it cannot disagree with the
+  game about level-of-detail switching.
+
+**Vite binds to `localhost`, which resolves to `::1` here.** Checks against
+`127.0.0.1` get no connection at all while the server is up and answering. That
+mistake cost two rounds of "written but unverified".
+
+Shaders can be compiled offline: `glslangValidator -S frag` on an extracted
+fragment shader. Note that the shaders live in template literals — **a backtick
+in a comment terminates the string**, and TypeScript catches that where the
+shader validator cannot.
 
 ## Working method
 

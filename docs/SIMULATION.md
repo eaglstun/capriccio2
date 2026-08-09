@@ -80,9 +80,27 @@ though the exact formula is not yet confirmed.
 
 Class `F_`. Holds `world`, `infill`, `meshes`, `agents`, `population`, `dummy`.
 
-**Rendered as 3 `InstancedMesh`es** — `meshes: 3` plus a `dummy` Object3D used
-to compose per-instance matrices. That's the standard three.js instancing
-pattern: 46 people, 3 draw calls.
+**Rendered as 9 `InstancedMesh`es** — three body variants times three levels of
+detail, indexed `lod * 3 + variant`, plus a `dummy` Object3D used to compose
+per-instance matrices. That's the standard three.js instancing pattern: 46
+people, 9 draw calls, and a mesh with no instances in it draws nothing.
+
+It was 3 until levels of detail arrived. Each agent's level is chosen every
+frame from its distance to the camera, at the END of the per-agent block rather
+than the start — the position is only final there, because ambient life nudges
+standing agents by up to 2.1m after the fact. `pickLevel` steps one level at a
+time and uses a separate threshold for leaving and returning (23m out / 19m
+back, then 46m / 38m), so an agent standing on a boundary cannot flicker.
+
+The head is what changes: 3,108 triangles baked, ~1,161 clustered, 84 as a bare
+ellipsoid on the same bounding box. Matching the bounding box is the point — at
+the distance a swap happens a citizen is essentially an outline, so if the
+outline matches, nothing visible changes. A full pool of 132 costs 448,000
+triangles all-near and 27,000 all-far.
+
+One trap worth knowing: the per-variant counter `o[]` strides work-node
+assignment, so it is NOT the mesh write cursor. Reusing it as one would reassign
+citizens to different workplaces the moment they changed distance.
 
 **The agent array is an object pool.** 132 slots allocated, 46 with
 `active: true`. `population` and the HUD's SOULS both read 46. Nobody is

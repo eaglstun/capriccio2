@@ -154,6 +154,21 @@ are far, without the moiré that fixed-frequency hatching produces at distance.
 This is the detail that separates it from a shader-toy effect. Somebody thought
 about what happens when you zoom.
 
+**`lineAA`'s moire guard was wrong and is now Nyquist.** `w = fwidth(s)` is
+periods per pixel, so `w = 0.5` is exactly two pixels per period — the point
+past which there is no line left to draw, only a beat against the pixel grid.
+The guard sat at `w > 0.62`, a third of an octave BELOW Nyquist, so the hatch
+was drawn through a band where it could only beat. It now crossfades out across
+0.34 to 0.5, and does so as a crossfade rather than the old hard branch, which
+drew its own visible arc across the ground where the two regimes met.
+
+Why the ground and not the walls: `fwidth` is a SCREEN derivative, so it blows
+up at grazing incidence, and the terrain is the one surface that is both
+enormous and viewed almost edge-on near the horizon. Distance alone never got
+the old threshold there inside `maxDistance`; the shallow angle did. The
+terrain's own hatch also went from 1.6 to 1.0 cycles per world unit — a line
+every metre instead of every 62cm.
+
 ## Masonry — three cases by normal
 
 `masonry()` branches on the world normal and returns `(ink, blockTone)`:
@@ -222,6 +237,21 @@ creases and arch intrados — each distance-compensated so distant geometry
 doesn't collapse into a tangle of lines. The fade is explicitly matched to the
 scene's exp2 fog, so ink and atmosphere dissolve on the same curve.
 
+**Softened since.** The lines were hard-edged at full strength, and the two
+smoothsteps above cannot fix that: a silhouette is a STEP in depth, so two
+pixels out from the boundary both taps land on the same surface, the gradient is
+zero, and there is nothing for a ramp to act on. Spreading a line needs WIDER
+TAPS — there is no free version. So the depth edge runs a second time at 2.4x
+the radius and folds in at 0.45 strength, giving each line a band of half-lit
+pixels either side: a glow rather than true antialiasing.
+
+Cost, stated honestly: four more depth taps, which DOUBLES the four distinct
+ones that block already samples. (It writes eight, but they are the same four
+coordinates twice and the compiler folds them.) Still far cheaper than real
+antialiasing, which would mean raising `supersample` past 1.4 — squared, across
+the whole frame, on top of a pixel ratio already capped at 1.75. `GLOW_LEVEL`
+0.0 removes it and lets the four fetches be eliminated with it.
+
 ### PAPER
 
 > `// grain: two frequencies of static screen-space tooth`
@@ -256,7 +286,15 @@ is filled with dark diagonal hatching.
 ## Cost
 
 `CAP.status()` reported **23 draw calls / 557,878 triangles** on a
-132-population city — a cheap frame for what it produces. The material hook adds
-only noise lookups to the existing standard-material shading; the post pass is a
-single full-screen pass doing sky, edges, and paper together rather than a stack
-of separate effects.
+132-population city — a cheap frame for what it produces.
+
+**That measurement is historical and has not been retaken.** Three things have
+moved since: the citizens went from 3 InstancedMeshes to 9 (three variants x
+three levels of detail), so the draw call count is higher; their triangle count
+now depends entirely on how far away they are, spanning 448,000 all-near to
+27,000 all-far where it used to be a flat ~25,000; and the perimeter apron was
+rebuilt flat, reaching radius 1600 at 25,600 triangles. Re-run `CAP.status()` in
+a browser before quoting a number here. The material hook adds only noise
+lookups to the existing standard-material shading; the post pass is a single
+full-screen pass doing sky, edges, and paper together rather than a stack of
+separate effects.
